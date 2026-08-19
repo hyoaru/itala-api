@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	var api app.Application = &api.API{
+	var api app.Application = &api.App{
 		Config: api.Config{
 			Addr: ":8080",
 		},
