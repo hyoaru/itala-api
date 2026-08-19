@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hyoaru/itala-api/internal/shared/logger"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
 )
 
 type TransactionHandler struct{}

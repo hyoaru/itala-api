@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	api "github.com/hyoaru/itala-api/internal/app/api/handlers"
-	"github.com/hyoaru/itala-api/internal/shared/logger"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure//logger"
 )
 
 type Config struct {
