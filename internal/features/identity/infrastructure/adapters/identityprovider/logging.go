@@ -23,7 +23,7 @@ func (idp *LoggingIdentityProvider) ValidateToken(ctx context.Context, token str
 		return result, err
 	}
 
-	logger.Debug(
+	logger.Info(
 		"Access token validation successful",
 		"user_id", result.Subject,
 	)
