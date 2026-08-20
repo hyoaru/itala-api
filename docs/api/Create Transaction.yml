@@ -5,7 +5,10 @@ info:
 
 http:
   method: POST
-  url: ""
+  url: "{{BASE_URL}}/transactions"
+  headers:
+    - name: Authorization
+      value: Bearer {{ACCESS_TOKEN}}
   auth: inherit
 
 settings:
