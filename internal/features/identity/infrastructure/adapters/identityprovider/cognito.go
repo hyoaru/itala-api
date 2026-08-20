@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -19,7 +20,7 @@ func NewCognitoIdentityProvider(region string, userPoolID string) *CognitoIdenti
 	return &CognitoIdentityProvider{region: region, userPoolID: userPoolID}
 }
 
-func (idp *CognitoIdentityProvider) ValidateToken(token string) (entities.Claims, error) {
+func (idp *CognitoIdentityProvider) ValidateToken(ctx context.Context, token string) (entities.Claims, error) {
 	issuer := fmt.Sprintf("https://cognito-idp.%s.amazonaws.com/%s", idp.region, idp.userPoolID)
 
 	jwks, err := keyfunc.NewDefault([]string{issuer + "/.well-known/jwks.json"})

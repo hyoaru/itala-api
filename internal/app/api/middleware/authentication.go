@@ -11,6 +11,7 @@ import (
 func Authentication(idp identity.IdentityProvider) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
 			authorization := r.Header.Get("Authorization")
 			scheme, token, ok := strings.Cut(authorization, " ")
 
@@ -19,7 +20,7 @@ func Authentication(idp identity.IdentityProvider) func(next http.Handler) http.
 				return
 			}
 
-			claims, err := idp.ValidateToken(token)
+			claims, err := idp.ValidateToken(ctx, token)
 			if err != nil {
 				if errors.Is(err, identity.ErrTokenExpired) || errors.Is(err, identity.ErrTokenInvalid) {
 					http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -31,8 +32,8 @@ func Authentication(idp identity.IdentityProvider) func(next http.Handler) http.
 			}
 
 			user := &identity.User{ID: claims.Subject}
-			ctx := identity.WithUser(r.Context(), user)
-			next.ServeHTTP(w, r.WithContext(ctx))
+			ctxWithUser := identity.WithUser(ctx, user)
+			next.ServeHTTP(w, r.WithContext(ctxWithUser))
 		}
 		return http.HandlerFunc(fn)
 	}
