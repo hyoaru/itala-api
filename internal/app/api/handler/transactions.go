@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
+	identity "github.com/hyoaru/itala-api/internal/features/identity"
 )
 
 type TransactionHandler struct{}
 
 func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	authorization := r.Header.Get("Authorization")
-	logger.Debug("Received auth", "auth", authorization)
-	w.Write([]byte(fmt.Sprintf(`{"auth": "%s"}`, authorization)))
+	user := identity.UserFromContext(r.Context())
+	w.Write([]byte(fmt.Sprintf(`{"user": "%s"}`, user.ID)))
 }

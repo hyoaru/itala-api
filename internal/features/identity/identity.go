@@ -18,7 +18,7 @@ func WithUser(ctx context.Context, user *User) context.Context {
 	return identitycontext.WithUser(ctx, user)
 }
 
-func UserFromContext(ctx context.Context) (user *User, found bool) {
+func UserFromContext(ctx context.Context) *User {
 	return identitycontext.UserFromContext(ctx)
 }
 
