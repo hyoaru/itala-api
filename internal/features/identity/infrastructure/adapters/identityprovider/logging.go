@@ -2,7 +2,7 @@ package identity
 
 import (
 	identityprovider "github.com/hyoaru/itala-api/internal/features/identity/application/ports/identityprovider"
-	valueobjects "github.com/hyoaru/itala-api/internal/features/identity/domain/valueobjects"
+	entities "github.com/hyoaru/itala-api/internal/features/identity/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
 )
 
@@ -14,7 +14,7 @@ func NewLoggingIdentityProvider(inner identityprovider.IdentityProvider) *Loggin
 	return &LoggingIdentityProvider{inner: inner}
 }
 
-func (idp *LoggingIdentityProvider) ValidateToken(token string) (valueobjects.Claims, error) {
+func (idp *LoggingIdentityProvider) ValidateToken(token string) (entities.Claims, error) {
 	result, err := idp.inner.ValidateToken(token)
 	if err != nil {
 		logger.Warn("Access token validation failed")

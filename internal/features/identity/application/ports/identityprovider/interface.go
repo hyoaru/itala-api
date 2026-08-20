@@ -1,7 +1,7 @@
 package identity
 
-import valueobjects "github.com/hyoaru/itala-api/internal/features/identity/domain/valueobjects"
+import entities "github.com/hyoaru/itala-api/internal/features/identity/domain/entities"
 
 type IdentityProvider interface {
-	ValidateToken(token string) (valueobjects.Claims, error)
+	ValidateToken(token string) (entities.Claims, error)
 }
