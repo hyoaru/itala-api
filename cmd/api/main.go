@@ -3,16 +3,15 @@ package main
 import (
 	"log"
 
-	"github.com/hyoaru/itala-api/internal/app"
 	"github.com/hyoaru/itala-api/internal/app/api"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	var api app.Application = &api.App{
-		Config: api.Config{
-			Addr: ":8080",
-		},
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("failed to load .env")
 	}
 
-	log.Fatal(api.Run())
+	app := api.New(":8080")
+	log.Fatal(app.Run())
 }

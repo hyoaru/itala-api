@@ -3,41 +3,47 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	api "github.com/hyoaru/itala-api/internal/app/api/handlers"
-	"github.com/hyoaru/itala-api/internal/shared/infrastructure//logger"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	app "github.com/hyoaru/itala-api/internal/app"
+	handler "github.com/hyoaru/itala-api/internal/app/api/handler"
+	middleware "github.com/hyoaru/itala-api/internal/app/api/middleware"
+	identity "github.com/hyoaru/itala-api/internal/features/identity"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
 )
 
-type Config struct {
-	Addr string
-}
+type App struct{ server *http.Server }
 
-type App struct {
-	Config Config
-}
+func New(addr string) app.Application {
+	// Composition Root
+	idp := identity.NewCognitoIdentityProvider(os.Getenv("AWS_REGION"), os.Getenv("COGNITO_USER_POOL_ID"))
 
-func (app *App) Run() error {
 	mux := chi.NewRouter()
-	mux.Use(middleware.RequestID)
-	mux.Use(middleware.Logger)
-	mux.Use(middleware.Recoverer)
-	mux.Use(middleware.Timeout(60 * time.Second))
+	mux.Use(chiMiddleware.RequestID)
+	mux.Use(chiMiddleware.Logger)
+	mux.Use(chiMiddleware.Recoverer)
+	mux.Use(chiMiddleware.Timeout(60 * time.Second))
 
-	transactionHandler := &api.TransactionHandler{}
+	transactionHandler := &handler.TransactionHandler{}
+	mux.Group(func(r chi.Router) {
+		r.Use(middleware.Authentication(idp))
+		r.Post("/transactions", transactionHandler.Create)
+	})
 
-	mux.Post("/transactions", transactionHandler.Create)
-
-	srv := &http.Server{
-		Addr:         app.Config.Addr,
+	server := &http.Server{
+		Addr:         addr,
 		Handler:      mux,
 		WriteTimeout: time.Second * 30,
 		ReadTimeout:  time.Second * 10,
 		IdleTimeout:  time.Minute,
 	}
+	return &App{server: server}
+}
 
-	logger.Debug(fmt.Sprintf("Server has started at %s", srv.Addr))
-	return srv.ListenAndServe()
+func (app *App) Run() error {
+	logger.Debug(fmt.Sprintf("Server has started at %s", app.server.Addr))
+	return app.server.ListenAndServe()
 }
