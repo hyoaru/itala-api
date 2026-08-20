@@ -14,25 +14,23 @@ type CreateCategoryRequest struct {
 }
 
 type CreateCategory struct {
-	request            CreateCategoryRequest
 	categoryRepository categoryrepository.CategoryRepository
 }
 
-func NewCreateCategory(
-	request CreateCategoryRequest,
-	categoryRepository categoryrepository.CategoryRepository,
-) *CreateCategory {
-	return &CreateCategory{
-		request:            request,
-		categoryRepository: categoryRepository,
-	}
+func NewCreateCategory(categoryRepository categoryrepository.CategoryRepository) *CreateCategory {
+	return &CreateCategory{categoryRepository: categoryRepository}
 }
 
-func (u *CreateCategory) Execute(ctx context.Context) error {
-	return u.categoryRepository.Create(
+func (u *CreateCategory) Execute(ctx context.Context, request CreateCategoryRequest) (struct{}, error) {
+	err := u.categoryRepository.Create(
 		ctx,
-		u.request.UserID,
-		u.request.Name,
-		u.request.TransactionType,
+		request.UserID,
+		request.Name,
+		request.TransactionType,
 	)
+	if err != nil {
+		return struct{}{}, err
+	}
+
+	return struct{}{}, nil
 }

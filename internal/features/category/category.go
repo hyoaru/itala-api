@@ -22,6 +22,6 @@ func NewDynamoDBCategoryRepository(client dynamodbclient.DynamoDBClient, tableNa
 
 type CreateCategoryRequest = categoryusecases.CreateCategoryRequest
 
-func NewCreateCategory(request CreateCategoryRequest, categoryRepository CategoryRepository) usecases.UseCase[error] {
-	return categoryusecases.NewCreateCategory(request, categoryRepository)
+func NewCreateCategory(categoryRepository CategoryRepository) usecases.UseCase[CreateCategoryRequest, struct{}] {
+	return categoryusecases.NewCreateCategory(categoryRepository)
 }

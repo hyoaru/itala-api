@@ -16,8 +16,8 @@ type SDKDynamoDBClient struct {
 	client *dynamodb.Client
 }
 
-func NewSDKDynamoDBClient(ctx context.Context) *SDKDynamoDBClient {
-	cfg, err := config.LoadDefaultConfig(ctx)
+func NewSDKDynamoDBClient() *SDKDynamoDBClient {
+	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
 		panic(fmt.Errorf("load AWS config: %w", err))
 	}

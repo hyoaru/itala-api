@@ -6,40 +6,32 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	app "github.com/hyoaru/itala-api/internal/app"
 	handler "github.com/hyoaru/itala-api/internal/app/api/handler"
-	middleware "github.com/hyoaru/itala-api/internal/app/api/middleware"
+	category "github.com/hyoaru/itala-api/internal/features/category"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
 )
 
 type App struct{ server *http.Server }
 
-func New(addr string) app.Application {
-	// Composition Root
-	idp := identity.NewCognitoIdentityProvider(os.Getenv("AWS_REGION"), os.Getenv("COGNITO_USER_POOL_ID"))
+func New(addr string) *App {
+	dynamodbClient := dynamodbclient.NewSDKDynamoDBClient()
 
-	mux := chi.NewRouter()
-	mux.Use(chiMiddleware.RequestID)
-	mux.Use(chiMiddleware.Logger)
-	mux.Use(chiMiddleware.Recoverer)
-	mux.Use(chiMiddleware.Timeout(60 * time.Second))
+	identityProvider := identity.NewCognitoIdentityProvider(os.Getenv("AWS_REGION"), os.Getenv("COGNITO_USER_POOL_ID"))
+	categoryRepository := category.NewDynamoDBCategoryRepository(dynamodbClient, os.Getenv("DYNAMODB_TABLE_NAME"))
 
-	transactionHandler := &handler.TransactionHandler{}
-	mux.Group(func(r chi.Router) {
-		r.Use(middleware.Authentication(idp))
-		r.Post("/transactions", transactionHandler.Create)
-	})
+	categoryHandler := &handler.CategoryHandler{CreateCategory: category.NewCreateCategory(categoryRepository)}
+	router := NewRouter(identityProvider, *categoryHandler)
 
 	server := &http.Server{
 		Addr:         addr,
-		Handler:      mux,
+		Handler:      router,
 		WriteTimeout: time.Second * 30,
 		ReadTimeout:  time.Second * 10,
 		IdleTimeout:  time.Minute,
 	}
+
 	return &App{server: server}
 }
 
