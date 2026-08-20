@@ -16,38 +16,18 @@ func NewSlogLogger() *SlogLogger {
 	}
 }
 
-func (l *SlogLogger) Debug(message string, extras ...map[string]any) {
-	if len(extras) == 0 {
-		l.logger.Debug(message)
-		return
-	}
-
-	l.logger.Debug(message, "extras", extras[0])
+func (l *SlogLogger) Debug(message string, extras ...any) {
+	l.logger.Debug(message, extras...)
 }
 
-func (l *SlogLogger) Info(message string, extras ...map[string]any) {
-	if len(extras) == 0 {
-		l.logger.Info(message)
-		return
-	}
-
-	l.logger.Info(message, "extras", extras[0])
+func (l *SlogLogger) Info(message string, extras ...any) {
+	l.logger.Info(message, extras...)
 }
 
-func (l *SlogLogger) Warn(message string, extras ...map[string]any) {
-	if len(extras) == 0 {
-		l.logger.Warn(message)
-		return
-	}
-
-	l.logger.Warn(message, "extras", extras[0])
+func (l *SlogLogger) Warn(message string, extras ...any) {
+	l.logger.Warn(message, extras...)
 }
 
-func (l *SlogLogger) Error(message string, extras ...map[string]any) {
-	if len(extras) == 0 {
-		l.logger.Error(message)
-		return
-	}
-
-	l.logger.Error(message, "extras", extras[0])
+func (l *SlogLogger) Error(message string, extras ...any) {
+	l.logger.Error(message, extras...)
 }
