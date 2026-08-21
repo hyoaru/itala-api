@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-
 	port "github.com/hyoaru/itala-api/internal/features/account/application/ports/accountrepository"
+	entities "github.com/hyoaru/itala-api/internal/features/account/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
 
@@ -21,21 +20,18 @@ func NewDynamoDBAccountRepository(client dynamodbclient.DynamoDBClient, tableNam
 	return &DynamoDBAccountRepository{client: client, tableName: tableName}
 }
 
-func (r *DynamoDBAccountRepository) Create(ctx context.Context, userID string, name string) error {
-	id := uuid.New()
-	now := time.Now().UTC()
-
+func (r *DynamoDBAccountRepository) Create(ctx context.Context, userID string, account entities.Account) error {
 	transactItems := []dynamodbclient.TransactWriteItem{
 		{
 			Put: &dynamodbclient.TransactPut{
 				TableName: r.tableName,
 				Item: map[string]any{
 					"PK":         fmt.Sprintf("USER#%s", userID),
-					"SK":         fmt.Sprintf("ACCOUNT#%s", id),
-					"name":       name,
-					"balance":    0,
-					"created_at": now.Format(time.RFC3339Nano),
-					"updated_at": now.Format(time.RFC3339Nano),
+					"SK":         fmt.Sprintf("ACCOUNT#%s", account.ID),
+					"name":       account.Name,
+					"balance":    account.Balance,
+					"created_at": account.CreatedAt.Format(time.RFC3339Nano),
+					"updated_at": account.UpdatedAt.Format(time.RFC3339Nano),
 				},
 			},
 		},
@@ -44,8 +40,8 @@ func (r *DynamoDBAccountRepository) Create(ctx context.Context, userID string, n
 				TableName: r.tableName,
 				Item: map[string]any{
 					"PK":         fmt.Sprintf("USER#%s", userID),
-					"SK":         fmt.Sprintf("ACCOUNT_NAME#%s", name),
-					"account_id": id,
+					"SK":         fmt.Sprintf("ACCOUNT_NAME#%s", account.Name),
+					"account_id": account.ID,
 				},
 				Condition: "attribute_not_exists(PK)",
 			},

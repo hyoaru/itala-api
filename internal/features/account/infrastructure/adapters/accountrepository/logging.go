@@ -4,6 +4,7 @@ import (
 	"context"
 
 	port "github.com/hyoaru/itala-api/internal/features/account/application/ports/accountrepository"
+	entities "github.com/hyoaru/itala-api/internal/features/account/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
 )
 
@@ -15,15 +16,15 @@ func NewLoggingAccountRepository(inner port.AccountRepository) *LoggingAccountRe
 	return &LoggingAccountRepository{inner: inner}
 }
 
-func (c *LoggingAccountRepository) Create(ctx context.Context, userID string, name string) error {
-	logger.Debug("Creating account", "name", name)
+func (c *LoggingAccountRepository) Create(ctx context.Context, userID string, account entities.Account) error {
+	logger.Debug("Creating account", "name", account.Name)
 
-	if err := c.inner.Create(ctx, userID, name); err != nil {
+	if err := c.inner.Create(ctx, userID, account); err != nil {
 		logger.Warn("Failed to create account", "error", err)
 		return err
 	}
 
-	logger.Info("Account created", "name", name)
+	logger.Info("Account created", "name", account.Name)
 
 	return nil
 }

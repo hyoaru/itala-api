@@ -4,6 +4,7 @@ import (
 	"context"
 
 	port "github.com/hyoaru/itala-api/internal/features/account/application/ports/accountrepository"
+	entities "github.com/hyoaru/itala-api/internal/features/account/domain/entities"
 )
 
 type DecoratedAccountRepository struct {
@@ -14,6 +15,6 @@ func NewDecoratedAccountRepository(inner port.AccountRepository) *DecoratedAccou
 	return &DecoratedAccountRepository{inner: NewLoggingAccountRepository(inner)}
 }
 
-func (c *DecoratedAccountRepository) Create(ctx context.Context, userID string, name string) error {
-	return c.inner.Create(ctx, userID, name)
+func (c *DecoratedAccountRepository) Create(ctx context.Context, userID string, account entities.Account) error {
+	return c.inner.Create(ctx, userID, account)
 }

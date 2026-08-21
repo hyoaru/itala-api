@@ -1,7 +1,11 @@
 package account
 
-import "context"
+import (
+	"context"
+
+	entities "github.com/hyoaru/itala-api/internal/features/account/domain/entities"
+)
 
 type AccountRepository interface {
-	Create(ctx context.Context, userID string, name string) error
+	Create(ctx context.Context, userID string, account entities.Account) error
 }
