@@ -43,3 +43,13 @@ func (d Decimal) Divide(amount Decimal) (Decimal, error) {
 func (d Decimal) String() string {
 	return d.value.String()
 }
+
+func (d *Decimal) UnmarshalJSON(data []byte) error {
+	value, err := NewDecimal(string(data))
+	if err != nil {
+		return err
+	}
+
+	*d = value
+	return nil
+}

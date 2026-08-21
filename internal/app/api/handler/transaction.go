@@ -10,7 +10,6 @@ import (
 	"github.com/hyoaru/itala-api/internal/features/transaction"
 	"github.com/hyoaru/itala-api/internal/shared/application/usecases"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
-	"github.com/shopspring/decimal"
 )
 
 type TransactionHandler struct {
@@ -18,7 +17,7 @@ type TransactionHandler struct {
 }
 
 type createTransactionPayload struct {
-	Amount      decimal.Decimal              `json:"amount"`
+	Amount      valueobjects.Decimal         `json:"amount"`
 	Type        valueobjects.TransactionType `json:"type"`
 	CategoryID  string                       `json:"category_id"`
 	Description string                       `json:"description"`

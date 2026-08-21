@@ -9,12 +9,11 @@ import (
 	transactionrepository "github.com/hyoaru/itala-api/internal/features/transaction/application/ports/transactionrepository"
 	entities "github.com/hyoaru/itala-api/internal/features/transaction/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
-	"github.com/shopspring/decimal"
 )
 
 type CreateTransactionRequest struct {
 	UserID      string
-	Amount      decimal.Decimal
+	Amount      valueobjects.Decimal
 	Type        valueobjects.TransactionType
 	CategoryID  string
 	Description string

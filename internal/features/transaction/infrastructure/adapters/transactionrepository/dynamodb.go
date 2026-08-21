@@ -5,20 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/shopspring/decimal"
-
 	entities "github.com/hyoaru/itala-api/internal/features/transaction/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
-
-type dynamodbDecimal decimal.Decimal
-
-func (d dynamodbDecimal) MarshalDynamoDBAttributeValue() (types.AttributeValue, error) {
-	return &types.AttributeValueMemberN{
-		Value: decimal.Decimal(d).String(),
-	}, nil
-}
 
 type DynamoDBTransactionRepository struct {
 	client    dynamodbclient.DynamoDBClient
@@ -33,7 +22,7 @@ func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID strin
 	return r.client.PutItem(ctx, r.tableName, map[string]any{
 		"PK":               fmt.Sprintf("USER#%s", userID),
 		"SK":               fmt.Sprintf("TRANSACTION#%s#%s", transaction.OccurredAt.Format(time.RFC3339Nano), transaction.ID),
-		"amount":           dynamodbDecimal(transaction.Amount),
+		"amount":           dynamodbclient.Decimal(transaction.Amount),
 		"transaction_type": string(transaction.Type),
 		"category_id":      transaction.CategoryID,
 		"description":      transaction.Description,
