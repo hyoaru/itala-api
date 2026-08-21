@@ -62,6 +62,18 @@ func (c *SDKDynamoDBClient) TransactWriteItems(ctx context.Context, items []Tran
 	}
 
 	_, err := c.client.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{TransactItems: parsedTransactItems})
+	if err != nil {
+		if canceled, ok := errors.AsType[*types.TransactionCanceledException](err); ok {
+			for _, reason := range canceled.CancellationReasons {
+				if reason.Code != nil && *reason.Code == "ConditionalCheckFailed" {
+					return ErrItemExists
+				}
+			}
+		}
+
+		return err
+	}
+
 	return err
 }
 

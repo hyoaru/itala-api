@@ -19,10 +19,7 @@ type DynamoDBCategoryRepository struct {
 }
 
 func NewDynamoDBCategoryRepository(client dynamodbclient.DynamoDBClient, tableName string) *DynamoDBCategoryRepository {
-	return &DynamoDBCategoryRepository{
-		client:    client,
-		tableName: tableName,
-	}
+	return &DynamoDBCategoryRepository{client: client, tableName: tableName}
 }
 
 func (r *DynamoDBCategoryRepository) Create(
@@ -34,14 +31,34 @@ func (r *DynamoDBCategoryRepository) Create(
 	id := uuid.New()
 	now := time.Now().UTC()
 
-	err := r.client.PutItem(ctx, r.tableName, map[string]any{
-		"PK":         fmt.Sprintf("USER#%s", userID),
-		"SK":         fmt.Sprintf("CATEGORY#%s", id),
-		"name":       name,
-		"type":       string(transactionType),
-		"created_at": now.Format(time.RFC3339Nano),
-		"updated_at": now.Format(time.RFC3339Nano),
-	})
+	transactItems := []dynamodbclient.TransactWriteItem{
+		{
+			Put: &dynamodbclient.TransactPut{
+				TableName: r.tableName,
+				Item: map[string]any{
+					"PK":         fmt.Sprintf("USER#%s", userID),
+					"SK":         fmt.Sprintf("CATEGORY#%s", id),
+					"name":       name,
+					"type":       string(transactionType),
+					"created_at": now.Format(time.RFC3339Nano),
+					"updated_at": now.Format(time.RFC3339Nano),
+				},
+			},
+		},
+		{
+			Put: &dynamodbclient.TransactPut{
+				TableName: r.tableName,
+				Item: map[string]any{
+					"PK":          fmt.Sprintf("USER#%s", userID),
+					"SK":          fmt.Sprintf("CATEGORY_NAME#%s", name),
+					"category_id": id,
+				},
+				Condition: "attribute_not_exists(PK)",
+			},
+		},
+	}
+
+	err := r.client.TransactWriteItems(ctx, transactItems)
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemExists) {
 			return port.ErrCategoryExists
