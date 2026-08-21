@@ -48,3 +48,94 @@ func (c *SDKDynamoDBClient) PutItem(ctx context.Context, tableName string, item 
 
 	return nil
 }
+
+func (c *SDKDynamoDBClient) TransactWriteItems(ctx context.Context, items []TransactWriteItem) error {
+	parsedTransactItems := make([]types.TransactWriteItem, 0, len(items))
+
+	for _, item := range items {
+		parsedTransactItem, err := c.toTransactWriteItem(item)
+		if err != nil {
+			return err
+		}
+
+		parsedTransactItems = append(parsedTransactItems, parsedTransactItem)
+	}
+
+	_, err := c.client.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{TransactItems: parsedTransactItems})
+	return err
+}
+
+func (c *SDKDynamoDBClient) toTransactWriteItem(writeItem TransactWriteItem) (types.TransactWriteItem, error) {
+	switch {
+	case writeItem.Put != nil:
+		return c.toTransactPut(writeItem.Put)
+	case writeItem.Update != nil:
+		return c.toTransactUpdate(writeItem.Update)
+	case writeItem.Delete != nil:
+		return c.toTransactDelete(writeItem.Delete)
+	default:
+		return types.TransactWriteItem{}, errors.New("write operation must contain put, update, or delete")
+	}
+}
+
+func (c *SDKDynamoDBClient) toTransactPut(operation *TransactPut) (types.TransactWriteItem, error) {
+	parsedItem, err := attributevalue.MarshalMap(operation.Item)
+	if err != nil {
+		return types.TransactWriteItem{}, err
+	}
+
+	item := &types.Put{
+		TableName: aws.String(operation.TableName),
+		Item:      parsedItem,
+	}
+
+	if operation.Condition != "" {
+		item.ConditionExpression = aws.String(operation.Condition)
+	}
+
+	return types.TransactWriteItem{Put: item}, nil
+}
+
+func (c *SDKDynamoDBClient) toTransactUpdate(operation *TransactUpdate) (types.TransactWriteItem, error) {
+	key, err := attributevalue.MarshalMap(operation.Key)
+	if err != nil {
+		return types.TransactWriteItem{}, err
+	}
+
+	values, err := attributevalue.MarshalMap(operation.ExpressionValues)
+	if err != nil {
+		return types.TransactWriteItem{}, err
+	}
+
+	item := &types.Update{
+		TableName:                 aws.String(operation.TableName),
+		Key:                       key,
+		UpdateExpression:          aws.String(operation.UpdateExpression),
+		ExpressionAttributeValues: values,
+		ExpressionAttributeNames:  operation.ExpressionNames,
+	}
+
+	if operation.Condition != "" {
+		item.ConditionExpression = aws.String(operation.Condition)
+	}
+
+	return types.TransactWriteItem{Update: item}, nil
+}
+
+func (c *SDKDynamoDBClient) toTransactDelete(operation *TransactDelete) (types.TransactWriteItem, error) {
+	key, err := attributevalue.MarshalMap(operation.Key)
+	if err != nil {
+		return types.TransactWriteItem{}, err
+	}
+
+	item := &types.Delete{
+		TableName: aws.String(operation.TableName),
+		Key:       key,
+	}
+
+	if operation.Condition != "" {
+		item.ConditionExpression = aws.String(operation.Condition)
+	}
+
+	return types.TransactWriteItem{Delete: item}, nil
+}

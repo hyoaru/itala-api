@@ -35,12 +35,12 @@ func (r *DynamoDBCategoryRepository) Create(
 	now := time.Now().UTC()
 
 	err := r.client.PutItem(ctx, r.tableName, map[string]any{
-		"PK":        fmt.Sprintf("USER#%s", userID),
-		"SK":        fmt.Sprintf("CATEGORY#%s", id),
-		"name":      name,
-		"type":      string(transactionType),
-		"createdAt": now.Format(time.RFC3339Nano),
-		"updatedAt": now.Format(time.RFC3339Nano),
+		"PK":         fmt.Sprintf("USER#%s", userID),
+		"SK":         fmt.Sprintf("CATEGORY#%s", id),
+		"name":       name,
+		"type":       string(transactionType),
+		"created_at": now.Format(time.RFC3339Nano),
+		"updated_at": now.Format(time.RFC3339Nano),
 	})
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemExists) {
