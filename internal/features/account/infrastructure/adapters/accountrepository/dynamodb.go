@@ -29,7 +29,7 @@ func (r *DynamoDBAccountRepository) Create(ctx context.Context, userID string, a
 					"PK":         fmt.Sprintf("USER#%s", userID),
 					"SK":         fmt.Sprintf("ACCOUNT#%s", account.ID),
 					"name":       account.Name,
-					"balance":    account.Balance,
+					"balance":    dynamodbclient.Decimal(account.Balance),
 					"created_at": account.CreatedAt.Format(time.RFC3339Nano),
 					"updated_at": account.UpdatedAt.Format(time.RFC3339Nano),
 				},

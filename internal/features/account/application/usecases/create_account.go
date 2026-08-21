@@ -9,7 +9,6 @@ import (
 	accountrepository "github.com/hyoaru/itala-api/internal/features/account/application/ports/accountrepository"
 	entities "github.com/hyoaru/itala-api/internal/features/account/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
-	"github.com/shopspring/decimal"
 )
 
 type CreateAccountRequest struct {
@@ -29,11 +28,15 @@ func NewCreateAccount(accountRepository accountrepository.AccountRepository) *Cr
 func (u *CreateAccount) Execute(ctx context.Context, request CreateAccountRequest) (struct{}, error) {
 	id := uuid.New()
 	now := time.Now().UTC()
+	balance, err := valueobjects.NewDecimal("0")
+	if err != nil {
+		return struct{}{}, err
+	}
 
 	account := entities.Account{
 		ID:        id.String(),
 		Name:      request.Name,
-		Balance:   decimal.Zero,
+		Balance:   balance,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
