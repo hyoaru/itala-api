@@ -8,9 +8,9 @@ import (
 )
 
 type CreateCategoryRequest struct {
-	UserID          string
-	Name            string
-	TransactionType valueobjects.TransactionType
+	UserID string
+	Name   string
+	Type   valueobjects.TransactionType
 }
 
 type CreateCategory struct {
@@ -26,7 +26,7 @@ func (u *CreateCategory) Execute(ctx context.Context, request CreateCategoryRequ
 		ctx,
 		request.UserID,
 		request.Name,
-		request.TransactionType,
+		request.Type,
 	)
 	if err != nil {
 		return struct{}{}, err

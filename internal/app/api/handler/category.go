@@ -37,9 +37,9 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	request := category.CreateCategoryRequest{
-		UserID:          user.ID,
-		Name:            payload.Name,
-		TransactionType: transactionType,
+		UserID: user.ID,
+		Name:   payload.Name,
+		Type:   transactionType,
 	}
 
 	if _, err := h.CreateCategory.Execute(r.Context(), request); err != nil {
