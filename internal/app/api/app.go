@@ -7,6 +7,7 @@ import (
 	"time"
 
 	handler "github.com/hyoaru/itala-api/internal/app/api/handler"
+	account "github.com/hyoaru/itala-api/internal/features/account"
 	category "github.com/hyoaru/itala-api/internal/features/category"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
@@ -16,13 +17,16 @@ import (
 type App struct{ server *http.Server }
 
 func New(addr string) *App {
+	dynamodbTableName := os.Getenv("DYNAMODB_TABLE_NAME")
 	dynamodbClient := dynamodbclient.NewSDKDynamoDBClient()
 
 	identityProvider := identity.NewCognitoIdentityProvider(os.Getenv("AWS_REGION"), os.Getenv("COGNITO_USER_POOL_ID"))
-	categoryRepository := category.NewDynamoDBCategoryRepository(dynamodbClient, os.Getenv("DYNAMODB_TABLE_NAME"))
+	categoryRepository := category.NewDynamoDBCategoryRepository(dynamodbClient, dynamodbTableName)
+	accountRepository := account.NewDynamoDBAccountRepository(dynamodbClient, dynamodbTableName)
 
 	categoryHandler := &handler.CategoryHandler{CreateCategory: category.NewCreateCategory(categoryRepository)}
-	router := NewRouter(identityProvider, *categoryHandler)
+	accountHandler := &handler.AccountHandler{CreateAccount: account.NewCreateAccount(accountRepository)}
+	router := NewRouter(identityProvider, *categoryHandler, *accountHandler)
 
 	server := &http.Server{
 		Addr:         addr,

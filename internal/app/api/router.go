@@ -14,6 +14,7 @@ import (
 func NewRouter(
 	identityProvider identity.IdentityProvider,
 	categoryHandler handler.CategoryHandler,
+	accountHandler handler.AccountHandler,
 ) http.Handler {
 	mux := chi.NewRouter()
 
@@ -25,6 +26,7 @@ func NewRouter(
 	mux.Group(func(r chi.Router) {
 		r.Use(middleware.Authentication(identityProvider))
 		r.Post("/categories", categoryHandler.Create)
+		r.Post("/accounts", accountHandler.Create)
 	})
 
 	return mux

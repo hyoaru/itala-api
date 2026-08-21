@@ -30,5 +30,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.6 // indirect
 	github.com/aws/smithy-go v1.27.8 // indirect
+	github.com/shopspring/decimal v1.4.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 )

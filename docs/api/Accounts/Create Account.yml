@@ -1,0 +1,21 @@
+info:
+  name: Create Account
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{BASE_URL}}/accounts"
+  headers:
+    - name: Authorization
+      value: Bearer {{ACCESS_TOKEN}}
+  body:
+    type: json
+    data: '{"name": "BPI Savings"}'
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
