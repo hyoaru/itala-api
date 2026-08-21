@@ -10,6 +10,7 @@ import (
 	account "github.com/hyoaru/itala-api/internal/features/account"
 	category "github.com/hyoaru/itala-api/internal/features/category"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
+	"github.com/hyoaru/itala-api/internal/features/transaction"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
 )
@@ -23,10 +24,12 @@ func New(addr string) *App {
 	identityProvider := identity.NewCognitoIdentityProvider(os.Getenv("AWS_REGION"), os.Getenv("COGNITO_USER_POOL_ID"))
 	categoryRepository := category.NewDynamoDBCategoryRepository(dynamodbClient, dynamodbTableName)
 	accountRepository := account.NewDynamoDBAccountRepository(dynamodbClient, dynamodbTableName)
+	transactionRepository := transaction.NewDynamoDBTransactionRepository(dynamodbClient, dynamodbTableName)
 
 	categoryHandler := &handler.CategoryHandler{CreateCategory: category.NewCreateCategory(categoryRepository)}
 	accountHandler := &handler.AccountHandler{CreateAccount: account.NewCreateAccount(accountRepository)}
-	router := NewRouter(identityProvider, *categoryHandler, *accountHandler)
+	transactionHandler := &handler.TransactionHandler{CreateTransaction: transaction.NewCreateTransaction(transactionRepository)}
+	router := NewRouter(identityProvider, *categoryHandler, *accountHandler, *transactionHandler)
 
 	server := &http.Server{
 		Addr:         addr,

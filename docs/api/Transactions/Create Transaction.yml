@@ -9,6 +9,16 @@ http:
   headers:
     - name: Authorization
       value: Bearer {{ACCESS_TOKEN}}
+  body:
+    type: json
+    data: |-
+      {
+        "amount": "1500.50",
+        "type": "EXPENSE",
+        "category_id": "550e8400-e29b-41d4-a716-446655440000",
+        "description": "Dinner with friends",
+        "occurred_at": "2026-08-21T18:30:00+08:00"
+      }
   auth: inherit
 
 settings:
