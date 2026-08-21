@@ -22,7 +22,7 @@ type createTransactionPayload struct {
 	Type        valueobjects.TransactionType `json:"type"`
 	CategoryID  string                       `json:"category_id"`
 	Description string                       `json:"description"`
-	OccuredAt   time.Time                    `json:"occured_at"`
+	OccurredAt  time.Time                    `json:"occurred_at"`
 }
 
 func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +46,7 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Type:        transactionType,
 		CategoryID:  payload.CategoryID,
 		Description: payload.Description,
-		OccuredAt:   payload.OccuredAt,
+		OccurredAt:  payload.OccurredAt,
 	}
 
 	if _, err := h.CreateTransaction.Execute(r.Context(), request); err != nil {

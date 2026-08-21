@@ -2,12 +2,10 @@ package transaction
 
 import (
 	"context"
-	"time"
 
 	port "github.com/hyoaru/itala-api/internal/features/transaction/application/ports/transactionrepository"
-	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
+	entities "github.com/hyoaru/itala-api/internal/features/transaction/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
-	"github.com/shopspring/decimal"
 )
 
 type LoggingTransactionRepository struct {
@@ -18,31 +16,15 @@ func NewLoggingTransactionRepository(inner port.TransactionRepository) *LoggingT
 	return &LoggingTransactionRepository{inner: inner}
 }
 
-func (c *LoggingTransactionRepository) Create(
-	ctx context.Context,
-	userID string,
-	amount decimal.Decimal,
-	transactionType valueobjects.TransactionType,
-	categoryID string,
-	description string,
-	occurredAt time.Time,
-) error {
-	logger.Debug("Creating transaction", "amount", amount, "type", transactionType)
+func (c *LoggingTransactionRepository) Create(ctx context.Context, userID string, transaction entities.Transaction) error {
+	logger.Debug("Creating transaction", "amount", transaction.Amount, "type", transaction.Type)
 
-	if err := c.inner.Create(
-		ctx,
-		userID,
-		amount,
-		transactionType,
-		categoryID,
-		description,
-		occurredAt,
-	); err != nil {
+	if err := c.inner.Create(ctx, userID, transaction); err != nil {
 		logger.Warn("Failed to create transaction", "error", err)
 		return err
 	}
 
-	logger.Info("Transaction created", "amount", amount, "type", transactionType)
+	logger.Info("Transaction created", "amount", transaction.Amount, "type", transaction.Type)
 
 	return nil
 }

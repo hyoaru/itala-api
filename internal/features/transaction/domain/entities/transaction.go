@@ -13,7 +13,7 @@ type Transaction struct {
 	Type        valueobjects.TransactionType
 	CategoryID  string
 	Description string
-	OccuredAt   time.Time
+	OccurredAt  time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
