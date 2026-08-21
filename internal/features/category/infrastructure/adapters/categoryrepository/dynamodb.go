@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-
 	port "github.com/hyoaru/itala-api/internal/features/category/application/ports/categoryrepository"
-	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
+	entities "github.com/hyoaru/itala-api/internal/features/category/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
 
@@ -22,26 +20,18 @@ func NewDynamoDBCategoryRepository(client dynamodbclient.DynamoDBClient, tableNa
 	return &DynamoDBCategoryRepository{client: client, tableName: tableName}
 }
 
-func (r *DynamoDBCategoryRepository) Create(
-	ctx context.Context,
-	userID string,
-	name string,
-	transactionType valueobjects.TransactionType,
-) error {
-	id := uuid.New()
-	now := time.Now().UTC()
-
+func (r *DynamoDBCategoryRepository) Create(ctx context.Context, userID string, category entities.Category) error {
 	transactItems := []dynamodbclient.TransactWriteItem{
 		{
 			Put: &dynamodbclient.TransactPut{
 				TableName: r.tableName,
 				Item: map[string]any{
 					"PK":         fmt.Sprintf("USER#%s", userID),
-					"SK":         fmt.Sprintf("CATEGORY#%s", id),
-					"name":       name,
-					"type":       string(transactionType),
-					"created_at": now.Format(time.RFC3339Nano),
-					"updated_at": now.Format(time.RFC3339Nano),
+					"SK":         fmt.Sprintf("CATEGORY#%s", category.ID),
+					"name":       category.Name,
+					"type":       string(category.Type),
+					"created_at": category.CreatedAt.Format(time.RFC3339Nano),
+					"updated_at": category.UpdatedAt.Format(time.RFC3339Nano),
 				},
 			},
 		},
@@ -50,8 +40,8 @@ func (r *DynamoDBCategoryRepository) Create(
 				TableName: r.tableName,
 				Item: map[string]any{
 					"PK":          fmt.Sprintf("USER#%s", userID),
-					"SK":          fmt.Sprintf("CATEGORY_NAME#%s", name),
-					"category_id": id,
+					"SK":          fmt.Sprintf("CATEGORY_NAME#%s", category.Name),
+					"category_id": category.ID,
 				},
 				Condition: "attribute_not_exists(PK)",
 			},

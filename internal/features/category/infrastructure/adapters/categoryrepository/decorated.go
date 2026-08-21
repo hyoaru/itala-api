@@ -4,7 +4,7 @@ import (
 	"context"
 
 	port "github.com/hyoaru/itala-api/internal/features/category/application/ports/categoryrepository"
-	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
+	entities "github.com/hyoaru/itala-api/internal/features/category/domain/entities"
 )
 
 type DecoratedCategoryRepository struct {
@@ -15,11 +15,6 @@ func NewDecoratedCategoryRepository(inner port.CategoryRepository) *DecoratedCat
 	return &DecoratedCategoryRepository{inner: NewLoggingCategoryRepository(inner)}
 }
 
-func (c *DecoratedCategoryRepository) Create(
-	ctx context.Context,
-	userID string,
-	name string,
-	transactionType valueobjects.TransactionType,
-) error {
-	return c.inner.Create(ctx, userID, name, transactionType)
+func (c *DecoratedCategoryRepository) Create(ctx context.Context, userID string, category entities.Category) error {
+	return c.inner.Create(ctx, userID, category)
 }

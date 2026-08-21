@@ -3,9 +3,9 @@ package category
 import (
 	"context"
 
-	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
+	entities "github.com/hyoaru/itala-api/internal/features/category/domain/entities"
 )
 
 type CategoryRepository interface {
-	Create(ctx context.Context, userID string, name string, transactionType valueobjects.TransactionType) error
+	Create(ctx context.Context, userID string, category entities.Category) error
 }

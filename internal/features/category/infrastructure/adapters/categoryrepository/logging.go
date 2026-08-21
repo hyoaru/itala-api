@@ -4,7 +4,7 @@ import (
 	"context"
 
 	port "github.com/hyoaru/itala-api/internal/features/category/application/ports/categoryrepository"
-	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
+	entities "github.com/hyoaru/itala-api/internal/features/category/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
 )
 
@@ -16,20 +16,15 @@ func NewLoggingCategoryRepository(inner port.CategoryRepository) *LoggingCategor
 	return &LoggingCategoryRepository{inner: inner}
 }
 
-func (c *LoggingCategoryRepository) Create(
-	ctx context.Context,
-	userID string,
-	name string,
-	transactionType valueobjects.TransactionType,
-) error {
-	logger.Debug("Creating category", "name", name, "transaction_type", transactionType)
+func (c *LoggingCategoryRepository) Create(ctx context.Context, userID string, category entities.Category) error {
+	logger.Debug("Creating category", "name", category.Name, "transaction_type", category.Type)
 
-	if err := c.inner.Create(ctx, userID, name, transactionType); err != nil {
+	if err := c.inner.Create(ctx, userID, category); err != nil {
 		logger.Warn("Failed to create category", "error", err)
 		return err
 	}
 
-	logger.Info("Category created", "name", name, "transaction_type", transactionType)
+	logger.Info("Category created", "name", category.Name, "transaction_type", category.Type)
 
 	return nil
 }

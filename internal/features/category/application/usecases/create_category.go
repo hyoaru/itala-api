@@ -2,8 +2,12 @@ package category
 
 import (
 	"context"
+	"time"
+
+	"github.com/google/uuid"
 
 	categoryrepository "github.com/hyoaru/itala-api/internal/features/category/application/ports/categoryrepository"
+	entities "github.com/hyoaru/itala-api/internal/features/category/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
 )
 
@@ -22,13 +26,18 @@ func NewCreateCategory(categoryRepository categoryrepository.CategoryRepository)
 }
 
 func (u *CreateCategory) Execute(ctx context.Context, request CreateCategoryRequest) (struct{}, error) {
-	err := u.categoryRepository.Create(
-		ctx,
-		request.UserID,
-		request.Name,
-		request.Type,
-	)
-	if err != nil {
+	id := uuid.New()
+	now := time.Now().UTC()
+
+	category := entities.Category{
+		ID:        id.String(),
+		Name:      request.Name,
+		Type:      request.Type,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	if err := u.categoryRepository.Create(ctx, request.UserID, category); err != nil {
 		return struct{}{}, err
 	}
 
