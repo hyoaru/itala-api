@@ -13,9 +13,10 @@ http:
     type: json
     data: |-
       {
-        "amount": "1500.50",
+        "amount": 1500.50,
         "type": "EXPENSE",
-        "category_id": "550e8400-e29b-41d4-a716-446655440000",
+        "account_id": "bafb212d-c30c-4f7e-8a03-be2a91fa3d6a",
+        "category_id": "3d99c550-4ff2-460a-a3c5-e397fa1232f3",
         "description": "Dinner with friends",
         "occurred_at": "2026-08-21T18:30:00+08:00"
       }

@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	category "github.com/hyoaru/itala-api/internal/features/category"
 	transactionrepositoryport "github.com/hyoaru/itala-api/internal/features/transaction/application/ports/transactionrepository"
 	transactionusecases "github.com/hyoaru/itala-api/internal/features/transaction/application/usecases"
 	entities "github.com/hyoaru/itala-api/internal/features/transaction/domain/entities"
@@ -20,8 +21,11 @@ func NewDynamoDBTransactionRepository(client dynamodbclient.DynamoDBClient, tabl
 
 type CreateTransactionRequest = transactionusecases.CreateTransactionRequest
 
-func NewCreateTransaction(transactionRepository TransactionRepository) usecases.UseCase[CreateTransactionRequest, struct{}] {
-	return transactionusecases.NewCreateTransaction(transactionRepository)
+func NewCreateTransaction(
+	transactionRepository TransactionRepository,
+	categoryRepository category.CategoryRepository,
+) usecases.UseCase[CreateTransactionRequest, struct{}] {
+	return transactionusecases.NewCreateTransaction(transactionRepository, categoryRepository)
 }
 
 type (

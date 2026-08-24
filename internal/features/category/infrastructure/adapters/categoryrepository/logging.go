@@ -39,6 +39,18 @@ func (c *LoggingCategoryRepository) Find(ctx context.Context, userID string, que
 	}
 
 	logger.Info("Categories found", "count", len(result.Categories))
+	return result, nil
+}
 
+func (c *LoggingCategoryRepository) FindOne(ctx context.Context, userID string, categoryID string) (entities.Category, error) {
+	logger.Debug("Finding category", "category_id", categoryID)
+
+	result, err := c.inner.FindOne(ctx, userID, categoryID)
+	if err != nil {
+		logger.Warn("Failed to find category", "error", err)
+		return result, err
+	}
+
+	logger.Info("Category found", "category_id", categoryID)
 	return result, nil
 }

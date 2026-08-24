@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
+	category "github.com/hyoaru/itala-api/internal/features/category"
 	transactionrepository "github.com/hyoaru/itala-api/internal/features/transaction/application/ports/transactionrepository"
 	entities "github.com/hyoaru/itala-api/internal/features/transaction/domain/entities"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
@@ -14,7 +14,6 @@ import (
 type CreateTransactionRequest struct {
 	UserID      string
 	Amount      valueobjects.Decimal
-	Type        valueobjects.TransactionType
 	AccountID   string
 	CategoryID  string
 	Description string
@@ -23,19 +22,30 @@ type CreateTransactionRequest struct {
 
 type CreateTransaction struct {
 	transactionRepository transactionrepository.TransactionRepository
+	categoryRepository    category.CategoryRepository
 }
 
-func NewCreateTransaction(transactionRepository transactionrepository.TransactionRepository) *CreateTransaction {
-	return &CreateTransaction{transactionRepository: transactionRepository}
+func NewCreateTransaction(
+	transactionRepository transactionrepository.TransactionRepository,
+	categoryRepository category.CategoryRepository,
+) *CreateTransaction {
+	return &CreateTransaction{
+		transactionRepository: transactionRepository,
+		categoryRepository:    categoryRepository,
+	}
 }
 
 func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransactionRequest) (struct{}, error) {
 	now := time.Now().UTC()
+	category, err := u.categoryRepository.FindOne(ctx, request.UserID, request.CategoryID)
+	if err != nil {
+		return struct{}{}, err
+	}
 
 	transaction := entities.Transaction{
 		ID:          uuid.New().String(),
 		Amount:      request.Amount,
-		Type:        request.Type,
+		Type:        category.Type,
 		AccountID:   request.AccountID,
 		CategoryID:  request.CategoryID,
 		Description: request.Description,

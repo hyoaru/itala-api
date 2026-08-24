@@ -22,3 +22,7 @@ func (c *DecoratedCategoryRepository) Create(ctx context.Context, userID string,
 func (c *DecoratedCategoryRepository) Find(ctx context.Context, userID string, query port.CategoryQuery) (port.CategoryPage, error) {
 	return c.inner.Find(ctx, userID, query)
 }
+
+func (c *DecoratedCategoryRepository) FindOne(ctx context.Context, userID string, categoryID string) (entities.Category, error) {
+	return c.inner.FindOne(ctx, userID, categoryID)
+}

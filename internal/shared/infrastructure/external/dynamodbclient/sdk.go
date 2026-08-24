@@ -215,3 +215,31 @@ func (c *SDKDynamoDBClient) Query(
 
 	return QueryMetadata{LastEvaluatedKey: lastEvaluatedKey}, nil
 }
+
+func (c *SDKDynamoDBClient) GetItem(ctx context.Context, tableName string, key map[string]any, output any) error {
+	parsedKey, err := attributevalue.MarshalMap(key)
+	if err != nil {
+		return fmt.Errorf("marshal key: %w", err)
+	}
+
+	getItemOutput, err := c.client.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key:       parsedKey,
+	})
+	if err != nil {
+		if _, ok := errors.AsType[*types.ResourceNotFoundException](err); ok {
+			return ErrItemNotFound
+		}
+		return err
+	}
+
+	if getItemOutput.Item == nil {
+		return ErrItemNotFound
+	}
+
+	if err := attributevalue.UnmarshalMap(getItemOutput.Item, output); err != nil {
+		return fmt.Errorf("unmarshal item: %w", err)
+	}
+
+	return nil
+}

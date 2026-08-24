@@ -29,7 +29,7 @@ func New(addr string) *App {
 	categoryHandler := &handler.CategoryHandler{CreateCategory: category.NewCreateCategory(categoryRepository)}
 	accountHandler := &handler.AccountHandler{CreateAccount: account.NewCreateAccount(accountRepository)}
 	transactionHandler := &handler.TransactionHandler{
-		CreateTransaction: transaction.NewCreateTransaction(transactionRepository),
+		CreateTransaction: transaction.NewCreateTransaction(transactionRepository, categoryRepository),
 		ListTransactions:  transaction.NewListTransactions(transactionRepository),
 	}
 

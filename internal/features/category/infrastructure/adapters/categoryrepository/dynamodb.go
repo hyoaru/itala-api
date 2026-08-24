@@ -25,11 +25,11 @@ func NewDynamoDBCategoryRepository(client dynamodbclient.DynamoDBClient, tableNa
 }
 
 type findCategoryItem struct {
-	ID              string `dynamodbav:"id"`
-	Name            string `dynamodbav:"name"`
-	TransactionType string `dynamodbav:"transaction_type"`
-	CreatedAt       string `dynamodbav:"created_at"`
-	UpdatedAt       string `dynamodbav:"updated_at"`
+	ID        string `dynamodbav:"id"`
+	Name      string `dynamodbav:"name"`
+	Type      string `dynamodbav:"type"`
+	CreatedAt string `dynamodbav:"created_at"`
+	UpdatedAt string `dynamodbav:"updated_at"`
 }
 
 func (i findCategoryItem) toDomain() (entities.Category, error) {
@@ -46,7 +46,7 @@ func (i findCategoryItem) toDomain() (entities.Category, error) {
 	category := entities.Category{
 		ID:        i.ID,
 		Name:      i.Name,
-		Type:      valueobjects.TransactionType(i.TransactionType),
+		Type:      valueobjects.TransactionType(i.Type),
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
 	}
@@ -154,4 +154,24 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 
 	nextCursor := base64.RawURLEncoding.EncodeToString(encodedNextCursor)
 	return port.CategoryPage{Categories: categories, NextCursor: &nextCursor}, nil
+}
+
+func (r *DynamoDBCategoryRepository) FindOne(ctx context.Context, userID string, categoryID string) (entities.Category, error) {
+	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("CATEGORY#%s", categoryID)}
+
+	var findItem *findCategoryItem
+	if err := r.client.GetItem(ctx, r.tableName, key, &findItem); err != nil {
+		if errors.Is(err, dynamodbclient.ErrItemNotFound) {
+			return entities.Category{}, port.ErrCategoryNotFound
+		}
+
+		return entities.Category{}, fmt.Errorf("find category: %w", err)
+	}
+
+	category, err := findItem.toDomain()
+	if err != nil {
+		return entities.Category{}, fmt.Errorf("parse category: %w", err)
+	}
+
+	return category, nil
 }

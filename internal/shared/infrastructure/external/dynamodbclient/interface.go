@@ -36,6 +36,7 @@ type QueryMetadata struct {
 type DynamoDBClient interface {
 	PutItem(ctx context.Context, tableName string, item map[string]any) error
 	TransactWriteItems(ctx context.Context, items []TransactWriteItem) error
+	GetItem(ctx context.Context, tableName string, key map[string]any, output any) error
 	Query(
 		ctx context.Context,
 		tableName string,

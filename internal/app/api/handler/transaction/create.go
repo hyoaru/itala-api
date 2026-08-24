@@ -12,12 +12,11 @@ import (
 )
 
 type createTransactionRequest struct {
-	Amount      valueobjects.Decimal         `json:"amount"`
-	Type        valueobjects.TransactionType `json:"type" validate:"omitempty,oneof=INCOME EXPENSE"`
-	AccountID   string                       `json:"account_id"`
-	CategoryID  string                       `json:"category_id"`
-	Description string                       `json:"description"`
-	OccurredAt  time.Time                    `json:"occurred_at"`
+	Amount      valueobjects.Decimal `json:"amount"`
+	AccountID   string               `json:"account_id"`
+	CategoryID  string               `json:"category_id"`
+	Description string               `json:"description"`
+	OccurredAt  time.Time            `json:"occurred_at"`
 }
 
 func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -32,7 +31,6 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	useCaseRequest := transaction.CreateTransactionRequest{
 		UserID:      user.ID,
 		Amount:      request.Amount,
-		Type:        valueobjects.TransactionType(request.Type),
 		AccountID:   request.AccountID,
 		CategoryID:  request.CategoryID,
 		Description: request.Description,

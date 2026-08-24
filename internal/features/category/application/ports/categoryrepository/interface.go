@@ -22,4 +22,5 @@ type CategoryPage struct {
 type CategoryRepository interface {
 	Create(ctx context.Context, userID string, category entities.Category) error
 	Find(ctx context.Context, userID string, query CategoryQuery) (CategoryPage, error)
+	FindOne(ctx context.Context, userID string, categoryID string) (entities.Category, error)
 }
