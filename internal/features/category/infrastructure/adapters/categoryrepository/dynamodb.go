@@ -28,6 +28,7 @@ func (r *DynamoDBCategoryRepository) Create(ctx context.Context, userID string, 
 				Item: map[string]any{
 					"PK":         fmt.Sprintf("USER#%s", userID),
 					"SK":         fmt.Sprintf("CATEGORY#%s", category.ID),
+					"id":         category.ID,
 					"name":       category.Name,
 					"type":       string(category.Type),
 					"created_at": category.CreatedAt.Format(time.RFC3339Nano),
