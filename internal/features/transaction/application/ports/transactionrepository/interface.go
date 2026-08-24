@@ -9,13 +9,20 @@ import (
 )
 
 type TransactionQuery struct {
+	Limit      int32
 	Type       *valueobjects.TransactionType
 	CategoryID *string
 	From       *time.Time
 	To         *time.Time
+	Cursor     *string
+}
+
+type TransactionPage struct {
+	Transactions []entities.Transaction
+	NextCursor   *string
 }
 
 type TransactionRepository interface {
 	Create(ctx context.Context, userID string, transaction entities.Transaction) error
-	Find(ctx context.Context, userID string, query TransactionQuery) ([]entities.Transaction, error)
+	Find(ctx context.Context, userID string, query TransactionQuery) (TransactionPage, error)
 }

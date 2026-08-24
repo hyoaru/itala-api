@@ -2,6 +2,8 @@ package transaction
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -82,7 +84,7 @@ func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID strin
 	})
 }
 
-func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string, query port.TransactionQuery) ([]entities.Transaction, error) {
+func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string, query port.TransactionQuery) (port.TransactionPage, error) {
 	conditionExpression := "PK = :pk "
 	expressionValues := map[string]any{":pk": fmt.Sprintf("USER#%s", userID)}
 
@@ -115,19 +117,50 @@ func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string,
 	}
 	filterExpression := strings.Join(filters, " AND ")
 
+	var startKey map[string]any
+	if query.Cursor != nil {
+		decodedCursor, err := base64.RawURLEncoding.DecodeString(*query.Cursor)
+		if err != nil {
+			return port.TransactionPage{}, fmt.Errorf("decode cursor: %w", err)
+		}
+		if err := json.Unmarshal(decodedCursor, &startKey); err != nil {
+			return port.TransactionPage{}, fmt.Errorf("unmarshal start key: %w", err)
+		}
+	}
+
 	var queryItems []findTransactionItem
-	if err := r.client.Query(ctx, r.tableName, conditionExpression, filterExpression, expressionValues, &queryItems); err != nil {
-		return nil, fmt.Errorf("find transactions: %w", err)
+	metadata, err := r.client.Query(
+		ctx,
+		r.tableName,
+		query.Limit,
+		conditionExpression,
+		filterExpression,
+		expressionValues,
+		startKey,
+		&queryItems,
+	)
+	if err != nil {
+		return port.TransactionPage{}, fmt.Errorf("find transactions: %w", err)
 	}
 
 	transactions := make([]entities.Transaction, 0, len(queryItems))
 	for _, item := range queryItems {
 		transaction, err := item.toDomain()
 		if err != nil {
-			return nil, err
+			return port.TransactionPage{}, err
 		}
 		transactions = append(transactions, transaction)
 	}
 
-	return transactions, nil
+	if metadata.LastEvaluatedKey == nil {
+		return port.TransactionPage{Transactions: transactions, NextCursor: nil}, nil
+	}
+
+	encodedNextCursor, err := json.Marshal(metadata.LastEvaluatedKey)
+	if err != nil {
+		return port.TransactionPage{}, fmt.Errorf("marshal next cursor: %w", err)
+	}
+
+	nextCursor := base64.RawURLEncoding.EncodeToString(encodedNextCursor)
+	return port.TransactionPage{Transactions: transactions, NextCursor: &nextCursor}, nil
 }

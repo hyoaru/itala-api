@@ -27,6 +27,6 @@ func (c *DecoratedTransactionRepository) Find(
 	ctx context.Context,
 	userID string,
 	query port.TransactionQuery,
-) ([]entities.Transaction, error) {
+) (port.TransactionPage, error) {
 	return c.inner.Find(ctx, userID, query)
 }

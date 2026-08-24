@@ -24,8 +24,11 @@ func NewCreateTransaction(transactionRepository TransactionRepository) usecases.
 	return transactionusecases.NewCreateTransaction(transactionRepository)
 }
 
-type ListTransactionsRequest = transactionusecases.ListTransactionsRequest
+type (
+	ListTransactionsRequest  = transactionusecases.ListTransactionsRequest
+	ListTransactionsResponse = transactionusecases.ListTransactionsResponse
+)
 
-func NewListTransactions(transactionRepository TransactionRepository) usecases.UseCase[ListTransactionsRequest, []entities.Transaction] {
+func NewListTransactions(transactionRepository TransactionRepository) usecases.UseCase[ListTransactionsRequest, transactionusecases.ListTransactionsResponse] {
 	return transactionusecases.NewListTransactions(transactionRepository)
 }

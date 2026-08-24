@@ -33,16 +33,16 @@ func (r *LoggingTransactionRepository) Find(
 	ctx context.Context,
 	userID string,
 	query port.TransactionQuery,
-) ([]entities.Transaction, error) {
+) (port.TransactionPage, error) {
 	logger.Debug("Finding transactions", "query", query)
 
-	transactions, err := r.inner.Find(ctx, userID, query)
+	result, err := r.inner.Find(ctx, userID, query)
 	if err != nil {
 		logger.Warn("Failed to find transactions", "error", err)
-		return nil, err
+		return result, err
 	}
 
-	logger.Info("Transactions found", "count", len(transactions))
+	logger.Info("Transactions found", "count", len(result.Transactions))
 
-	return transactions, nil
+	return result, nil
 }

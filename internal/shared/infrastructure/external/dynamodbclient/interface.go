@@ -29,6 +29,10 @@ type TransactWriteItem struct {
 	Delete *TransactDelete
 }
 
+type QueryMetadata struct {
+	LastEvaluatedKey map[string]any
+}
+
 type DynamoDBClient interface {
 	PutItem(ctx context.Context, tableName string, item map[string]any) error
 	TransactWriteItems(ctx context.Context, items []TransactWriteItem) error
@@ -39,7 +43,7 @@ type DynamoDBClient interface {
 		conditionExpression string,
 		filterExpression string,
 		expressionValues map[string]any,
-		nextKey map[string]any,
-		result any,
-	) error
+		startKey map[string]any,
+		output any,
+	) (QueryMetadata, error)
 }

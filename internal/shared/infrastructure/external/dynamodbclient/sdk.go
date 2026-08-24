@@ -13,14 +13,6 @@ import (
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
 )
 
-type Decimal valueobjects.Decimal
-
-func (d Decimal) MarshalDynamoDBAttributeValue() (types.AttributeValue, error) {
-	return &types.AttributeValueMemberN{
-		Value: valueobjects.Decimal(d).String(),
-	}, nil
-}
-
 type SDKDynamoDBClient struct {
 	client *dynamodb.Client
 }
@@ -34,6 +26,14 @@ func NewSDKDynamoDBClient() *SDKDynamoDBClient {
 	return &SDKDynamoDBClient{
 		client: dynamodb.NewFromConfig(cfg),
 	}
+}
+
+type Decimal valueobjects.Decimal
+
+func (d Decimal) MarshalDynamoDBAttributeValue() (types.AttributeValue, error) {
+	return &types.AttributeValueMemberN{
+		Value: valueobjects.Decimal(d).String(),
+	}, nil
 }
 
 func (c *SDKDynamoDBClient) PutItem(ctx context.Context, tableName string, item map[string]any) error {
@@ -168,39 +168,50 @@ func (c *SDKDynamoDBClient) Query(
 	conditionExpression string,
 	filterExpression string,
 	expressionValues map[string]any,
-	nextKey map[string]any,
-	result any,
-) error {
+	startKey map[string]any,
+	output any,
+) (QueryMetadata, error) {
 	parsedExpressionValues, err := attributevalue.MarshalMap(expressionValues)
 	if err != nil {
-		return fmt.Errorf("marshal expression values: %w", err)
-	}
-
-	parsedNextKey, err := attributevalue.MarshalMap(nextKey)
-	if err != nil {
-		return fmt.Errorf("marshal start key: %w", err)
+		return QueryMetadata{}, fmt.Errorf("marshal expression values: %w", err)
 	}
 
 	queryInput := &dynamodb.QueryInput{
+		Limit:                     aws.Int32(limit),
 		TableName:                 aws.String(tableName),
 		KeyConditionExpression:    aws.String(conditionExpression),
 		ExpressionAttributeValues: parsedExpressionValues,
-		Limit:                     aws.Int32(limit),
-		ExclusiveStartKey:         parsedNextKey,
 	}
 
-	if filterExpression != "" {
+	if startKey != nil {
+		parsedStartKey, err := attributevalue.MarshalMap(startKey)
+		if err != nil {
+			return QueryMetadata{}, fmt.Errorf("marshal start key: %w", err)
+		}
+		queryInput.ExclusiveStartKey = parsedStartKey
+	}
+
+	if len(filterExpression) > 0 {
 		queryInput.FilterExpression = aws.String(filterExpression)
 	}
 
-	output, err := c.client.Query(ctx, queryInput)
+	queryOutput, err := c.client.Query(ctx, queryInput)
 	if err != nil {
-		return fmt.Errorf("query items: %w", err)
+		return QueryMetadata{}, fmt.Errorf("query items: %w", err)
 	}
 
-	if err := attributevalue.UnmarshalListOfMaps(output.Items, result); err != nil {
-		return fmt.Errorf("unmarshal items: %w", err)
+	if err := attributevalue.UnmarshalListOfMaps(queryOutput.Items, output); err != nil {
+		return QueryMetadata{}, fmt.Errorf("unmarshal items: %w", err)
 	}
 
-	return nil
+	if queryOutput.LastEvaluatedKey == nil {
+		return QueryMetadata{}, nil
+	}
+
+	var lastEvaluatedKey map[string]any
+	if err = attributevalue.UnmarshalMap(queryOutput.LastEvaluatedKey, &lastEvaluatedKey); err != nil {
+		return QueryMetadata{}, fmt.Errorf("unmarshal last evaluated key: %w", err)
+	}
+
+	return QueryMetadata{LastEvaluatedKey: lastEvaluatedKey}, nil
 }
