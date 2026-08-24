@@ -10,6 +10,7 @@ type Transaction struct {
 	ID          string
 	Amount      valueobjects.Decimal
 	Type        valueobjects.TransactionType
+	AccountID   string
 	CategoryID  string
 	Description string
 	OccurredAt  time.Time

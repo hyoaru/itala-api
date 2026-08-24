@@ -28,6 +28,7 @@ type findTransactionItem struct {
 	ID              string                `dynamodbav:"id"`
 	Amount          attributevalue.Number `dynamodbav:"amount"`
 	TransactionType string                `dynamodbav:"transaction_type"`
+	AccountID       string                `dynamodbav:"account_id"`
 	CategoryID      string                `dynamodbav:"category_id"`
 	Description     string                `dynamodbav:"description"`
 	OccurredAt      string                `dynamodbav:"occurred_at"`
@@ -58,9 +59,10 @@ func (i findTransactionItem) toDomain() (entities.Transaction, error) {
 
 	transaction := entities.Transaction{
 		ID:         i.ID,
+		Amount:     amount,
 		Type:       valueobjects.TransactionType(i.TransactionType),
 		CategoryID: i.CategoryID,
-		Amount:     amount,
+		AccountID:  i.AccountID,
 		OccurredAt: occurredAt,
 		CreatedAt:  createdAt,
 		UpdatedAt:  updatedAt,
@@ -70,12 +72,30 @@ func (i findTransactionItem) toDomain() (entities.Transaction, error) {
 }
 
 func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID string, transaction entities.Transaction) error {
+	occurredAt := transaction.OccurredAt.Format(time.RFC3339Nano)
+	sortKey := fmt.Sprintf("TRANSACTION#%s%s", occurredAt, transaction.ID)
+
 	return r.client.PutItem(ctx, r.tableName, map[string]any{
-		"PK":               fmt.Sprintf("USER#%s", userID),
-		"SK":               fmt.Sprintf("TRANSACTION#%s#%s", transaction.OccurredAt.Format(time.RFC3339Nano), transaction.ID),
+		// Base table
+		"PK": fmt.Sprintf("USER#%s", userID),
+		"SK": sortKey,
+
+		// Type GSI
+		"GSI1PK": fmt.Sprintf("USER#%s#TYPE#%s", userID, string(transaction.Type)),
+		"GSI1SK": sortKey,
+
+		// Account GSI
+		"GSI2PK": fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, transaction.AccountID),
+		"GSI2SK": sortKey,
+
+		// Category GSI
+		"GSI3PK": fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
+		"GSI3SK": sortKey,
+
 		"id":               transaction.ID,
 		"amount":           dynamodbclient.Decimal(transaction.Amount),
 		"transaction_type": string(transaction.Type),
+		"account_id":       transaction.AccountID,
 		"category_id":      transaction.CategoryID,
 		"description":      transaction.Description,
 		"occurred_at":      transaction.OccurredAt.Format(time.RFC3339Nano),

@@ -15,6 +15,7 @@ type CreateTransactionRequest struct {
 	UserID      string
 	Amount      valueobjects.Decimal
 	Type        valueobjects.TransactionType
+	AccountID   string
 	CategoryID  string
 	Description string
 	OccurredAt  time.Time
@@ -35,6 +36,7 @@ func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransacti
 		ID:          uuid.New().String(),
 		Amount:      request.Amount,
 		Type:        request.Type,
+		AccountID:   request.AccountID,
 		CategoryID:  request.CategoryID,
 		Description: request.Description,
 		OccurredAt:  request.OccurredAt,
