@@ -28,3 +28,17 @@ func (c *LoggingCategoryRepository) Create(ctx context.Context, userID string, c
 
 	return nil
 }
+
+func (c *LoggingCategoryRepository) Find(ctx context.Context, userID string, query port.CategoryQuery) (port.CategoryPage, error) {
+	logger.Debug("Finding categories", "query", query)
+
+	result, err := c.inner.Find(ctx, userID, query)
+	if err != nil {
+		logger.Warn("Failed to find categories", "error", err)
+		return result, err
+	}
+
+	logger.Info("Categories found", "count", len(result.Categories))
+
+	return result, nil
+}

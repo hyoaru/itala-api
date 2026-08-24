@@ -18,3 +18,7 @@ func NewDecoratedCategoryRepository(inner port.CategoryRepository) *DecoratedCat
 func (c *DecoratedCategoryRepository) Create(ctx context.Context, userID string, category entities.Category) error {
 	return c.inner.Create(ctx, userID, category)
 }
+
+func (c *DecoratedCategoryRepository) Find(ctx context.Context, userID string, query port.CategoryQuery) (port.CategoryPage, error) {
+	return c.inner.Find(ctx, userID, query)
+}
