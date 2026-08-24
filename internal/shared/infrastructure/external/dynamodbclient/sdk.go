@@ -160,3 +160,38 @@ func (c *SDKDynamoDBClient) toTransactDelete(operation *TransactDelete) (types.T
 
 	return types.TransactWriteItem{Delete: item}, nil
 }
+
+func (c *SDKDynamoDBClient) Query(
+	ctx context.Context,
+	tableName string,
+	conditionExpression string,
+	filterExpression string,
+	expressionValues map[string]any,
+	result any,
+) error {
+	parsedExpressionValues, err := attributevalue.MarshalMap(expressionValues)
+	if err != nil {
+		return fmt.Errorf("marshal expression values: %w", err)
+	}
+
+	queryInput := &dynamodb.QueryInput{
+		TableName:                 aws.String(tableName),
+		KeyConditionExpression:    aws.String(conditionExpression),
+		ExpressionAttributeValues: parsedExpressionValues,
+	}
+
+	if filterExpression != "" {
+		queryInput.FilterExpression = aws.String(filterExpression)
+	}
+
+	output, err := c.client.Query(ctx, queryInput)
+	if err != nil {
+		return fmt.Errorf("query items: %w", err)
+	}
+
+	if err := attributevalue.UnmarshalListOfMaps(output.Items, result); err != nil {
+		return fmt.Errorf("unmarshal items: %w", err)
+	}
+
+	return nil
+}

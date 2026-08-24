@@ -32,4 +32,12 @@ type TransactWriteItem struct {
 type DynamoDBClient interface {
 	PutItem(ctx context.Context, tableName string, item map[string]any) error
 	TransactWriteItems(ctx context.Context, items []TransactWriteItem) error
+	Query(
+		ctx context.Context,
+		tableName string,
+		conditionExpression string,
+		filterExpression string,
+		expressionValues map[string]any,
+		result any,
+	) error
 }

@@ -23,3 +23,9 @@ type CreateTransactionRequest = transactionusecases.CreateTransactionRequest
 func NewCreateTransaction(transactionRepository TransactionRepository) usecases.UseCase[CreateTransactionRequest, struct{}] {
 	return transactionusecases.NewCreateTransaction(transactionRepository)
 }
+
+type ListTransactionsRequest = transactionusecases.ListTransactionsRequest
+
+func NewListTransactions(transactionRepository TransactionRepository) usecases.UseCase[ListTransactionsRequest, []entities.Transaction] {
+	return transactionusecases.NewListTransactions(transactionRepository)
+}

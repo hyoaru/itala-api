@@ -15,6 +15,18 @@ func NewDecoratedTransactionRepository(inner port.TransactionRepository) *Decora
 	return &DecoratedTransactionRepository{inner: NewLoggingTransactionRepository(inner)}
 }
 
-func (c *DecoratedTransactionRepository) Create(ctx context.Context, userID string, transaction entities.Transaction) error {
+func (c *DecoratedTransactionRepository) Create(
+	ctx context.Context,
+	userID string,
+	transaction entities.Transaction,
+) error {
 	return c.inner.Create(ctx, userID, transaction)
+}
+
+func (c *DecoratedTransactionRepository) Find(
+	ctx context.Context,
+	userID string,
+	query port.TransactionQuery,
+) ([]entities.Transaction, error) {
+	return c.inner.Find(ctx, userID, query)
 }

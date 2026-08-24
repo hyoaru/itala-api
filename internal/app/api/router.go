@@ -29,6 +29,7 @@ func NewRouter(
 		r.Post("/categories", categoryHandler.Create)
 		r.Post("/accounts", accountHandler.Create)
 		r.Post("/transactions", transactionHandler.Create)
+		r.Get("/transactions", transactionHandler.List)
 	})
 
 	return mux

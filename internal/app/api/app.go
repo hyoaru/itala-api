@@ -28,7 +28,11 @@ func New(addr string) *App {
 
 	categoryHandler := &handler.CategoryHandler{CreateCategory: category.NewCreateCategory(categoryRepository)}
 	accountHandler := &handler.AccountHandler{CreateAccount: account.NewCreateAccount(accountRepository)}
-	transactionHandler := &handler.TransactionHandler{CreateTransaction: transaction.NewCreateTransaction(transactionRepository)}
+	transactionHandler := &handler.TransactionHandler{
+		CreateTransaction: transaction.NewCreateTransaction(transactionRepository),
+		ListTransactions:  transaction.NewListTransactions(transactionRepository),
+	}
+
 	router := NewRouter(identityProvider, *categoryHandler, *accountHandler, *transactionHandler)
 
 	server := &http.Server{
