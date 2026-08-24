@@ -25,3 +25,12 @@ type CreateAccountRequest = accountusecases.CreateAccountRequest
 func NewCreateAccount(accountRepository AccountRepository) usecases.UseCase[CreateAccountRequest, struct{}] {
 	return accountusecases.NewCreateAccount(accountRepository)
 }
+
+type (
+	ListAccountsRequest  = accountusecases.ListAccountsRequest
+	ListAccountsResponse = accountusecases.ListAccountsResponse
+)
+
+func NewListAccounts(accountRepository AccountRepository) usecases.UseCase[ListAccountsRequest, accountusecases.ListAccountsResponse] {
+	return accountusecases.NewListAccounts(accountRepository)
+}

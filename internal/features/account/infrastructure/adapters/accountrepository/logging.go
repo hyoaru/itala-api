@@ -28,3 +28,16 @@ func (c *LoggingAccountRepository) Create(ctx context.Context, userID string, ac
 
 	return nil
 }
+
+func (c *LoggingAccountRepository) Find(ctx context.Context, userID string, query port.AccountQuery) (port.AccountPage, error) {
+	logger.Debug("Finding accounts", "query", query)
+
+	result, err := c.inner.Find(ctx, userID, query)
+	if err != nil {
+		logger.Warn("Failed to find accounts", "error", err)
+		return result, err
+	}
+
+	logger.Info("Accounts found", "count", len(result.Accounts))
+	return result, nil
+}

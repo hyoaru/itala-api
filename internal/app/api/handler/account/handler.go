@@ -7,4 +7,5 @@ import (
 
 type AccountHandler struct {
 	CreateAccount usecases.UseCase[account.CreateAccountRequest, struct{}]
+	ListAccounts  usecases.UseCase[account.ListAccountsRequest, account.ListAccountsResponse]
 }

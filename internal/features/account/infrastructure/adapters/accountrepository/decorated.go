@@ -18,3 +18,7 @@ func NewDecoratedAccountRepository(inner port.AccountRepository) *DecoratedAccou
 func (c *DecoratedAccountRepository) Create(ctx context.Context, userID string, account entities.Account) error {
 	return c.inner.Create(ctx, userID, account)
 }
+
+func (c *DecoratedAccountRepository) Find(ctx context.Context, userID string, query port.AccountQuery) (port.AccountPage, error) {
+	return c.inner.Find(ctx, userID, query)
+}
