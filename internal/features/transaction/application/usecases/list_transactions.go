@@ -13,6 +13,7 @@ type ListTransactionsRequest struct {
 	UserID     string
 	Limit      int32
 	Type       *valueobjects.TransactionType
+	AccountID  *string
 	CategoryID *string
 	From       *time.Time
 	To         *time.Time
@@ -36,6 +37,7 @@ func (u *ListTransactions) Execute(ctx context.Context, request ListTransactions
 	query := transactionrepository.TransactionQuery{
 		Limit:      request.Limit,
 		Type:       request.Type,
+		AccountID:  request.AccountID,
 		CategoryID: request.CategoryID,
 		From:       request.From,
 		To:         request.To,

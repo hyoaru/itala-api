@@ -14,6 +14,7 @@ import (
 type listTransactionsRequest struct {
 	Limit      int32      `schema:"limit" validate:"omitempty,min=1,max=40"`
 	Type       *string    `schema:"type" validate:"omitempty,oneof=INCOME EXPENSE"`
+	AccountID  *string    `schema:"account_id"`
 	CategoryID *string    `schema:"category_id"`
 	From       *time.Time `schema:"from"`
 	To         *time.Time `schema:"to"`
@@ -72,6 +73,7 @@ func (h *TransactionHandler) List(w http.ResponseWriter, r *http.Request) {
 		UserID:     user.ID,
 		Limit:      limit,
 		Type:       transactionType,
+		AccountID:  request.AccountID,
 		CategoryID: request.CategoryID,
 		From:       from,
 		To:         to,

@@ -115,6 +115,10 @@ func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string,
 		filters = append(filters, "category_id = :category_id")
 		expressionValues[":category_id"] = *query.CategoryID
 	}
+	if query.AccountID != nil {
+		filters = append(filters, "account_id = :account_id")
+		expressionValues[":account_id"] = *query.AccountID
+	}
 	filterExpression := strings.Join(filters, " AND ")
 
 	var startKey map[string]any

@@ -11,6 +11,7 @@ import (
 type TransactionQuery struct {
 	Limit      int32
 	Type       *valueobjects.TransactionType
+	AccountID  *string
 	CategoryID *string
 	From       *time.Time
 	To         *time.Time
