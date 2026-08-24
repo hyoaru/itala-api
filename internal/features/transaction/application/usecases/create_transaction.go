@@ -29,17 +29,15 @@ func NewCreateTransaction(transactionRepository transactionrepository.Transactio
 }
 
 func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransactionRequest) (struct{}, error) {
-	id := uuid.New()
 	now := time.Now().UTC()
-	occurredAt := request.OccurredAt.UTC()
 
 	transaction := entities.Transaction{
-		ID:          id.String(),
+		ID:          uuid.New().String(),
 		Amount:      request.Amount,
 		Type:        request.Type,
 		CategoryID:  request.CategoryID,
 		Description: request.Description,
-		OccurredAt:  occurredAt,
+		OccurredAt:  request.OccurredAt,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
