@@ -7,9 +7,9 @@ import (
 )
 
 type Category struct {
-	ID        string
-	Name      string
-	Type      valueobjects.TransactionType
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID              string
+	Name            string
+	TransactionType valueobjects.TransactionType
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }

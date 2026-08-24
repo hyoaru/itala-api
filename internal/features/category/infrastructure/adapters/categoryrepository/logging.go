@@ -17,14 +17,14 @@ func NewLoggingCategoryRepository(inner port.CategoryRepository) *LoggingCategor
 }
 
 func (c *LoggingCategoryRepository) Create(ctx context.Context, userID string, category entities.Category) error {
-	logger.Debug("Creating category", "name", category.Name, "transaction_type", category.Type)
+	logger.Debug("Creating category", "name", category.Name, "transaction_type", category.TransactionType)
 
 	if err := c.inner.Create(ctx, userID, category); err != nil {
 		logger.Warn("Failed to create category", "error", err)
 		return err
 	}
 
-	logger.Info("Category created", "name", category.Name, "transaction_type", category.Type)
+	logger.Info("Category created", "name", category.Name, "transaction_type", category.TransactionType)
 
 	return nil
 }

@@ -25,15 +25,15 @@ func NewDynamoDBTransactionRepository(client dynamodbclient.DynamoDBClient, tabl
 }
 
 type findTransactionItem struct {
-	ID              string                `dynamodbav:"id"`
-	Amount          attributevalue.Number `dynamodbav:"amount"`
-	TransactionType string                `dynamodbav:"transaction_type"`
-	AccountID       string                `dynamodbav:"account_id"`
-	CategoryID      string                `dynamodbav:"category_id"`
-	Description     string                `dynamodbav:"description"`
-	OccurredAt      string                `dynamodbav:"occurred_at"`
-	CreatedAt       string                `dynamodbav:"created_at"`
-	UpdatedAt       string                `dynamodbav:"updated_at"`
+	ID          string                `dynamodbav:"id"`
+	Amount      attributevalue.Number `dynamodbav:"amount"`
+	Type        string                `dynamodbav:"type"`
+	AccountID   string                `dynamodbav:"account_id"`
+	CategoryID  string                `dynamodbav:"category_id"`
+	Description string                `dynamodbav:"description"`
+	OccurredAt  string                `dynamodbav:"occurred_at"`
+	CreatedAt   string                `dynamodbav:"created_at"`
+	UpdatedAt   string                `dynamodbav:"updated_at"`
 }
 
 func (i findTransactionItem) toDomain() (entities.Transaction, error) {
@@ -60,7 +60,7 @@ func (i findTransactionItem) toDomain() (entities.Transaction, error) {
 	transaction := entities.Transaction{
 		ID:         i.ID,
 		Amount:     amount,
-		Type:       valueobjects.TransactionType(i.TransactionType),
+		Type:       valueobjects.TransactionType(i.Type),
 		CategoryID: i.CategoryID,
 		AccountID:  i.AccountID,
 		OccurredAt: occurredAt,
@@ -92,15 +92,15 @@ func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID strin
 		"GSI3PK": fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
 		"GSI3SK": sortKey,
 
-		"id":               transaction.ID,
-		"amount":           dynamodbclient.Decimal(transaction.Amount),
-		"transaction_type": string(transaction.Type),
-		"account_id":       transaction.AccountID,
-		"category_id":      transaction.CategoryID,
-		"description":      transaction.Description,
-		"occurred_at":      transaction.OccurredAt.Format(time.RFC3339Nano),
-		"created_at":       transaction.CreatedAt.Format(time.RFC3339Nano),
-		"updated_at":       transaction.UpdatedAt.Format(time.RFC3339Nano),
+		"id":          transaction.ID,
+		"amount":      dynamodbclient.Decimal(transaction.Amount),
+		"type":        string(transaction.Type),
+		"account_id":  transaction.AccountID,
+		"category_id": transaction.CategoryID,
+		"description": transaction.Description,
+		"occurred_at": transaction.OccurredAt.Format(time.RFC3339Nano),
+		"created_at":  transaction.CreatedAt.Format(time.RFC3339Nano),
+		"updated_at":  transaction.UpdatedAt.Format(time.RFC3339Nano),
 	})
 }
 
@@ -128,7 +128,7 @@ func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string,
 	// Filters condition
 	var filters []string
 	if query.Type != nil {
-		filters = append(filters, "transaction_type = :type")
+		filters = append(filters, "type = :type")
 		expressionValues[":type"] = string(*query.Type)
 	}
 	if query.CategoryID != nil {

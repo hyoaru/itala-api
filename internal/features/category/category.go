@@ -25,3 +25,12 @@ type CreateCategoryRequest = categoryusecases.CreateCategoryRequest
 func NewCreateCategory(categoryRepository CategoryRepository) usecases.UseCase[CreateCategoryRequest, struct{}] {
 	return categoryusecases.NewCreateCategory(categoryRepository)
 }
+
+type (
+	ListCategoriesRequest  = categoryusecases.ListCategoriesRequest
+	ListCategoriesResponse = categoryusecases.ListCategoriesResponse
+)
+
+func NewListCategories(categoryRepository CategoryRepository) usecases.UseCase[ListCategoriesRequest, categoryusecases.ListCategoriesResponse] {
+	return categoryusecases.NewListCategories(categoryRepository)
+}

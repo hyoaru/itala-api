@@ -45,7 +45,7 @@ func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransacti
 	transaction := entities.Transaction{
 		ID:          uuid.New().String(),
 		Amount:      request.Amount,
-		Type:        category.Type,
+		Type:        category.TransactionType,
 		AccountID:   request.AccountID,
 		CategoryID:  request.CategoryID,
 		Description: request.Description,

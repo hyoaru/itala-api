@@ -8,10 +8,10 @@ import (
 )
 
 type CategoryQuery struct {
-	Limit  int32
-	Type   *valueobjects.TransactionType
-	Name   *string
-	Cursor *string
+	Limit           int32
+	TransactionType *valueobjects.TransactionType
+	Name            *string
+	Cursor          *string
 }
 
 type CategoryPage struct {

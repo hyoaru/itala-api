@@ -7,4 +7,5 @@ import (
 
 type CategoryHandler struct {
 	CreateCategory usecases.UseCase[category.CreateCategoryRequest, struct{}]
+	ListCategories usecases.UseCase[category.ListCategoriesRequest, category.ListCategoriesResponse]
 }

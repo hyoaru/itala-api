@@ -27,6 +27,7 @@ func NewRouter(
 	mux.Group(func(r chi.Router) {
 		r.Use(middleware.Authentication(identityProvider))
 		r.Post("/categories", categoryHandler.Create)
+		r.Get("/categories", categoryHandler.List)
 		r.Post("/accounts", accountHandler.Create)
 		r.Post("/transactions", transactionHandler.Create)
 		r.Get("/transactions", transactionHandler.List)

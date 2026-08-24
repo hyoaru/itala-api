@@ -26,7 +26,10 @@ func New(addr string) *App {
 	accountRepository := account.NewDynamoDBAccountRepository(dynamodbClient, dynamodbTableName)
 	transactionRepository := transaction.NewDynamoDBTransactionRepository(dynamodbClient, dynamodbTableName)
 
-	categoryHandler := &handler.CategoryHandler{CreateCategory: category.NewCreateCategory(categoryRepository)}
+	categoryHandler := &handler.CategoryHandler{
+		CreateCategory: category.NewCreateCategory(categoryRepository),
+		ListCategories: category.NewListCategories(categoryRepository),
+	}
 	accountHandler := &handler.AccountHandler{CreateAccount: account.NewCreateAccount(accountRepository)}
 	transactionHandler := &handler.TransactionHandler{
 		CreateTransaction: transaction.NewCreateTransaction(transactionRepository, categoryRepository),

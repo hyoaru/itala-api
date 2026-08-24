@@ -25,11 +25,11 @@ func NewDynamoDBCategoryRepository(client dynamodbclient.DynamoDBClient, tableNa
 }
 
 type findCategoryItem struct {
-	ID        string `dynamodbav:"id"`
-	Name      string `dynamodbav:"name"`
-	Type      string `dynamodbav:"type"`
-	CreatedAt string `dynamodbav:"created_at"`
-	UpdatedAt string `dynamodbav:"updated_at"`
+	ID              string `dynamodbav:"id"`
+	Name            string `dynamodbav:"name"`
+	TransactionType string `dynamodbav:"transaction_type"`
+	CreatedAt       string `dynamodbav:"created_at"`
+	UpdatedAt       string `dynamodbav:"updated_at"`
 }
 
 func (i findCategoryItem) toDomain() (entities.Category, error) {
@@ -44,11 +44,11 @@ func (i findCategoryItem) toDomain() (entities.Category, error) {
 	}
 
 	category := entities.Category{
-		ID:        i.ID,
-		Name:      i.Name,
-		Type:      valueobjects.TransactionType(i.Type),
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
+		ID:              i.ID,
+		Name:            i.Name,
+		TransactionType: valueobjects.TransactionType(i.TransactionType),
+		CreatedAt:       createdAt,
+		UpdatedAt:       updatedAt,
 	}
 
 	return category, nil
@@ -60,13 +60,13 @@ func (r *DynamoDBCategoryRepository) Create(ctx context.Context, userID string, 
 			Put: &dynamodbclient.TransactPut{
 				TableName: r.tableName,
 				Item: map[string]any{
-					"PK":         fmt.Sprintf("USER#%s", userID),
-					"SK":         fmt.Sprintf("CATEGORY#%s", category.ID),
-					"id":         category.ID,
-					"name":       category.Name,
-					"type":       string(category.Type),
-					"created_at": category.CreatedAt.Format(time.RFC3339Nano),
-					"updated_at": category.UpdatedAt.Format(time.RFC3339Nano),
+					"PK":               fmt.Sprintf("USER#%s", userID),
+					"SK":               fmt.Sprintf("CATEGORY#%s", category.ID),
+					"id":               category.ID,
+					"name":             category.Name,
+					"transaction_type": string(category.TransactionType),
+					"created_at":       category.CreatedAt.Format(time.RFC3339Nano),
+					"updated_at":       category.UpdatedAt.Format(time.RFC3339Nano),
 				},
 			},
 		},
@@ -98,9 +98,9 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 	expressionValues := map[string]any{":pk": fmt.Sprintf("USER#%s", userID), ":sk": "ACCOUNT#"}
 
 	var filters []string
-	if query.Type != nil {
-		filters = append(filters, "transaction_type = :type")
-		expressionValues[":type"] = string(*query.Type)
+	if query.TransactionType != nil {
+		filters = append(filters, "transaction_type = :transaction_type")
+		expressionValues[":transaction_type"] = string(*query.TransactionType)
 	}
 	if query.Name != nil {
 		filters = append(filters, "name = :name")

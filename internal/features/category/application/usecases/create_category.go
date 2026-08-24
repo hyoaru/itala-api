@@ -30,11 +30,11 @@ func (u *CreateCategory) Execute(ctx context.Context, request CreateCategoryRequ
 	now := time.Now().UTC()
 
 	category := entities.Category{
-		ID:        id.String(),
-		Name:      request.Name,
-		Type:      request.Type,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:              id.String(),
+		Name:            request.Name,
+		TransactionType: request.Type,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 
 	if err := u.categoryRepository.Create(ctx, request.UserID, category); err != nil {

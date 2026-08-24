@@ -22,14 +22,14 @@ type listTransactionsRequest struct {
 }
 
 type listTransactionsResponseItem struct {
-	ID              string    `json:"id"`
-	Amount          string    `json:"amount"`
-	TransactionType string    `json:"transaction_type"`
-	CategoryID      string    `json:"category_id"`
-	Description     string    `json:"description"`
-	OccurredAt      time.Time `json:"occurred_at"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID          string    `json:"id"`
+	Amount      string    `json:"amount"`
+	Type        string    `json:"type"`
+	CategoryID  string    `json:"category_id"`
+	Description string    `json:"description"`
+	OccurredAt  time.Time `json:"occurred_at"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type listTransactionsResponse struct {
@@ -89,14 +89,14 @@ func (h *TransactionHandler) List(w http.ResponseWriter, r *http.Request) {
 	responseItems := make([]listTransactionsResponseItem, 0, len(useCaseResponse.Transactions))
 	for _, transaction := range useCaseResponse.Transactions {
 		responseItems = append(responseItems, listTransactionsResponseItem{
-			ID:              transaction.ID,
-			Amount:          transaction.Amount.String(),
-			TransactionType: string(transaction.Type),
-			CategoryID:      transaction.CategoryID,
-			Description:     transaction.Description,
-			OccurredAt:      transaction.OccurredAt,
-			CreatedAt:       transaction.CreatedAt,
-			UpdatedAt:       transaction.UpdatedAt,
+			ID:          transaction.ID,
+			Amount:      transaction.Amount.String(),
+			Type:        string(transaction.Type),
+			CategoryID:  transaction.CategoryID,
+			Description: transaction.Description,
+			OccurredAt:  transaction.OccurredAt,
+			CreatedAt:   transaction.CreatedAt,
+			UpdatedAt:   transaction.UpdatedAt,
 		})
 	}
 
