@@ -164,9 +164,11 @@ func (c *SDKDynamoDBClient) toTransactDelete(operation *TransactDelete) (types.T
 func (c *SDKDynamoDBClient) Query(
 	ctx context.Context,
 	tableName string,
+	limit int32,
 	conditionExpression string,
 	filterExpression string,
 	expressionValues map[string]any,
+	nextKey map[string]any,
 	result any,
 ) error {
 	parsedExpressionValues, err := attributevalue.MarshalMap(expressionValues)
@@ -174,10 +176,17 @@ func (c *SDKDynamoDBClient) Query(
 		return fmt.Errorf("marshal expression values: %w", err)
 	}
 
+	parsedNextKey, err := attributevalue.MarshalMap(nextKey)
+	if err != nil {
+		return fmt.Errorf("marshal start key: %w", err)
+	}
+
 	queryInput := &dynamodb.QueryInput{
 		TableName:                 aws.String(tableName),
 		KeyConditionExpression:    aws.String(conditionExpression),
 		ExpressionAttributeValues: parsedExpressionValues,
+		Limit:                     aws.Int32(limit),
+		ExclusiveStartKey:         parsedNextKey,
 	}
 
 	if filterExpression != "" {

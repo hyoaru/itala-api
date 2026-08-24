@@ -35,9 +35,11 @@ type DynamoDBClient interface {
 	Query(
 		ctx context.Context,
 		tableName string,
+		limit int32,
 		conditionExpression string,
 		filterExpression string,
 		expressionValues map[string]any,
+		nextKey map[string]any,
 		result any,
 	) error
 }
