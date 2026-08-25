@@ -24,6 +24,11 @@ func NewDynamoDBTransactionRepository(client dynamodbclient.DynamoDBClient, tabl
 	return &DynamoDBTransactionRepository{client: client, tableName: tableName}
 }
 
+type transactionIndex struct {
+	PK string
+	SK string
+}
+
 type findTransactionItem struct {
 	ID          string                `dynamodbav:"id"`
 	Amount      attributevalue.Number `dynamodbav:"amount"`
@@ -104,9 +109,9 @@ func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID strin
 	})
 }
 
-func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string, query port.TransactionQuery) (port.TransactionPage, error) {
-	conditionExpression := "PK = :pk "
-	expressionValues := map[string]any{":pk": fmt.Sprintf("USER#%s", userID)}
+func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index transactionIndex, pk string, query port.TransactionQuery) (port.TransactionPage, error) {
+	conditionExpression := fmt.Sprintf("%s = :pk ", index.PK)
+	expressionValues := map[string]any{":pk": pk}
 
 	// Sort key condition
 	switch {
@@ -121,11 +126,10 @@ func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string,
 		conditionExpression += " AND SK <= :to"
 		expressionValues[":to"] = fmt.Sprintf("TRANSACTION#%s~", query.To.UTC().Format(time.RFC3339Nano))
 	default:
-		conditionExpression += " AND begins_with(SK, :sk)"
+		conditionExpression += fmt.Sprintf(" AND begins_with(%s, :sk)", index.SK)
 		expressionValues[":sk"] = "TRANSACTION#"
 	}
 
-	// Filters condition
 	var filters []string
 	if query.Type != nil {
 		filters = append(filters, "type = :type")
@@ -187,4 +191,17 @@ func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string,
 
 	nextCursor := base64.RawURLEncoding.EncodeToString(encodedNextCursor)
 	return port.TransactionPage{Transactions: transactions, NextCursor: &nextCursor}, nil
+}
+
+func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string, query port.TransactionQuery) (port.TransactionPage, error) {
+	switch {
+	case query.Type != nil:
+		return r.findByIndex(ctx, transactionIndex{PK: "GSI1PK", SK: "GSI1SK"}, fmt.Sprintf("USER#%s#TYPE#%s", userID, *query.Type), query)
+	case query.AccountID != nil:
+		return r.findByIndex(ctx, transactionIndex{PK: "GSI2PK", SK: "GSI2SK"}, fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, *query.AccountID), query)
+	case query.CategoryID != nil:
+		return r.findByIndex(ctx, transactionIndex{PK: "GSI3PK", SK: "GSI3SK"}, fmt.Sprintf("USER#%s#CATEGORY#%s", userID, *query.CategoryID), query)
+	default:
+		return r.findByIndex(ctx, transactionIndex{PK: "PK", SK: "SK"}, fmt.Sprintf("USER#%s", userID), query)
+	}
 }
