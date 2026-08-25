@@ -261,7 +261,7 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 	expression := `
 		SET
 			amount = :amount,
-			type = :type,
+			#type = :type,
 			account_id = :account_id,
 			category_id = :category_id,
 			description = :description,
@@ -275,6 +275,8 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 			GSI4PK = :gsi4pk,
 			GSI4SK = :gsi4sk
 	`
+
+	expressionNames := map[string]string{"#type": "type"}
 
 	expressionValues := map[string]any{
 		":amount":      dynamodbclient.Decimal(transaction.Amount),
@@ -293,7 +295,7 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 		":gsi4sk":      gsiSortKey,
 	}
 
-	if err := r.client.UpdateItem(ctx, r.tableName, key, expression, expressionValues); err != nil {
+	if err := r.client.UpdateItem(ctx, r.tableName, key, expression, expressionNames, expressionValues); err != nil {
 		return fmt.Errorf("update transaction: %w", err)
 	}
 

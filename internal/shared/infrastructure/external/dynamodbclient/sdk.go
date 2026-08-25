@@ -254,6 +254,7 @@ func (c *SDKDynamoDBClient) UpdateItem(
 	tableName string,
 	key map[string]any,
 	expression string,
+	expressionNames map[string]string,
 	expressionValues map[string]any,
 ) error {
 	parsedKey, err := attributevalue.MarshalMap(key)
@@ -270,6 +271,7 @@ func (c *SDKDynamoDBClient) UpdateItem(
 		TableName:                 aws.String(tableName),
 		Key:                       parsedKey,
 		UpdateExpression:          aws.String(expression),
+		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: parsedExpressionValues,
 	})
 	if err != nil {
