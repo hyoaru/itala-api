@@ -20,4 +20,6 @@ type AccountPage struct {
 type AccountRepository interface {
 	Create(ctx context.Context, userID string, account entity.Account) error
 	Find(ctx context.Context, userID string, query AccountQuery) (AccountPage, error)
+	FindOne(ctx context.Context, userID string, id string) (entity.Account, error)
+	Update(ctx context.Context, userID string, account entity.Account) error
 }

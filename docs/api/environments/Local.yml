@@ -2,6 +2,7 @@ name: Local
 variables:
   - name: BASE_URL
     value: localhost:8080
+    description: ""
   - secret: true
     name: ACCESS_TOKEN
     description: ""

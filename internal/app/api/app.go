@@ -34,6 +34,7 @@ func New(addr string) *App {
 	accountHandler := &handler.AccountHandler{
 		CreateAccount: account.NewCreateAccount(accountRepository),
 		ListAccounts:  account.NewListAccounts(accountRepository),
+		UpdateAccount: account.NewUpdateAccount(accountRepository),
 	}
 	transactionHandler := &handler.TransactionHandler{
 		CreateTransaction: transaction.NewCreateTransaction(transactionRepository, categoryRepository),

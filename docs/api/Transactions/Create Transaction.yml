@@ -22,6 +22,17 @@ http:
       }
   auth: inherit
 
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const status = res.getStatus();
+
+        if (status >= 200 && status < 300) {
+          const body = res.getBody();
+          bru.setVar("TRANSACTION_ID", body["id"]);
+        }
+
 settings:
   encodeUrl: true
   timeout: 0

@@ -1,21 +1,21 @@
 info:
-  name: Update Category
+  name: Update Account
   type: http
   seq: 3
 
 http:
   method: PUT
-  url: "{{BASE_URL}}/categories/:id"
+  url: "{{BASE_URL}}/accounts/:id"
   headers:
     - name: Authorization
       value: Bearer {{ACCESS_TOKEN}}
   params:
     - name: id
-      value: "{{CATEGORY_ID}}"
+      value: "{{ACCOUNT_ID}}"
       type: path
   body:
     type: json
-    data: '{"name": "Side Hustle"}'
+    data: '{"name": "BPI Emergency"}'
   auth: inherit
 
 settings:

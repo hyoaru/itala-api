@@ -158,3 +158,90 @@ func (r *DynamoDBAccountRepository) Find(ctx context.Context, userID string, que
 	nextCursor := base64.RawURLEncoding.EncodeToString(encodedNextCursor)
 	return port.AccountPage{Accounts: accounts, NextCursor: &nextCursor}, nil
 }
+
+func (r *DynamoDBAccountRepository) FindOne(ctx context.Context, userID string, id string) (entity.Account, error) {
+	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("ACCOUNT#%s", id)}
+
+	var findItem findAccountItem
+	if err := r.client.GetItem(ctx, r.tableName, key, &findItem); err != nil {
+		if errors.Is(err, dynamodbclient.ErrItemNotFound) {
+			return entity.Account{}, port.ErrAccountNotFound
+		}
+
+		return entity.Account{}, fmt.Errorf("find account: %w", err)
+	}
+
+	account, err := findItem.toDomain()
+	if err != nil {
+		return entity.Account{}, fmt.Errorf("parse account: %w", err)
+	}
+
+	return account, nil
+}
+
+func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, account entity.Account) error {
+	current, err := r.FindOne(ctx, userID, account.ID)
+	if err != nil {
+		return fmt.Errorf("get current account: %w", err)
+	}
+
+	pk := fmt.Sprintf("USER#%s", userID)
+	accountSK := fmt.Sprintf("ACCOUNT#%s", account.ID)
+	updatedAt := account.UpdatedAt.Format(time.RFC3339Nano)
+	currentKey := map[string]any{"PK": pk, "SK": accountSK}
+
+	if current.Name == account.Name {
+		expression := "SET updated_at = :updated_at"
+		expressionValues := map[string]any{":updated_at": updatedAt}
+		if err := r.client.UpdateItem(ctx, r.tableName, currentKey, expression, nil, expressionValues); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	transactItems := []dynamodbclient.TransactWriteItem{
+		{
+			Update: &dynamodbclient.TransactUpdate{
+				TableName:        r.tableName,
+				Key:              currentKey,
+				UpdateExpression: "SET #name = :name, updated_at = :updated_at",
+				Condition:        "#name = :old_name",
+				ExpressionNames:  map[string]string{"#name": "name"},
+				ExpressionValues: map[string]any{
+					":name":       account.Name,
+					":updated_at": updatedAt,
+					":old_name":   current.Name,
+				},
+			},
+		},
+		{
+			Delete: &dynamodbclient.TransactDelete{
+				TableName: r.tableName,
+				Key: map[string]any{
+					"PK": pk,
+					"SK": fmt.Sprintf("ACCOUNT_NAME#%s", current.Name),
+				},
+			},
+		},
+		{
+			Put: &dynamodbclient.TransactPut{
+				TableName: r.tableName,
+				Item: map[string]any{
+					"PK":         pk,
+					"SK":         fmt.Sprintf("ACCOUNT_NAME#%s", account.Name),
+					"account_id": account.ID,
+				},
+				Condition: "attribute_not_exists(PK)",
+			},
+		},
+	}
+
+	err = r.client.TransactWriteItems(ctx, transactItems)
+	if err != nil {
+		if errors.Is(err, dynamodbclient.ErrItemExists) {
+			return port.ErrAccountExists
+		}
+	}
+
+	return err
+}

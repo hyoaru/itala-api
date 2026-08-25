@@ -37,3 +37,12 @@ type (
 func NewListAccounts(accountRepository AccountRepository) usecase.UseCase[ListAccountsRequest, accountusecase.ListAccountsResponse] {
 	return accountusecase.NewListAccounts(accountRepository)
 }
+
+type (
+	UpdateAccountRequest  = accountusecase.UpdateAccountRequest
+	UpdateAccountResponse = accountusecase.UpdateAccountResponse
+)
+
+func NewUpdateAccount(accountRepository AccountRepository) usecase.UseCase[UpdateAccountRequest, UpdateAccountResponse] {
+	return accountusecase.NewUpdateAccount(accountRepository)
+}

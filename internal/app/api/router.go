@@ -31,6 +31,7 @@ func NewRouter(
 		r.Put("/categories/{id}", categoryHandler.Update)
 		r.Post("/accounts", accountHandler.Create)
 		r.Get("/accounts", accountHandler.List)
+		r.Put("/accounts/{id}", accountHandler.Update)
 		r.Post("/transactions", transactionHandler.Create)
 		r.Get("/transactions", transactionHandler.List)
 		r.Put("/transactions/{id}", transactionHandler.Update)

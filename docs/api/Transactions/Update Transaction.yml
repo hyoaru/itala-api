@@ -11,7 +11,7 @@ http:
       value: Bearer {{ACCESS_TOKEN}}
   params:
     - name: id
-      value: 01a03830-1912-70b0-9d56-dd4a77bbe138
+      value: "{{TRANSACTION_ID}}"
       type: path
   body:
     type: json

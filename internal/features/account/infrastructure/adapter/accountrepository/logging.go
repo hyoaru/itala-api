@@ -41,3 +41,30 @@ func (c *LoggingAccountRepository) Find(ctx context.Context, userID string, quer
 	logger.Info("Accounts found", "count", len(result.Accounts))
 	return result, nil
 }
+
+func (c *LoggingAccountRepository) FindOne(ctx context.Context, userID string, id string) (entity.Account, error) {
+	logger.Debug("Finding account", "id", id)
+
+	result, err := c.inner.FindOne(ctx, userID, id)
+	if err != nil {
+		logger.Warn("Failed to find account", "error", err)
+		return result, err
+	}
+
+	logger.Info("Account found", "id", id)
+
+	return result, nil
+}
+
+func (c *LoggingAccountRepository) Update(ctx context.Context, userID string, account entity.Account) error {
+	logger.Debug("Updating account", "id", account.ID)
+
+	if err := c.inner.Update(ctx, userID, account); err != nil {
+		logger.Warn("Failed to update account", "error", err)
+		return err
+	}
+
+	logger.Info("Account updated", "id", account.ID)
+
+	return nil
+}
