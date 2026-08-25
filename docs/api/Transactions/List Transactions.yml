@@ -9,6 +9,27 @@ http:
   headers:
     - name: Authorization
       value: Bearer {{ACCESS_TOKEN}}
+  params:
+    - name: limit
+      value: "1"
+      type: query
+      disabled: true
+    - name: cursor
+      value: eyJQSyI6IlVTRVIjZTlkYTM1ZGMtMzBlMS03MDRlLTIwMGUtOGQwYmZhN2Q5ODI2IiwiU0siOiJUUkFOU0FDVElPTiMyMDI2LTA4LTIxVDEwOjMwOjAwWiM2YmQwMDYzNC1kMGY0LTQ3OTktYmZjNC03NWYxZjU5OWFmOWEifQ
+      type: query
+      disabled: true
+    - name: from
+      value: 2026-09-21T10:30:00Z
+      type: query
+      disabled: true
+    - name: type
+      value: EXPENSE
+      type: query
+      disabled: true
+    - name: category_id
+      value: 550e8400-e29b-41d4-a716-446655440000
+      type: query
+      disabled: true
   auth: inherit
 
 settings:

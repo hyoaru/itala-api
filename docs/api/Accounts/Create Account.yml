@@ -11,7 +11,7 @@ http:
       value: Bearer {{ACCESS_TOKEN}}
   body:
     type: json
-    data: '{"name": "BPI 3224"}'
+    data: '{"name": "BPI 32234"}'
   auth: inherit
 
 runtime:
