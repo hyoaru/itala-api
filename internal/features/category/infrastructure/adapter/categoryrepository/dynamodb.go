@@ -160,7 +160,7 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 func (r *DynamoDBCategoryRepository) FindOne(ctx context.Context, userID string, categoryID string) (entity.Category, error) {
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("CATEGORY#%s", categoryID)}
 
-	var findItem *findCategoryItem
+	var findItem findCategoryItem
 	if err := r.client.GetItem(ctx, r.tableName, key, &findItem); err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemNotFound) {
 			return entity.Category{}, port.ErrCategoryNotFound

@@ -237,7 +237,7 @@ func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string,
 func (r *DynamoDBTransactionRepository) FindOne(ctx context.Context, userID string, id string) (entity.Transaction, error) {
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("TRANSACTION#%s", id)}
 
-	var findItem *findTransactionItem
+	var findItem findTransactionItem
 	if err := r.client.GetItem(ctx, r.tableName, key, &findItem); err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemNotFound) {
 			return entity.Transaction{}, port.ErrTransactionNotFound
