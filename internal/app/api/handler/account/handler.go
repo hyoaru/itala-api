@@ -2,10 +2,10 @@ package api
 
 import (
 	"github.com/hyoaru/itala-api/internal/features/account"
-	"github.com/hyoaru/itala-api/internal/shared/application/usecases"
+	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 )
 
 type AccountHandler struct {
-	CreateAccount usecases.UseCase[account.CreateAccountRequest, account.CreateAccountResponse]
-	ListAccounts  usecases.UseCase[account.ListAccountsRequest, account.ListAccountsResponse]
+	CreateAccount usecase.UseCase[account.CreateAccountRequest, account.CreateAccountResponse]
+	ListAccounts  usecase.UseCase[account.ListAccountsRequest, account.ListAccountsResponse]
 }

@@ -2,40 +2,40 @@ package transaction
 
 import (
 	category "github.com/hyoaru/itala-api/internal/features/category"
-	transactionrepositoryport "github.com/hyoaru/itala-api/internal/features/transaction/application/ports/transactionrepository"
-	transactionusecases "github.com/hyoaru/itala-api/internal/features/transaction/application/usecases"
-	entities "github.com/hyoaru/itala-api/internal/features/transaction/domain/entities"
-	transactionrepositoryadapters "github.com/hyoaru/itala-api/internal/features/transaction/infrastructure/adapters/transactionrepository"
-	"github.com/hyoaru/itala-api/internal/shared/application/usecases"
+	transactionrepositoryport "github.com/hyoaru/itala-api/internal/features/transaction/application/port/transactionrepository"
+	transactionusecase "github.com/hyoaru/itala-api/internal/features/transaction/application/usecase"
+	entity "github.com/hyoaru/itala-api/internal/features/transaction/domain/entity"
+	transactionrepositoryadapter "github.com/hyoaru/itala-api/internal/features/transaction/infrastructure/adapter/transactionrepository"
+	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
 
-type Transaction = entities.Transaction
+type Transaction = entity.Transaction
 
 type TransactionRepository = transactionrepositoryport.TransactionRepository
 
 func NewDynamoDBTransactionRepository(client dynamodbclient.DynamoDBClient, tableName string) TransactionRepository {
-	r := transactionrepositoryadapters.NewDynamoDBTransactionRepository(client, tableName)
-	return transactionrepositoryadapters.NewDecoratedTransactionRepository(r)
+	r := transactionrepositoryadapter.NewDynamoDBTransactionRepository(client, tableName)
+	return transactionrepositoryadapter.NewDecoratedTransactionRepository(r)
 }
 
 type (
-	CreateTransactionRequest  = transactionusecases.CreateTransactionRequest
-	CreateTransactionResponse = transactionusecases.CreateTransactionResponse
+	CreateTransactionRequest  = transactionusecase.CreateTransactionRequest
+	CreateTransactionResponse = transactionusecase.CreateTransactionResponse
 )
 
 func NewCreateTransaction(
 	transactionRepository TransactionRepository,
 	categoryRepository category.CategoryRepository,
-) usecases.UseCase[CreateTransactionRequest, CreateTransactionResponse] {
-	return transactionusecases.NewCreateTransaction(transactionRepository, categoryRepository)
+) usecase.UseCase[CreateTransactionRequest, CreateTransactionResponse] {
+	return transactionusecase.NewCreateTransaction(transactionRepository, categoryRepository)
 }
 
 type (
-	ListTransactionsRequest  = transactionusecases.ListTransactionsRequest
-	ListTransactionsResponse = transactionusecases.ListTransactionsResponse
+	ListTransactionsRequest  = transactionusecase.ListTransactionsRequest
+	ListTransactionsResponse = transactionusecase.ListTransactionsResponse
 )
 
-func NewListTransactions(transactionRepository TransactionRepository) usecases.UseCase[ListTransactionsRequest, transactionusecases.ListTransactionsResponse] {
-	return transactionusecases.NewListTransactions(transactionRepository)
+func NewListTransactions(transactionRepository TransactionRepository) usecase.UseCase[ListTransactionsRequest, transactionusecase.ListTransactionsResponse] {
+	return transactionusecase.NewListTransactions(transactionRepository)
 }

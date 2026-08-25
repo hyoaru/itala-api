@@ -2,10 +2,10 @@ package api
 
 import (
 	"github.com/hyoaru/itala-api/internal/features/category"
-	"github.com/hyoaru/itala-api/internal/shared/application/usecases"
+	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 )
 
 type CategoryHandler struct {
-	CreateCategory usecases.UseCase[category.CreateCategoryRequest, category.CreateCategoryResponse]
-	ListCategories usecases.UseCase[category.ListCategoriesRequest, category.ListCategoriesResponse]
+	CreateCategory usecase.UseCase[category.CreateCategoryRequest, category.CreateCategoryResponse]
+	ListCategories usecase.UseCase[category.ListCategoriesRequest, category.ListCategoriesResponse]
 }

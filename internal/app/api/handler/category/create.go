@@ -8,7 +8,7 @@ import (
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
 	"github.com/hyoaru/itala-api/internal/features/category"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
-	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
+	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
 type createCategoryRequest struct {
@@ -32,7 +32,7 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	useCaseRequest := category.CreateCategoryRequest{
 		UserID: user.ID,
 		Name:   request.Name,
-		Type:   valueobjects.TransactionType(request.Type),
+		Type:   valueobject.TransactionType(request.Type),
 	}
 
 	entity, err := h.CreateCategory.Execute(r.Context(), useCaseRequest)

@@ -8,7 +8,7 @@ import (
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
 	"github.com/hyoaru/itala-api/internal/features/transaction"
-	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
+	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
 type createTransactionRequest struct {
@@ -32,7 +32,7 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	amount, err := valueobjects.NewDecimal(request.Amount)
+	amount, err := valueobject.NewDecimal(request.Amount)
 	if err != nil {
 		res.WriteError(w, "INVALID_REQUEST", "invalid request body", http.StatusBadRequest)
 		return

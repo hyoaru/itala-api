@@ -1,39 +1,39 @@
 package category
 
 import (
-	categoryrepositoryport "github.com/hyoaru/itala-api/internal/features/category/application/ports/categoryrepository"
-	categoryusecases "github.com/hyoaru/itala-api/internal/features/category/application/usecases"
-	entities "github.com/hyoaru/itala-api/internal/features/category/domain/entities"
-	categoryrepositoryadapters "github.com/hyoaru/itala-api/internal/features/category/infrastructure/adapters/categoryrepository"
-	"github.com/hyoaru/itala-api/internal/shared/application/usecases"
+	categoryrepositoryport "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
+	categoryusecase "github.com/hyoaru/itala-api/internal/features/category/application/usecase"
+	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
+	categoryrepositoryadapter "github.com/hyoaru/itala-api/internal/features/category/infrastructure/adapter/categoryrepository"
+	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
 
-type Category = entities.Category
+type Category = entity.Category
 
 type CategoryRepository = categoryrepositoryport.CategoryRepository
 
 var ErrCategoryExists = categoryrepositoryport.ErrCategoryExists
 
 func NewDynamoDBCategoryRepository(client dynamodbclient.DynamoDBClient, tableName string) CategoryRepository {
-	r := categoryrepositoryadapters.NewDynamoDBCategoryRepository(client, tableName)
-	return categoryrepositoryadapters.NewDecoratedCategoryRepository(r)
+	r := categoryrepositoryadapter.NewDynamoDBCategoryRepository(client, tableName)
+	return categoryrepositoryadapter.NewDecoratedCategoryRepository(r)
 }
 
 type (
-	CreateCategoryRequest  = categoryusecases.CreateCategoryRequest
-	CreateCategoryResponse = categoryusecases.CreateCategoryResponse
+	CreateCategoryRequest  = categoryusecase.CreateCategoryRequest
+	CreateCategoryResponse = categoryusecase.CreateCategoryResponse
 )
 
-func NewCreateCategory(categoryRepository CategoryRepository) usecases.UseCase[CreateCategoryRequest, CreateCategoryResponse] {
-	return categoryusecases.NewCreateCategory(categoryRepository)
+func NewCreateCategory(categoryRepository CategoryRepository) usecase.UseCase[CreateCategoryRequest, CreateCategoryResponse] {
+	return categoryusecase.NewCreateCategory(categoryRepository)
 }
 
 type (
-	ListCategoriesRequest  = categoryusecases.ListCategoriesRequest
-	ListCategoriesResponse = categoryusecases.ListCategoriesResponse
+	ListCategoriesRequest  = categoryusecase.ListCategoriesRequest
+	ListCategoriesResponse = categoryusecase.ListCategoriesResponse
 )
 
-func NewListCategories(categoryRepository CategoryRepository) usecases.UseCase[ListCategoriesRequest, categoryusecases.ListCategoriesResponse] {
-	return categoryusecases.NewListCategories(categoryRepository)
+func NewListCategories(categoryRepository CategoryRepository) usecase.UseCase[ListCategoriesRequest, categoryusecase.ListCategoriesResponse] {
+	return categoryusecase.NewListCategories(categoryRepository)
 }

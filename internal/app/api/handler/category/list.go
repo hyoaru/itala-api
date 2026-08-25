@@ -8,7 +8,7 @@ import (
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
 	"github.com/hyoaru/itala-api/internal/features/category"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
-	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
+	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
 type listCategoriesRequest struct {
@@ -45,9 +45,9 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 		limit = 40
 	}
 
-	var transactionType *valueobjects.TransactionType
+	var transactionType *valueobject.TransactionType
 	if request.TransactionType != nil {
-		t := valueobjects.TransactionType(*request.TransactionType)
+		t := valueobject.TransactionType(*request.TransactionType)
 		transactionType = &t
 	}
 

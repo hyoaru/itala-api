@@ -3,15 +3,15 @@ package identity
 import (
 	"context"
 
-	identityproviderport "github.com/hyoaru/itala-api/internal/features/identity/application/ports/identityprovider"
-	entities "github.com/hyoaru/itala-api/internal/features/identity/domain/entities"
-	identityprovideradapters "github.com/hyoaru/itala-api/internal/features/identity/infrastructure/adapters/identityprovider"
+	identityproviderport "github.com/hyoaru/itala-api/internal/features/identity/application/port/identityprovider"
+	entity "github.com/hyoaru/itala-api/internal/features/identity/domain/entity"
+	identityprovideradapter "github.com/hyoaru/itala-api/internal/features/identity/infrastructure/adapter/identityprovider"
 	identitycontext "github.com/hyoaru/itala-api/internal/features/identity/infrastructure/context"
 )
 
 type (
-	User   = entities.User
-	Claims = entities.Claims
+	User   = entity.User
+	Claims = entity.Claims
 )
 
 func WithUser(ctx context.Context, user *User) context.Context {
@@ -30,6 +30,6 @@ var (
 )
 
 func NewCognitoIdentityProvider(region string, userPoolID string) IdentityProvider {
-	idp := identityprovideradapters.NewCognitoIdentityProvider(region, userPoolID)
-	return identityprovideradapters.NewDecoratedIdentityProvider(idp)
+	idp := identityprovideradapter.NewCognitoIdentityProvider(region, userPoolID)
+	return identityprovideradapter.NewDecoratedIdentityProvider(idp)
 }

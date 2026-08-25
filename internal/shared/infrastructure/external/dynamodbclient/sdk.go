@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/hyoaru/itala-api/internal/shared/domain/valueobjects"
+	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
 type SDKDynamoDBClient struct {
@@ -28,11 +28,11 @@ func NewSDKDynamoDBClient() *SDKDynamoDBClient {
 	}
 }
 
-type Decimal valueobjects.Decimal
+type Decimal valueobject.Decimal
 
 func (d Decimal) MarshalDynamoDBAttributeValue() (types.AttributeValue, error) {
 	return &types.AttributeValueMemberN{
-		Value: valueobjects.Decimal(d).String(),
+		Value: valueobject.Decimal(d).String(),
 	}, nil
 }
 

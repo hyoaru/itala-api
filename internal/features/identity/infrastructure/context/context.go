@@ -3,14 +3,18 @@ package identity
 import (
 	"context"
 
-	entities "github.com/hyoaru/itala-api/internal/features/identity/domain/entities"
+	entitiy "github.com/hyoaru/itala-api/internal/features/identity/domain/entity"
 )
 
-func WithUser(ctx context.Context, user *entities.User) context.Context {
+type contextKey string
+
+const userContextKey contextKey = "user"
+
+func WithUser(ctx context.Context, user *entitiy.User) context.Context {
 	return context.WithValue(ctx, userContextKey, user)
 }
 
-func UserFromContext(ctx context.Context) *entities.User {
-	user, _ := ctx.Value(userContextKey).(*entities.User)
+func UserFromContext(ctx context.Context) *entitiy.User {
+	user, _ := ctx.Value(userContextKey).(*entitiy.User)
 	return user
 }

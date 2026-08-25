@@ -1,39 +1,39 @@
 package account
 
 import (
-	accountrepositoryport "github.com/hyoaru/itala-api/internal/features/account/application/ports/accountrepository"
-	accountusecases "github.com/hyoaru/itala-api/internal/features/account/application/usecases"
-	entities "github.com/hyoaru/itala-api/internal/features/account/domain/entities"
-	accountrepositoryadapters "github.com/hyoaru/itala-api/internal/features/account/infrastructure/adapters/accountrepository"
-	"github.com/hyoaru/itala-api/internal/shared/application/usecases"
+	accountrepositoryport "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
+	accountusecase "github.com/hyoaru/itala-api/internal/features/account/application/usecase"
+	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
+	accountrepositoryadapter "github.com/hyoaru/itala-api/internal/features/account/infrastructure/adapter/accountrepository"
+	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
 
-type Account = entities.Account
+type Account = entity.Account
 
 type AccountRepository = accountrepositoryport.AccountRepository
 
 var ErrAccountExists = accountrepositoryport.ErrAccountExists
 
 func NewDynamoDBAccountRepository(client dynamodbclient.DynamoDBClient, tableName string) AccountRepository {
-	r := accountrepositoryadapters.NewDynamoDBAccountRepository(client, tableName)
-	return accountrepositoryadapters.NewDecoratedAccountRepository(r)
+	r := accountrepositoryadapter.NewDynamoDBAccountRepository(client, tableName)
+	return accountrepositoryadapter.NewDecoratedAccountRepository(r)
 }
 
 type (
-	CreateAccountRequest  = accountusecases.CreateAccountRequest
-	CreateAccountResponse = accountusecases.CreateAccountResponse
+	CreateAccountRequest  = accountusecase.CreateAccountRequest
+	CreateAccountResponse = accountusecase.CreateAccountResponse
 )
 
-func NewCreateAccount(accountRepository AccountRepository) usecases.UseCase[CreateAccountRequest, CreateAccountResponse] {
-	return accountusecases.NewCreateAccount(accountRepository)
+func NewCreateAccount(accountRepository AccountRepository) usecase.UseCase[CreateAccountRequest, CreateAccountResponse] {
+	return accountusecase.NewCreateAccount(accountRepository)
 }
 
 type (
-	ListAccountsRequest  = accountusecases.ListAccountsRequest
-	ListAccountsResponse = accountusecases.ListAccountsResponse
+	ListAccountsRequest  = accountusecase.ListAccountsRequest
+	ListAccountsResponse = accountusecase.ListAccountsResponse
 )
 
-func NewListAccounts(accountRepository AccountRepository) usecases.UseCase[ListAccountsRequest, accountusecases.ListAccountsResponse] {
-	return accountusecases.NewListAccounts(accountRepository)
+func NewListAccounts(accountRepository AccountRepository) usecase.UseCase[ListAccountsRequest, accountusecase.ListAccountsResponse] {
+	return accountusecase.NewListAccounts(accountRepository)
 }
