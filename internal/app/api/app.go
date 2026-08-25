@@ -37,6 +37,7 @@ func New(addr string) *App {
 	transactionHandler := &handler.TransactionHandler{
 		CreateTransaction: transaction.NewCreateTransaction(transactionRepository, categoryRepository),
 		ListTransactions:  transaction.NewListTransactions(transactionRepository),
+		UpdateTransaction: transaction.NewUpdateTransaction(transactionRepository, categoryRepository),
 	}
 
 	router := NewRouter(identityProvider, *categoryHandler, *accountHandler, *transactionHandler)

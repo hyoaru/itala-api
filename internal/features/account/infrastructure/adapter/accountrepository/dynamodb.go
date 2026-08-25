@@ -125,6 +125,7 @@ func (r *DynamoDBAccountRepository) Find(ctx context.Context, userID string, que
 	metadata, err := r.client.Query(
 		ctx,
 		r.tableName,
+		"",
 		query.Limit,
 		conditionExpression,
 		filterExpression,

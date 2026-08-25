@@ -39,3 +39,15 @@ type (
 func NewListTransactions(transactionRepository TransactionRepository) usecase.UseCase[ListTransactionsRequest, transactionusecase.ListTransactionsResponse] {
 	return transactionusecase.NewListTransactions(transactionRepository)
 }
+
+type (
+	UpdateTransactionRequest  = transactionusecase.UpdateTransactionRequest
+	UpdateTransactionResponse = transactionusecase.UpdateTransactionResponse
+)
+
+func NewUpdateTransaction(
+	transactionRepository TransactionRepository,
+	categoryRepository category.CategoryRepository,
+) usecase.UseCase[UpdateTransactionRequest, UpdateTransactionResponse] {
+	return transactionusecase.NewUpdateTransaction(transactionRepository, categoryRepository)
+}

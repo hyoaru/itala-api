@@ -164,6 +164,7 @@ func (c *SDKDynamoDBClient) toTransactDelete(operation *TransactDelete) (types.T
 func (c *SDKDynamoDBClient) Query(
 	ctx context.Context,
 	tableName string,
+	indexName string,
 	limit int32,
 	conditionExpression string,
 	filterExpression string,
@@ -181,6 +182,10 @@ func (c *SDKDynamoDBClient) Query(
 		TableName:                 aws.String(tableName),
 		KeyConditionExpression:    aws.String(conditionExpression),
 		ExpressionAttributeValues: parsedExpressionValues,
+	}
+
+	if indexName != "" {
+		queryInput.IndexName = aws.String(indexName)
 	}
 
 	if startKey != nil {
@@ -239,6 +244,36 @@ func (c *SDKDynamoDBClient) GetItem(ctx context.Context, tableName string, key m
 
 	if err := attributevalue.UnmarshalMap(getItemOutput.Item, output); err != nil {
 		return fmt.Errorf("unmarshal item: %w", err)
+	}
+
+	return nil
+}
+
+func (c *SDKDynamoDBClient) UpdateItem(
+	ctx context.Context,
+	tableName string,
+	key map[string]any,
+	expression string,
+	expressionValues map[string]any,
+) error {
+	parsedKey, err := attributevalue.MarshalMap(key)
+	if err != nil {
+		return fmt.Errorf("marshal key: %w", err)
+	}
+
+	parsedExpressionValues, err := attributevalue.MarshalMap(expressionValues)
+	if err != nil {
+		return fmt.Errorf("marshal expression values: %w", err)
+	}
+
+	_, err = c.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+		TableName:                 aws.String(tableName),
+		Key:                       parsedKey,
+		UpdateExpression:          aws.String(expression),
+		ExpressionAttributeValues: parsedExpressionValues,
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

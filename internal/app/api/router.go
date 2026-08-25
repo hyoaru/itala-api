@@ -32,6 +32,7 @@ func NewRouter(
 		r.Get("/accounts", accountHandler.List)
 		r.Post("/transactions", transactionHandler.Create)
 		r.Get("/transactions", transactionHandler.List)
+		r.Put("/transactions/{id}", transactionHandler.Update)
 	})
 
 	return mux

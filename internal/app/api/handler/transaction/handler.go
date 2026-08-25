@@ -8,4 +8,5 @@ import (
 type TransactionHandler struct {
 	CreateTransaction usecase.UseCase[transaction.CreateTransactionRequest, transaction.CreateTransactionResponse]
 	ListTransactions  usecase.UseCase[transaction.ListTransactionsRequest, transaction.ListTransactionsResponse]
+	UpdateTransaction usecase.UseCase[transaction.UpdateTransactionRequest, transaction.UpdateTransactionResponse]
 }

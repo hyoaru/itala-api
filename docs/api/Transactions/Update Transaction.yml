@@ -1,0 +1,32 @@
+info:
+  name: Update Transaction
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{BASE_URL}}/transactions/:id"
+  headers:
+    - name: Authorization
+      value: Bearer {{ACCESS_TOKEN}}
+  params:
+    - name: id
+      value: 01a03830-1912-70b0-9d56-dd4a77bbe138
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "amount": "2500.00",
+        "account_id": "01a0382f-e38e-791d-9674-31a0640f388b",
+        "category_id": "01a0382f-f08f-7cda-8eff-207ead77f0b1",
+        "description": "Updated dinner",
+        "occurred_at": "2026-08-25T14:30:00Z"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

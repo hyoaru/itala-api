@@ -123,6 +123,7 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 	metadata, err := r.client.Query(
 		ctx,
 		r.tableName,
+		"",
 		query.Limit,
 		conditionExpression,
 		filterExpression,

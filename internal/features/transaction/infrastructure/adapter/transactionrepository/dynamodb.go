@@ -26,8 +26,9 @@ func NewDynamoDBTransactionRepository(client dynamodbclient.DynamoDBClient, tabl
 }
 
 type transactionIndex struct {
-	PK string
-	SK string
+	Name string
+	PK   string
+	SK   string
 }
 
 type findTransactionItem struct {
@@ -116,20 +117,20 @@ func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID strin
 }
 
 func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index transactionIndex, pk string, query port.TransactionQuery) (port.TransactionPage, error) {
-	conditionExpression := fmt.Sprintf("%s = :pk ", index.PK)
+	conditionExpression := fmt.Sprintf("%s = :pk", index.PK)
 	expressionValues := map[string]any{":pk": pk}
 
 	// Sort key condition
 	switch {
 	case query.From != nil && query.To != nil:
-		conditionExpression += " AND SK BETWEEN :from AND :to"
+		conditionExpression += fmt.Sprintf(" AND %s BETWEEN :from AND :to", index.SK)
 		expressionValues[":from"] = fmt.Sprintf("TRANSACTION#%s", query.From.UTC().Format(time.RFC3339Nano))
 		expressionValues[":to"] = fmt.Sprintf("TRANSACTION#%s~", query.To.UTC().Format(time.RFC3339Nano))
 	case query.From != nil:
-		conditionExpression += " AND SK >= :from"
+		conditionExpression += fmt.Sprintf(" AND %s >= :from", index.SK)
 		expressionValues[":from"] = fmt.Sprintf("TRANSACTION#%s", query.From.UTC().Format(time.RFC3339Nano))
 	case query.To != nil:
-		conditionExpression += " AND SK <= :to"
+		conditionExpression += fmt.Sprintf(" AND %s <= :to", index.SK)
 		expressionValues[":to"] = fmt.Sprintf("TRANSACTION#%s~", query.To.UTC().Format(time.RFC3339Nano))
 	default:
 		conditionExpression += fmt.Sprintf(" AND begins_with(%s, :sk)", index.SK)
@@ -166,6 +167,7 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 	metadata, err := r.client.Query(
 		ctx,
 		r.tableName,
+		index.Name,
 		query.Limit,
 		conditionExpression,
 		filterExpression,
@@ -202,13 +204,33 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string, query port.TransactionQuery) (port.TransactionPage, error) {
 	switch {
 	case query.Type != nil:
-		return r.findByIndex(ctx, transactionIndex{PK: "GSI2PK", SK: "GSI2SK"}, fmt.Sprintf("USER#%s#TYPE#%s", userID, *query.Type), query)
+		return r.findByIndex(
+			ctx,
+			transactionIndex{PK: "GSI2PK", SK: "GSI2SK", Name: "TransactionByType"},
+			fmt.Sprintf("USER#%s#TYPE#%s", userID, *query.Type),
+			query,
+		)
 	case query.AccountID != nil:
-		return r.findByIndex(ctx, transactionIndex{PK: "GSI3PK", SK: "GSI3SK"}, fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, *query.AccountID), query)
+		return r.findByIndex(
+			ctx,
+			transactionIndex{PK: "GSI3PK", SK: "GSI3SK", Name: "TransactionByAccount"},
+			fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, *query.AccountID),
+			query,
+		)
 	case query.CategoryID != nil:
-		return r.findByIndex(ctx, transactionIndex{PK: "GSI4PK", SK: "GSI4SK"}, fmt.Sprintf("USER#%s#CATEGORY#%s", userID, *query.CategoryID), query)
+		return r.findByIndex(
+			ctx,
+			transactionIndex{PK: "GSI4PK", SK: "GSI4SK", Name: "TransactionByCategory"},
+			fmt.Sprintf("USER#%s#CATEGORY#%s", userID, *query.CategoryID),
+			query,
+		)
 	default:
-		return r.findByIndex(ctx, transactionIndex{PK: "GSI1PK", SK: "GSI1SK"}, fmt.Sprintf("USER#%s", userID), query)
+		return r.findByIndex(
+			ctx,
+			transactionIndex{PK: "GSI1PK", SK: "GSI1SK", Name: "TransactionByOccurredAt"},
+			fmt.Sprintf("USER#%s", userID),
+			query,
+		)
 	}
 }
 
@@ -233,5 +255,47 @@ func (r *DynamoDBTransactionRepository) FindOne(ctx context.Context, userID stri
 }
 
 func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID string, transaction entity.Transaction) error {
+	gsiSortKey := fmt.Sprintf("TRANSACTION#%s#%s", transaction.OccurredAt.Format(time.RFC3339Nano), transaction.ID)
+	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("TRANSACTION#%s", transaction.ID)}
+
+	expression := `
+		SET
+			amount = :amount,
+			type = :type,
+			account_id = :account_id,
+			category_id = :category_id,
+			description = :description,
+			occurred_at = :occurred_at,
+			updated_at = :updated_at,
+			GSI1SK = :gsi1sk,
+			GSI2PK = :gsi2pk,
+			GSI2SK = :gsi2sk,
+			GSI3PK = :gsi3pk,
+			GSI3SK = :gsi3sk,
+			GSI4PK = :gsi4pk,
+			GSI4SK = :gsi4sk
+	`
+
+	expressionValues := map[string]any{
+		":amount":      dynamodbclient.Decimal(transaction.Amount),
+		":type":        string(transaction.Type),
+		":account_id":  transaction.AccountID,
+		":category_id": transaction.CategoryID,
+		":description": transaction.Description,
+		":occurred_at": transaction.OccurredAt.Format(time.RFC3339Nano),
+		":updated_at":  transaction.UpdatedAt.Format(time.RFC3339Nano),
+		":gsi1sk":      gsiSortKey,
+		":gsi2pk":      fmt.Sprintf("USER#%s#TYPE#%s", userID, string(transaction.Type)),
+		":gsi2sk":      gsiSortKey,
+		":gsi3pk":      fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, transaction.AccountID),
+		":gsi3sk":      gsiSortKey,
+		":gsi4pk":      fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
+		":gsi4sk":      gsiSortKey,
+	}
+
+	if err := r.client.UpdateItem(ctx, r.tableName, key, expression, expressionValues); err != nil {
+		return fmt.Errorf("update transaction: %w", err)
+	}
+
 	return nil
 }

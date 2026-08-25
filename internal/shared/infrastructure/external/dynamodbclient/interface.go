@@ -37,9 +37,17 @@ type DynamoDBClient interface {
 	PutItem(ctx context.Context, tableName string, item map[string]any) error
 	TransactWriteItems(ctx context.Context, items []TransactWriteItem) error
 	GetItem(ctx context.Context, tableName string, key map[string]any, output any) error
+	UpdateItem(
+		ctx context.Context,
+		tableName string,
+		key map[string]any,
+		expression string,
+		expressionValues map[string]any,
+	) error
 	Query(
 		ctx context.Context,
 		tableName string,
+		indexName string,
 		limit int32,
 		conditionExpression string,
 		filterExpression string,
