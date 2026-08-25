@@ -138,8 +138,10 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 	}
 
 	var filters []string
+	expressionNames := map[string]string{}
 	if query.Type != nil {
-		filters = append(filters, "type = :type")
+		filters = append(filters, "#type = :type")
+		expressionNames["#type"] = "type"
 		expressionValues[":type"] = string(*query.Type)
 	}
 	if query.CategoryID != nil {
@@ -171,6 +173,7 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 		query.Limit,
 		conditionExpression,
 		filterExpression,
+		expressionNames,
 		expressionValues,
 		startKey,
 		&queryItems,

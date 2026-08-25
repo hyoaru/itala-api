@@ -6,12 +6,14 @@ import (
 
 	categoryrepository "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
+	categoryvo "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 )
 
 type UpdateCategoryRequest struct {
 	UserID string
 	ID     string
 	Name   string
+	Status categoryvo.Status
 }
 
 type UpdateCategoryResponse struct{}
@@ -30,6 +32,7 @@ func (u *UpdateCategory) Execute(ctx context.Context, request UpdateCategoryRequ
 	category := entity.Category{
 		ID:        request.ID,
 		Name:      request.Name,
+		Status:    request.Status,
 		UpdatedAt: now,
 	}
 

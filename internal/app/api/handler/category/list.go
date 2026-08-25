@@ -7,6 +7,7 @@ import (
 	req "github.com/hyoaru/itala-api/internal/app/api/request"
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
 	"github.com/hyoaru/itala-api/internal/features/category"
+	categoryvo "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
@@ -15,6 +16,7 @@ type listCategoriesRequest struct {
 	Limit           int32   `schema:"limit" validate:"omitempty,min=1,max=40"`
 	Name            *string `schema:"name"`
 	TransactionType *string `schema:"transaction_type" validate:"omitempty,oneof=INCOME EXPENSE"`
+	Status          *string `schema:"status" validate:"omitempty,oneof=ACTIVE ARCHIVED ALL"`
 	Cursor          *string `schema:"cursor"`
 }
 
@@ -22,6 +24,7 @@ type listCategoriesResponseItem struct {
 	ID              string    `json:"id"`
 	Name            string    `json:"name"`
 	TransactionType string    `json:"transaction_type"`
+	Status          string    `json:"status"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
@@ -51,11 +54,21 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 		transactionType = &t
 	}
 
+	var status *categoryvo.Status
+	if request.Status == nil {
+		active := categoryvo.StatusActive
+		status = &active
+	} else if *request.Status != "ALL" {
+		s := categoryvo.Status(*request.Status)
+		status = &s
+	}
+
 	useCaseRequest := category.ListCategoriesRequest{
 		UserID:          user.ID,
 		Limit:           limit,
 		Name:            request.Name,
 		TransactionType: transactionType,
+		Status:          status,
 		Cursor:          request.Cursor,
 	}
 
@@ -71,6 +84,7 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 			ID:              category.ID,
 			Name:            category.Name,
 			TransactionType: string(category.TransactionType),
+			Status:          string(category.Status),
 			CreatedAt:       category.CreatedAt,
 			UpdatedAt:       category.UpdatedAt,
 		})

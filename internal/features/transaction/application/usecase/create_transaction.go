@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	account "github.com/hyoaru/itala-api/internal/features/account"
 	category "github.com/hyoaru/itala-api/internal/features/category"
 	transactionrepository "github.com/hyoaru/itala-api/internal/features/transaction/application/port/transactionrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/transaction/domain/entity"
@@ -25,30 +26,47 @@ type CreateTransactionResponse entity.Transaction
 type CreateTransaction struct {
 	transactionRepository transactionrepository.TransactionRepository
 	categoryRepository    category.CategoryRepository
+	accountRepository     account.AccountRepository
 }
 
 func NewCreateTransaction(
 	transactionRepository transactionrepository.TransactionRepository,
 	categoryRepository category.CategoryRepository,
+	accountRepository account.AccountRepository,
 ) *CreateTransaction {
 	return &CreateTransaction{
 		transactionRepository: transactionRepository,
 		categoryRepository:    categoryRepository,
+		accountRepository:     accountRepository,
 	}
 }
 
 func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransactionRequest) (CreateTransactionResponse, error) {
 	id := uuid.Must(uuid.NewV7())
 	now := time.Now().UTC()
-	category, err := u.categoryRepository.FindOne(ctx, request.UserID, request.CategoryID)
+
+	foundCategory, err := u.categoryRepository.FindOne(ctx, request.UserID, request.CategoryID)
 	if err != nil {
 		return CreateTransactionResponse{}, err
+	}
+
+	if foundCategory.Status == category.CategoryStatusArchived {
+		return CreateTransactionResponse{}, category.ErrCategoryArchived
+	}
+
+	foundAccount, err := u.accountRepository.FindOne(ctx, request.UserID, request.AccountID)
+	if err != nil {
+		return CreateTransactionResponse{}, err
+	}
+
+	if foundAccount.Status == account.AccountStatusArchived {
+		return CreateTransactionResponse{}, account.ErrAccountArchived
 	}
 
 	transaction := entity.Transaction{
 		ID:          id.String(),
 		Amount:      request.Amount,
-		Type:        category.TransactionType,
+		Type:        foundCategory.TransactionType,
 		AccountID:   request.AccountID,
 		CategoryID:  request.CategoryID,
 		Description: request.Description,

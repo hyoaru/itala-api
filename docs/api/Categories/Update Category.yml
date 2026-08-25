@@ -15,7 +15,7 @@ http:
       type: path
   body:
     type: json
-    data: '{"name": "Side Hustle"}'
+    data: '{"name": "Side Hustle", "status": "ACTIVE"}'
   auth: inherit
 
 settings:

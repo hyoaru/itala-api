@@ -4,6 +4,7 @@ import (
 	categoryrepositoryport "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
 	categoryusecase "github.com/hyoaru/itala-api/internal/features/category/application/usecase"
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
+	"github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	categoryrepositoryadapter "github.com/hyoaru/itala-api/internal/features/category/infrastructure/adapter/categoryrepository"
 	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
@@ -11,11 +12,19 @@ import (
 
 type Category = entity.Category
 
+type CategoryStatus = valueobject.Status
+
+const (
+	CategoryStatusActive   = valueobject.StatusActive
+	CategoryStatusArchived = valueobject.StatusArchived
+)
+
 type CategoryRepository = categoryrepositoryport.CategoryRepository
 
 var (
 	ErrCategoryExists   = categoryrepositoryport.ErrCategoryExists
 	ErrCategoryNotFound = categoryrepositoryport.ErrCategoryNotFound
+	ErrCategoryArchived = categoryrepositoryport.ErrCategoryArchived
 )
 
 func NewDynamoDBCategoryRepository(client dynamodbclient.DynamoDBClient, tableName string) CategoryRepository {

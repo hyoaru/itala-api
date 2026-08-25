@@ -14,6 +14,7 @@ type getCategoryResponse struct {
 	ID              string    `json:"id"`
 	Name            string    `json:"name"`
 	TransactionType string    `json:"transaction_type"`
+	Status          string    `json:"status"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
@@ -42,6 +43,7 @@ func (h *CategoryHandler) Get(w http.ResponseWriter, r *http.Request) {
 		ID:              entity.ID,
 		Name:            entity.Name,
 		TransactionType: string(entity.TransactionType),
+		Status:          string(entity.Status),
 		CreatedAt:       entity.CreatedAt,
 		UpdatedAt:       entity.UpdatedAt,
 	}

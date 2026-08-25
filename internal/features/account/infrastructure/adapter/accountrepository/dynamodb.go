@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	port "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
+	accountvalueobject "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
@@ -29,6 +30,7 @@ type findAccountItem struct {
 	ID        string                `dynamodbav:"id"`
 	Name      string                `dynamodbav:"name"`
 	Balance   attributevalue.Number `dynamodbav:"balance"`
+	Status    string                `dynamodbav:"status"`
 	CreatedAt string                `dynamodbav:"created_at"`
 	UpdatedAt string                `dynamodbav:"updated_at"`
 }
@@ -37,6 +39,11 @@ func (i findAccountItem) toDomain() (entity.Account, error) {
 	balance, err := valueobject.NewDecimal(i.Balance.String())
 	if err != nil {
 		return entity.Account{}, fmt.Errorf("parse balance: %w", err)
+	}
+
+	status := i.Status
+	if status == "" {
+		status = string(accountvalueobject.StatusActive)
 	}
 
 	createdAt, err := time.Parse(time.RFC3339Nano, i.CreatedAt)
@@ -53,6 +60,7 @@ func (i findAccountItem) toDomain() (entity.Account, error) {
 		ID:        i.ID,
 		Name:      i.Name,
 		Balance:   balance,
+		Status:    accountvalueobject.Status(status),
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
 	}
@@ -71,6 +79,7 @@ func (r *DynamoDBAccountRepository) Create(ctx context.Context, userID string, a
 					"id":         account.ID,
 					"name":       account.Name,
 					"balance":    dynamodbclient.Decimal(account.Balance),
+					"status":     string(account.Status),
 					"created_at": account.CreatedAt.Format(time.RFC3339Nano),
 					"updated_at": account.UpdatedAt.Format(time.RFC3339Nano),
 				},
@@ -104,9 +113,16 @@ func (r *DynamoDBAccountRepository) Find(ctx context.Context, userID string, que
 	expressionValues := map[string]any{":pk": fmt.Sprintf("USER#%s", userID), ":sk": "ACCOUNT#"}
 
 	var filters []string
+	expressionNames := map[string]string{}
 	if query.Name != nil {
-		filters = append(filters, "name = :name")
+		filters = append(filters, "#name = :name")
+		expressionNames["#name"] = "name"
 		expressionValues[":name"] = *query.Name
+	}
+	if query.Status != nil {
+		filters = append(filters, "#status = :status")
+		expressionNames["#status"] = "status"
+		expressionValues[":status"] = string(*query.Status)
 	}
 	filterExpression := strings.Join(filters, " AND ")
 
@@ -129,6 +145,7 @@ func (r *DynamoDBAccountRepository) Find(ctx context.Context, userID string, que
 		query.Limit,
 		conditionExpression,
 		filterExpression,
+		expressionNames,
 		expressionValues,
 		startKey,
 		&queryItems,
@@ -191,9 +208,10 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 	currentKey := map[string]any{"PK": pk, "SK": accountSK}
 
 	if current.Name == account.Name {
-		expression := "SET updated_at = :updated_at"
-		expressionValues := map[string]any{":updated_at": updatedAt}
-		if err := r.client.UpdateItem(ctx, r.tableName, currentKey, expression, nil, expressionValues); err != nil {
+		expression := "SET #status = :status, updated_at = :updated_at"
+		expressionNames := map[string]string{"#status": "status"}
+		expressionValues := map[string]any{":status": string(account.Status), ":updated_at": updatedAt}
+		if err := r.client.UpdateItem(ctx, r.tableName, currentKey, expression, expressionNames, expressionValues); err != nil {
 			return err
 		}
 		return nil
@@ -204,11 +222,12 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 			Update: &dynamodbclient.TransactUpdate{
 				TableName:        r.tableName,
 				Key:              currentKey,
-				UpdateExpression: "SET #name = :name, updated_at = :updated_at",
+				UpdateExpression: "SET #name = :name, #status = :status, updated_at = :updated_at",
 				Condition:        "#name = :old_name",
-				ExpressionNames:  map[string]string{"#name": "name"},
+				ExpressionNames:  map[string]string{"#name": "name", "#status": "status"},
 				ExpressionValues: map[string]any{
 					":name":       account.Name,
+					":status":     string(account.Status),
 					":updated_at": updatedAt,
 					":old_name":   current.Name,
 				},

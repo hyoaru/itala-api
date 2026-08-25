@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	account "github.com/hyoaru/itala-api/internal/features/account"
 	category "github.com/hyoaru/itala-api/internal/features/category"
 	transactionrepositoryport "github.com/hyoaru/itala-api/internal/features/transaction/application/port/transactionrepository"
 	transactionusecase "github.com/hyoaru/itala-api/internal/features/transaction/application/usecase"
@@ -29,8 +30,9 @@ type (
 func NewCreateTransaction(
 	transactionRepository TransactionRepository,
 	categoryRepository category.CategoryRepository,
+	accountRepository account.AccountRepository,
 ) usecase.UseCase[CreateTransactionRequest, CreateTransactionResponse] {
-	return transactionusecase.NewCreateTransaction(transactionRepository, categoryRepository)
+	return transactionusecase.NewCreateTransaction(transactionRepository, categoryRepository, accountRepository)
 }
 
 type (
@@ -50,8 +52,9 @@ type (
 func NewUpdateTransaction(
 	transactionRepository TransactionRepository,
 	categoryRepository category.CategoryRepository,
+	accountRepository account.AccountRepository,
 ) usecase.UseCase[UpdateTransactionRequest, UpdateTransactionResponse] {
-	return transactionusecase.NewUpdateTransaction(transactionRepository, categoryRepository)
+	return transactionusecase.NewUpdateTransaction(transactionRepository, categoryRepository, accountRepository)
 }
 
 type (

@@ -52,6 +52,7 @@ type DynamoDBClient interface {
 		limit int32,
 		conditionExpression string,
 		filterExpression string,
+		expressionNames map[string]string,
 		expressionValues map[string]any,
 		startKey map[string]any,
 		output any,

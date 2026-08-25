@@ -1,11 +1,14 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
 	req "github.com/hyoaru/itala-api/internal/app/api/request"
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
+	account "github.com/hyoaru/itala-api/internal/features/account"
+	category "github.com/hyoaru/itala-api/internal/features/category"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
 	"github.com/hyoaru/itala-api/internal/features/transaction"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
@@ -45,6 +48,16 @@ func (h *TransactionHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err = h.UpdateTransaction.Execute(r.Context(), useCaseRequest); err != nil {
+		if errors.Is(err, category.ErrCategoryArchived) {
+			res.WriteError(w, "RESOURCE_CONFLICT", "category is archived", http.StatusConflict)
+			return
+		}
+
+		if errors.Is(err, account.ErrAccountArchived) {
+			res.WriteError(w, "RESOURCE_CONFLICT", "account is archived", http.StatusConflict)
+			return
+		}
+
 		res.WriteError(w, "INTERNAL_SERVER_ERROR", "internal server error", http.StatusInternalServerError)
 		return
 	}

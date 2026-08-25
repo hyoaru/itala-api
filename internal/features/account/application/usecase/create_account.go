@@ -8,6 +8,7 @@ import (
 
 	accountrepository "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
+	accountvo "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
@@ -39,6 +40,7 @@ func (u *CreateAccount) Execute(ctx context.Context, request CreateAccountReques
 		ID:        id.String(),
 		Name:      request.Name,
 		Balance:   balance,
+		Status:    accountvo.StatusActive,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}

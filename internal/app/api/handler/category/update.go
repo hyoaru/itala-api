@@ -6,11 +6,13 @@ import (
 	req "github.com/hyoaru/itala-api/internal/app/api/request"
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
 	"github.com/hyoaru/itala-api/internal/features/category"
+	categoryvo "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
 )
 
 type updateCategoryRequest struct {
-	Name string `json:"name"`
+	Name   string `json:"name"`
+	Status string `json:"status" validate:"oneof=ACTIVE ARCHIVED"`
 }
 
 func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -27,6 +29,7 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 		ID:     id,
 		Name:   request.Name,
+		Status: categoryvo.Status(request.Status),
 	}
 
 	if _, err := h.UpdateCategory.Execute(r.Context(), useCaseRequest); err != nil {

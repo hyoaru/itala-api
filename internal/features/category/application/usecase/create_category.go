@@ -8,6 +8,7 @@ import (
 
 	categoryrepository "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
+	categoryvo "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
@@ -35,6 +36,7 @@ func (u *CreateCategory) Execute(ctx context.Context, request CreateCategoryRequ
 		ID:              id.String(),
 		Name:            request.Name,
 		TransactionType: request.Type,
+		Status:          categoryvo.StatusActive,
 		CreatedAt:       now,
 		UpdatedAt:       now,
 	}

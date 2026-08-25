@@ -6,11 +6,13 @@ import (
 	req "github.com/hyoaru/itala-api/internal/app/api/request"
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
 	"github.com/hyoaru/itala-api/internal/features/account"
+	"github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
 )
 
 type updateAccountRequest struct {
-	Name string `json:"name"`
+	Name   string `json:"name"`
+	Status string `json:"status" validate:"oneof=ACTIVE ARCHIVED"`
 }
 
 func (h *AccountHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -27,6 +29,7 @@ func (h *AccountHandler) Update(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 		ID:     id,
 		Name:   request.Name,
+		Status: valueobject.Status(request.Status),
 	}
 
 	if _, err := h.UpdateAccount.Execute(r.Context(), useCaseRequest); err != nil {

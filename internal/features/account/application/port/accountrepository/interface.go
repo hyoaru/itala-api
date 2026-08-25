@@ -4,11 +4,13 @@ import (
 	"context"
 
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
+	"github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 )
 
 type AccountQuery struct {
 	Limit  int32
 	Name   *string
+	Status *valueobject.Status
 	Cursor *string
 }
 

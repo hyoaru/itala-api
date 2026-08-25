@@ -168,6 +168,7 @@ func (c *SDKDynamoDBClient) Query(
 	limit int32,
 	conditionExpression string,
 	filterExpression string,
+	expressionNames map[string]string,
 	expressionValues map[string]any,
 	startKey map[string]any,
 	output any,
@@ -182,6 +183,10 @@ func (c *SDKDynamoDBClient) Query(
 		TableName:                 aws.String(tableName),
 		KeyConditionExpression:    aws.String(conditionExpression),
 		ExpressionAttributeValues: parsedExpressionValues,
+	}
+
+	if len(expressionNames) > 0 {
+		queryInput.ExpressionAttributeNames = expressionNames
 	}
 
 	if indexName != "" {

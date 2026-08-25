@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	account "github.com/hyoaru/itala-api/internal/features/account"
 	category "github.com/hyoaru/itala-api/internal/features/category"
 	transactionrepository "github.com/hyoaru/itala-api/internal/features/transaction/application/port/transactionrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/transaction/domain/entity"
@@ -25,29 +26,46 @@ type UpdateTransactionResponse struct{}
 type UpdateTransaction struct {
 	transactionRepository transactionrepository.TransactionRepository
 	categoryRepository    category.CategoryRepository
+	accountRepository     account.AccountRepository
 }
 
 func NewUpdateTransaction(
 	transactionRepository transactionrepository.TransactionRepository,
 	categoryRepository category.CategoryRepository,
+	accountRepository account.AccountRepository,
 ) *UpdateTransaction {
 	return &UpdateTransaction{
 		transactionRepository: transactionRepository,
 		categoryRepository:    categoryRepository,
+		accountRepository:     accountRepository,
 	}
 }
 
 func (u *UpdateTransaction) Execute(ctx context.Context, request UpdateTransactionRequest) (UpdateTransactionResponse, error) {
 	now := time.Now().UTC()
-	category, err := u.categoryRepository.FindOne(ctx, request.UserID, request.CategoryID)
+
+	foundCategory, err := u.categoryRepository.FindOne(ctx, request.UserID, request.CategoryID)
 	if err != nil {
 		return UpdateTransactionResponse{}, err
+	}
+
+	if foundCategory.Status == category.CategoryStatusArchived {
+		return UpdateTransactionResponse{}, category.ErrCategoryArchived
+	}
+
+	foundAccount, err := u.accountRepository.FindOne(ctx, request.UserID, request.AccountID)
+	if err != nil {
+		return UpdateTransactionResponse{}, err
+	}
+
+	if foundAccount.Status == account.AccountStatusArchived {
+		return UpdateTransactionResponse{}, account.ErrAccountArchived
 	}
 
 	transaction := entity.Transaction{
 		ID:          request.ID,
 		Amount:      request.Amount,
-		Type:        category.TransactionType,
+		Type:        foundCategory.TransactionType,
 		AccountID:   request.AccountID,
 		CategoryID:  request.CategoryID,
 		Description: request.Description,

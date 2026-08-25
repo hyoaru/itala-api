@@ -11,6 +11,7 @@ import (
 
 	port "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
+	categoryvo "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
@@ -28,11 +29,17 @@ type findCategoryItem struct {
 	ID              string `dynamodbav:"id"`
 	Name            string `dynamodbav:"name"`
 	TransactionType string `dynamodbav:"transaction_type"`
+	Status          string `dynamodbav:"status"`
 	CreatedAt       string `dynamodbav:"created_at"`
 	UpdatedAt       string `dynamodbav:"updated_at"`
 }
 
 func (i findCategoryItem) toDomain() (entity.Category, error) {
+	status := i.Status
+	if status == "" {
+		status = string(categoryvo.StatusActive)
+	}
+
 	createdAt, err := time.Parse(time.RFC3339Nano, i.CreatedAt)
 	if err != nil {
 		return entity.Category{}, fmt.Errorf("parse created_at: %w", err)
@@ -47,6 +54,7 @@ func (i findCategoryItem) toDomain() (entity.Category, error) {
 		ID:              i.ID,
 		Name:            i.Name,
 		TransactionType: valueobject.TransactionType(i.TransactionType),
+		Status:          categoryvo.Status(status),
 		CreatedAt:       createdAt,
 		UpdatedAt:       updatedAt,
 	}
@@ -65,6 +73,7 @@ func (r *DynamoDBCategoryRepository) Create(ctx context.Context, userID string, 
 					"id":               category.ID,
 					"name":             category.Name,
 					"transaction_type": string(category.TransactionType),
+					"status":           string(category.Status),
 					"created_at":       category.CreatedAt.Format(time.RFC3339Nano),
 					"updated_at":       category.UpdatedAt.Format(time.RFC3339Nano),
 				},
@@ -98,13 +107,20 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 	expressionValues := map[string]any{":pk": fmt.Sprintf("USER#%s", userID), ":sk": "CATEGORY#"}
 
 	var filters []string
+	expressionNames := map[string]string{}
 	if query.TransactionType != nil {
 		filters = append(filters, "transaction_type = :transaction_type")
 		expressionValues[":transaction_type"] = string(*query.TransactionType)
 	}
 	if query.Name != nil {
-		filters = append(filters, "name = :name")
+		filters = append(filters, "#name = :name")
+		expressionNames["#name"] = "name"
 		expressionValues[":name"] = *query.Name
+	}
+	if query.Status != nil {
+		filters = append(filters, "#status = :status")
+		expressionNames["#status"] = "status"
+		expressionValues[":status"] = string(*query.Status)
 	}
 	filterExpression := strings.Join(filters, " AND ")
 
@@ -127,6 +143,7 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 		query.Limit,
 		conditionExpression,
 		filterExpression,
+		expressionNames,
 		expressionValues,
 		startKey,
 		&queryItems,
@@ -189,9 +206,10 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 	currentKey := map[string]any{"PK": pk, "SK": categorySK}
 
 	if current.Name == category.Name {
-		expression := "SET updated_at = :updated_at"
-		expressionValues := map[string]any{":updated_at": updatedAt}
-		if err := r.client.UpdateItem(ctx, r.tableName, currentKey, expression, nil, expressionValues); err != nil {
+		expression := "SET #status = :status, updated_at = :updated_at"
+		expressionNames := map[string]string{"#status": "status"}
+		expressionValues := map[string]any{":status": string(category.Status), ":updated_at": updatedAt}
+		if err := r.client.UpdateItem(ctx, r.tableName, currentKey, expression, expressionNames, expressionValues); err != nil {
 			return err
 		}
 		return nil
@@ -202,11 +220,12 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 			Update: &dynamodbclient.TransactUpdate{
 				TableName:        r.tableName,
 				Key:              currentKey,
-				UpdateExpression: "SET #name = :name, updated_at = :updated_at",
+				UpdateExpression: "SET #name = :name, #status = :status, updated_at = :updated_at",
 				Condition:        "#name = :old_name",
-				ExpressionNames:  map[string]string{"#name": "name"},
+				ExpressionNames:  map[string]string{"#name": "name", "#status": "status"},
 				ExpressionValues: map[string]any{
 					":name":       category.Name,
+					":status":     string(category.Status),
 					":updated_at": category.UpdatedAt.Format(time.RFC3339Nano),
 					":old_name":   current.Name,
 				},
