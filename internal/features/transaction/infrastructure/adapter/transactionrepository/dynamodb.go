@@ -79,24 +79,28 @@ func (i findTransactionItem) toDomain() (entity.Transaction, error) {
 
 func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID string, transaction entity.Transaction) error {
 	occurredAt := transaction.OccurredAt.Format(time.RFC3339Nano)
-	sortKey := fmt.Sprintf("TRANSACTION#%s%s", occurredAt, transaction.ID)
+	gsiSortKey := fmt.Sprintf("TRANSACTION#%s%s", occurredAt, transaction.ID)
 
 	return r.client.PutItem(ctx, r.tableName, map[string]any{
 		// Base table
 		"PK": fmt.Sprintf("USER#%s", userID),
-		"SK": sortKey,
+		"SK": fmt.Sprintf("TRANSACTION#%s", transaction.ID),
 
-		// Type GSI
-		"GSI1PK": fmt.Sprintf("USER#%s#TYPE#%s", userID, string(transaction.Type)),
-		"GSI1SK": sortKey,
+		// Chronological index
+		"GSI1PK": fmt.Sprintf("USER#%s", userID),
+		"GSI1SK": gsiSortKey,
 
-		// Account GSI
-		"GSI2PK": fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, transaction.AccountID),
-		"GSI2SK": sortKey,
+		// Transaction type index
+		"GSI2PK": fmt.Sprintf("USER#%s#TYPE#%s", userID, string(transaction.Type)),
+		"GSI2SK": gsiSortKey,
 
-		// Category GSI
-		"GSI3PK": fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
-		"GSI3SK": sortKey,
+		// Account index
+		"GSI3PK": fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, transaction.AccountID),
+		"GSI3SK": gsiSortKey,
+
+		// Category index
+		"GSI4PK": fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
+		"GSI4SK": gsiSortKey,
 
 		"id":          transaction.ID,
 		"amount":      dynamodbclient.Decimal(transaction.Amount),
@@ -197,12 +201,12 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string, query port.TransactionQuery) (port.TransactionPage, error) {
 	switch {
 	case query.Type != nil:
-		return r.findByIndex(ctx, transactionIndex{PK: "GSI1PK", SK: "GSI1SK"}, fmt.Sprintf("USER#%s#TYPE#%s", userID, *query.Type), query)
+		return r.findByIndex(ctx, transactionIndex{PK: "GSI2PK", SK: "GSI2SK"}, fmt.Sprintf("USER#%s#TYPE#%s", userID, *query.Type), query)
 	case query.AccountID != nil:
-		return r.findByIndex(ctx, transactionIndex{PK: "GSI2PK", SK: "GSI2SK"}, fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, *query.AccountID), query)
+		return r.findByIndex(ctx, transactionIndex{PK: "GSI3PK", SK: "GSI3SK"}, fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, *query.AccountID), query)
 	case query.CategoryID != nil:
-		return r.findByIndex(ctx, transactionIndex{PK: "GSI3PK", SK: "GSI3SK"}, fmt.Sprintf("USER#%s#CATEGORY#%s", userID, *query.CategoryID), query)
+		return r.findByIndex(ctx, transactionIndex{PK: "GSI4PK", SK: "GSI4SK"}, fmt.Sprintf("USER#%s#CATEGORY#%s", userID, *query.CategoryID), query)
 	default:
-		return r.findByIndex(ctx, transactionIndex{PK: "PK", SK: "SK"}, fmt.Sprintf("USER#%s", userID), query)
+		return r.findByIndex(ctx, transactionIndex{PK: "GSI1PK", SK: "GSI1SK"}, fmt.Sprintf("USER#%s", userID), query)
 	}
 }
