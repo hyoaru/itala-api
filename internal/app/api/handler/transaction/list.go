@@ -25,6 +25,7 @@ type listTransactionsResponseItem struct {
 	ID          string    `json:"id"`
 	Amount      string    `json:"amount"`
 	Type        string    `json:"type"`
+	AccountID   string    `json:"account_id"`
 	CategoryID  string    `json:"category_id"`
 	Description string    `json:"description"`
 	OccurredAt  time.Time `json:"occurred_at"`
@@ -92,6 +93,7 @@ func (h *TransactionHandler) List(w http.ResponseWriter, r *http.Request) {
 			ID:          transaction.ID,
 			Amount:      transaction.Amount.String(),
 			Type:        string(transaction.Type),
+			AccountID:   transaction.AccountID,
 			CategoryID:  transaction.CategoryID,
 			Description: transaction.Description,
 			OccurredAt:  transaction.OccurredAt,

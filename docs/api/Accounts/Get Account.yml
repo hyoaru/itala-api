@@ -1,0 +1,22 @@
+info:
+  name: Get Account
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{BASE_URL}}/accounts/:id"
+  headers:
+    - name: Authorization
+      value: Bearer {{ACCESS_TOKEN}}
+  params:
+    - name: id
+      value: "{{ACCOUNT_ID}}"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

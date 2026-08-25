@@ -13,7 +13,10 @@ type Account = entity.Account
 
 type AccountRepository = accountrepositoryport.AccountRepository
 
-var ErrAccountExists = accountrepositoryport.ErrAccountExists
+var (
+	ErrAccountExists   = accountrepositoryport.ErrAccountExists
+	ErrAccountNotFound = accountrepositoryport.ErrAccountNotFound
+)
 
 func NewDynamoDBAccountRepository(client dynamodbclient.DynamoDBClient, tableName string) AccountRepository {
 	r := accountrepositoryadapter.NewDynamoDBAccountRepository(client, tableName)
@@ -45,4 +48,13 @@ type (
 
 func NewUpdateAccount(accountRepository AccountRepository) usecase.UseCase[UpdateAccountRequest, UpdateAccountResponse] {
 	return accountusecase.NewUpdateAccount(accountRepository)
+}
+
+type (
+	GetAccountRequest  = accountusecase.GetAccountRequest
+	GetAccountResponse = accountusecase.GetAccountResponse
+)
+
+func NewGetAccount(accountRepository AccountRepository) usecase.UseCase[GetAccountRequest, GetAccountResponse] {
+	return accountusecase.NewGetAccount(accountRepository)
 }

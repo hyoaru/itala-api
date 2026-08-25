@@ -14,6 +14,8 @@ type Transaction = entity.Transaction
 
 type TransactionRepository = transactionrepositoryport.TransactionRepository
 
+var ErrTransactionNotFound = transactionrepositoryport.ErrTransactionNotFound
+
 func NewDynamoDBTransactionRepository(client dynamodbclient.DynamoDBClient, tableName string) TransactionRepository {
 	r := transactionrepositoryadapter.NewDynamoDBTransactionRepository(client, tableName)
 	return transactionrepositoryadapter.NewDecoratedTransactionRepository(r)
@@ -50,4 +52,13 @@ func NewUpdateTransaction(
 	categoryRepository category.CategoryRepository,
 ) usecase.UseCase[UpdateTransactionRequest, UpdateTransactionResponse] {
 	return transactionusecase.NewUpdateTransaction(transactionRepository, categoryRepository)
+}
+
+type (
+	GetTransactionRequest  = transactionusecase.GetTransactionRequest
+	GetTransactionResponse = transactionusecase.GetTransactionResponse
+)
+
+func NewGetTransaction(transactionRepository TransactionRepository) usecase.UseCase[GetTransactionRequest, GetTransactionResponse] {
+	return transactionusecase.NewGetTransaction(transactionRepository)
 }

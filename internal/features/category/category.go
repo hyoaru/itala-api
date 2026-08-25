@@ -13,7 +13,10 @@ type Category = entity.Category
 
 type CategoryRepository = categoryrepositoryport.CategoryRepository
 
-var ErrCategoryExists = categoryrepositoryport.ErrCategoryExists
+var (
+	ErrCategoryExists   = categoryrepositoryport.ErrCategoryExists
+	ErrCategoryNotFound = categoryrepositoryport.ErrCategoryNotFound
+)
 
 func NewDynamoDBCategoryRepository(client dynamodbclient.DynamoDBClient, tableName string) CategoryRepository {
 	r := categoryrepositoryadapter.NewDynamoDBCategoryRepository(client, tableName)
@@ -45,4 +48,13 @@ type (
 
 func NewUpdateCategory(categoryRepository CategoryRepository) usecase.UseCase[UpdateCategoryRequest, UpdateCategoryResponse] {
 	return categoryusecase.NewUpdateCategory(categoryRepository)
+}
+
+type (
+	GetCategoryRequest  = categoryusecase.GetCategoryRequest
+	GetCategoryResponse = categoryusecase.GetCategoryResponse
+)
+
+func NewGetCategory(categoryRepository CategoryRepository) usecase.UseCase[GetCategoryRequest, GetCategoryResponse] {
+	return categoryusecase.NewGetCategory(categoryRepository)
 }
