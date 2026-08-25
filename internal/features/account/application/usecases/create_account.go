@@ -28,7 +28,7 @@ func NewCreateAccount(accountRepository accountrepository.AccountRepository) *Cr
 }
 
 func (u *CreateAccount) Execute(ctx context.Context, request CreateAccountRequest) (CreateAccountResponse, error) {
-	id := uuid.New()
+	id := uuid.Must(uuid.NewV7())
 	now := time.Now().UTC()
 	balance, err := valueobjects.NewDecimal("0")
 	if err != nil {
