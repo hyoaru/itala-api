@@ -20,9 +20,12 @@ func NewDynamoDBAccountRepository(client dynamodbclient.DynamoDBClient, tableNam
 	return accountrepositoryadapters.NewDecoratedAccountRepository(r)
 }
 
-type CreateAccountRequest = accountusecases.CreateAccountRequest
+type (
+	CreateAccountRequest  = accountusecases.CreateAccountRequest
+	CreateAccountResponse = accountusecases.CreateAccountResponse
+)
 
-func NewCreateAccount(accountRepository AccountRepository) usecases.UseCase[CreateAccountRequest, struct{}] {
+func NewCreateAccount(accountRepository AccountRepository) usecases.UseCase[CreateAccountRequest, CreateAccountResponse] {
 	return accountusecases.NewCreateAccount(accountRepository)
 }
 

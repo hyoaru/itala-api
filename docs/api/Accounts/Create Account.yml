@@ -11,8 +11,19 @@ http:
       value: Bearer {{ACCESS_TOKEN}}
   body:
     type: json
-    data: '{"name": "BPI Savings"}'
+    data: '{"name": "BPI 3224"}'
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const status = res.getStatus();
+
+        if (status >= 200 && status < 300) {
+          const body = res.getBody();
+          bru.setEnvVar("ACCOUNT_ID", body["id"]);
+        }
 
 settings:
   encodeUrl: true

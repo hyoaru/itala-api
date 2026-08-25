@@ -14,6 +14,10 @@ type createAccountRequest struct {
 	Name string `json:"name"`
 }
 
+type createAccountResponse struct {
+	ID string `json:"id"`
+}
+
 func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user := identity.UserFromContext(r.Context())
 
@@ -28,7 +32,8 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Name:   request.Name,
 	}
 
-	if _, err := h.CreateAccount.Execute(r.Context(), useCaseRequest); err != nil {
+	entity, err := h.CreateAccount.Execute(r.Context(), useCaseRequest)
+	if err != nil {
 		if errors.Is(err, account.ErrAccountExists) {
 			res.WriteError(w, "RESOURCE_CONFLICT", "account already exists", http.StatusConflict)
 			return
@@ -38,5 +43,5 @@ func (h *AccountHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	res.WriteJSON(w, http.StatusCreated, createAccountResponse{ID: entity.ID})
 }

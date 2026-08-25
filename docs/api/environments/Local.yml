@@ -2,7 +2,9 @@ name: Local
 variables:
   - name: BASE_URL
     value: localhost:8080
-    description: ""
+  - name: ACCOUNT_ID
+    value: 3ca3bd45-c1b8-481c-99df-a03088fa6384
+  - name: CATEGORY_ID
+    value: 01a036ef-4898-749c-9aee-b23c64197c5d
   - secret: true
     name: ACCESS_TOKEN
-    description: ""

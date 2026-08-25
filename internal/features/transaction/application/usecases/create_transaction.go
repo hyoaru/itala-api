@@ -20,6 +20,8 @@ type CreateTransactionRequest struct {
 	OccurredAt  time.Time
 }
 
+type CreateTransactionResponse entities.Transaction
+
 type CreateTransaction struct {
 	transactionRepository transactionrepository.TransactionRepository
 	categoryRepository    category.CategoryRepository
@@ -35,15 +37,16 @@ func NewCreateTransaction(
 	}
 }
 
-func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransactionRequest) (struct{}, error) {
+func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransactionRequest) (CreateTransactionResponse, error) {
+	id := uuid.Must(uuid.NewV7())
 	now := time.Now().UTC()
 	category, err := u.categoryRepository.FindOne(ctx, request.UserID, request.CategoryID)
 	if err != nil {
-		return struct{}{}, err
+		return CreateTransactionResponse{}, err
 	}
 
 	transaction := entities.Transaction{
-		ID:          uuid.New().String(),
+		ID:          id.String(),
 		Amount:      request.Amount,
 		Type:        category.TransactionType,
 		AccountID:   request.AccountID,
@@ -55,8 +58,8 @@ func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransacti
 	}
 
 	if err := u.transactionRepository.Create(ctx, request.UserID, transaction); err != nil {
-		return struct{}{}, err
+		return CreateTransactionResponse{}, err
 	}
 
-	return struct{}{}, nil
+	return CreateTransactionResponse(transaction), nil
 }

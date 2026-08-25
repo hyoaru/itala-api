@@ -6,6 +6,6 @@ import (
 )
 
 type AccountHandler struct {
-	CreateAccount usecases.UseCase[account.CreateAccountRequest, struct{}]
+	CreateAccount usecases.UseCase[account.CreateAccountRequest, account.CreateAccountResponse]
 	ListAccounts  usecases.UseCase[account.ListAccountsRequest, account.ListAccountsResponse]
 }

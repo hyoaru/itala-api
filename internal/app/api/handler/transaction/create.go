@@ -19,6 +19,10 @@ type createTransactionRequest struct {
 	OccurredAt  time.Time `json:"occurred_at"`
 }
 
+type createTransactionResponse struct {
+	ID string `json:"id"`
+}
+
 func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user := identity.UserFromContext(r.Context())
 
@@ -43,10 +47,11 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		OccurredAt:  request.OccurredAt.UTC(),
 	}
 
-	if _, err := h.CreateTransaction.Execute(r.Context(), useCaseRequest); err != nil {
+	entity, err := h.CreateTransaction.Execute(r.Context(), useCaseRequest)
+	if err != nil {
 		res.WriteError(w, "INTERNAL_SERVER_ERROR", "internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	res.WriteJSON(w, http.StatusCreated, createTransactionResponse{ID: entity.ID})
 }

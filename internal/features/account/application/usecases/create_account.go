@@ -17,6 +17,8 @@ type CreateAccountRequest struct {
 	TransactionType valueobjects.TransactionType
 }
 
+type CreateAccountResponse entities.Account
+
 type CreateAccount struct {
 	accountRepository accountrepository.AccountRepository
 }
@@ -25,12 +27,12 @@ func NewCreateAccount(accountRepository accountrepository.AccountRepository) *Cr
 	return &CreateAccount{accountRepository: accountRepository}
 }
 
-func (u *CreateAccount) Execute(ctx context.Context, request CreateAccountRequest) (struct{}, error) {
+func (u *CreateAccount) Execute(ctx context.Context, request CreateAccountRequest) (CreateAccountResponse, error) {
 	id := uuid.New()
 	now := time.Now().UTC()
 	balance, err := valueobjects.NewDecimal("0")
 	if err != nil {
-		return struct{}{}, err
+		return CreateAccountResponse{}, err
 	}
 
 	account := entities.Account{
@@ -42,8 +44,8 @@ func (u *CreateAccount) Execute(ctx context.Context, request CreateAccountReques
 	}
 
 	if err := u.accountRepository.Create(ctx, request.UserID, account); err != nil {
-		return struct{}{}, err
+		return CreateAccountResponse{}, err
 	}
 
-	return struct{}{}, nil
+	return CreateAccountResponse(account), nil
 }

@@ -17,6 +17,8 @@ type CreateCategoryRequest struct {
 	Type   valueobjects.TransactionType
 }
 
+type CreateCategoryResponse entities.Category
+
 type CreateCategory struct {
 	categoryRepository categoryrepository.CategoryRepository
 }
@@ -25,8 +27,8 @@ func NewCreateCategory(categoryRepository categoryrepository.CategoryRepository)
 	return &CreateCategory{categoryRepository: categoryRepository}
 }
 
-func (u *CreateCategory) Execute(ctx context.Context, request CreateCategoryRequest) (struct{}, error) {
-	id := uuid.New()
+func (u *CreateCategory) Execute(ctx context.Context, request CreateCategoryRequest) (CreateCategoryResponse, error) {
+	id := uuid.Must(uuid.NewV7())
 	now := time.Now().UTC()
 
 	category := entities.Category{
@@ -38,8 +40,8 @@ func (u *CreateCategory) Execute(ctx context.Context, request CreateCategoryRequ
 	}
 
 	if err := u.categoryRepository.Create(ctx, request.UserID, category); err != nil {
-		return struct{}{}, err
+		return CreateCategoryResponse{}, err
 	}
 
-	return struct{}{}, nil
+	return CreateCategoryResponse(category), nil
 }

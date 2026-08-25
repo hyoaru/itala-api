@@ -6,6 +6,6 @@ import (
 )
 
 type TransactionHandler struct {
-	CreateTransaction usecases.UseCase[transaction.CreateTransactionRequest, struct{}]
+	CreateTransaction usecases.UseCase[transaction.CreateTransactionRequest, transaction.CreateTransactionResponse]
 	ListTransactions  usecases.UseCase[transaction.ListTransactionsRequest, transaction.ListTransactionsResponse]
 }

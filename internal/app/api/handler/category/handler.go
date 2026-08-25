@@ -6,6 +6,6 @@ import (
 )
 
 type CategoryHandler struct {
-	CreateCategory usecases.UseCase[category.CreateCategoryRequest, struct{}]
+	CreateCategory usecases.UseCase[category.CreateCategoryRequest, category.CreateCategoryResponse]
 	ListCategories usecases.UseCase[category.ListCategoriesRequest, category.ListCategoriesResponse]
 }

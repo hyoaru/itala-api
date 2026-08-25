@@ -16,6 +16,10 @@ type createCategoryRequest struct {
 	Type string `json:"type" validate:"omitempty,oneof=INCOME EXPENSE"`
 }
 
+type createCategoryResponse struct {
+	ID string `json:"id"`
+}
+
 func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user := identity.UserFromContext(r.Context())
 
@@ -31,7 +35,8 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Type:   valueobjects.TransactionType(request.Type),
 	}
 
-	if _, err := h.CreateCategory.Execute(r.Context(), useCaseRequest); err != nil {
+	entity, err := h.CreateCategory.Execute(r.Context(), useCaseRequest)
+	if err != nil {
 		if errors.Is(err, category.ErrCategoryExists) {
 			res.WriteError(w, "RESOURCE_CONFLICT", "category already exists", http.StatusConflict)
 			return
@@ -41,5 +46,5 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	res.WriteJSON(w, http.StatusCreated, createCategoryResponse{ID: entity.ID})
 }

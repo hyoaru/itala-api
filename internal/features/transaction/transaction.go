@@ -19,12 +19,15 @@ func NewDynamoDBTransactionRepository(client dynamodbclient.DynamoDBClient, tabl
 	return transactionrepositoryadapters.NewDecoratedTransactionRepository(r)
 }
 
-type CreateTransactionRequest = transactionusecases.CreateTransactionRequest
+type (
+	CreateTransactionRequest  = transactionusecases.CreateTransactionRequest
+	CreateTransactionResponse = transactionusecases.CreateTransactionResponse
+)
 
 func NewCreateTransaction(
 	transactionRepository TransactionRepository,
 	categoryRepository category.CategoryRepository,
-) usecases.UseCase[CreateTransactionRequest, struct{}] {
+) usecases.UseCase[CreateTransactionRequest, CreateTransactionResponse] {
 	return transactionusecases.NewCreateTransaction(transactionRepository, categoryRepository)
 }
 
