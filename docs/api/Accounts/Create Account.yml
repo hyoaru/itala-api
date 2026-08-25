@@ -22,7 +22,7 @@ runtime:
 
         if (status >= 200 && status < 300) {
           const body = res.getBody();
-          bru.setEnvVar("ACCOUNT_ID", body["id"]);
+          bru.setVar("ACCOUNT_ID", body["id"]);
         }
 
 settings:

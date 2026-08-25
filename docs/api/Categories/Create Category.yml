@@ -26,7 +26,7 @@ runtime:
 
         if (status >= 200 && status < 300) {
           const body = res.getBody();
-          bru.setEnvVar("CATEGORY_ID", body["id"]);
+          bru.setVar("CATEGORY_ID", body["id"]);
         }
 
 settings:
