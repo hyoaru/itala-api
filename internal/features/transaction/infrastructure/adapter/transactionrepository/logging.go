@@ -46,3 +46,30 @@ func (r *LoggingTransactionRepository) Find(
 
 	return result, nil
 }
+
+func (r *LoggingTransactionRepository) FindOne(ctx context.Context, userID string, id string) (entity.Transaction, error) {
+	logger.Debug("Finding transaction", "id", id)
+
+	result, err := r.inner.FindOne(ctx, userID, id)
+	if err != nil {
+		logger.Warn("Failed to find transaction", "error", err)
+		return result, err
+	}
+
+	logger.Info("Transaction found", "id", id)
+
+	return result, nil
+}
+
+func (r *LoggingTransactionRepository) Update(ctx context.Context, userID string, transaction entity.Transaction) error {
+	logger.Debug("Updating transaction", "amount", transaction.Amount, "type", transaction.Type)
+
+	if err := r.inner.Update(ctx, userID, transaction); err != nil {
+		logger.Warn("Failed to update transaction", "error", err)
+		return err
+	}
+
+	logger.Info("Transaction updated", "amount", transaction.Amount, "type", transaction.Type)
+
+	return nil
+}

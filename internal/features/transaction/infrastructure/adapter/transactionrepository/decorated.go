@@ -30,3 +30,11 @@ func (c *DecoratedTransactionRepository) Find(
 ) (port.TransactionPage, error) {
 	return c.inner.Find(ctx, userID, query)
 }
+
+func (c *DecoratedTransactionRepository) FindOne(ctx context.Context, userID string, id string) (entity.Transaction, error) {
+	return c.inner.FindOne(ctx, userID, id)
+}
+
+func (c *DecoratedTransactionRepository) Update(ctx context.Context, userID string, transaction entity.Transaction) error {
+	return c.inner.Update(ctx, userID, transaction)
+}

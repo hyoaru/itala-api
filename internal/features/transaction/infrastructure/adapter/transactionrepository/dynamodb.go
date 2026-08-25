@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -209,4 +210,28 @@ func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string,
 	default:
 		return r.findByIndex(ctx, transactionIndex{PK: "GSI1PK", SK: "GSI1SK"}, fmt.Sprintf("USER#%s", userID), query)
 	}
+}
+
+func (r *DynamoDBTransactionRepository) FindOne(ctx context.Context, userID string, id string) (entity.Transaction, error) {
+	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("TRANSACTION#%s", id)}
+
+	var findItem *findTransactionItem
+	if err := r.client.GetItem(ctx, r.tableName, key, &findItem); err != nil {
+		if errors.Is(err, dynamodbclient.ErrItemNotFound) {
+			return entity.Transaction{}, port.ErrTransactionNotFound
+		}
+
+		return entity.Transaction{}, fmt.Errorf("find transaction: %w", err)
+	}
+
+	transaction, err := findItem.toDomain()
+	if err != nil {
+		return entity.Transaction{}, fmt.Errorf("parse transaction: %w", err)
+	}
+
+	return transaction, nil
+}
+
+func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID string, transaction entity.Transaction) error {
+	return nil
 }
