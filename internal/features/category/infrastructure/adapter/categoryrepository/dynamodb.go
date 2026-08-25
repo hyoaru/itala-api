@@ -176,3 +176,70 @@ func (r *DynamoDBCategoryRepository) FindOne(ctx context.Context, userID string,
 
 	return category, nil
 }
+
+func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, category entity.Category) error {
+	current, err := r.FindOne(ctx, userID, category.ID)
+	if err != nil {
+		return fmt.Errorf("get current category: %w", err)
+	}
+
+	pk := fmt.Sprintf("USER#%s", userID)
+	categorySK := fmt.Sprintf("CATEGORY#%s", category.ID)
+	updatedAt := category.UpdatedAt.Format(time.RFC3339Nano)
+	currentKey := map[string]any{"PK": pk, "SK": categorySK}
+
+	if current.Name == category.Name {
+		expression := "SET updated_at = :updated_at"
+		expressionValues := map[string]any{":updated_at": updatedAt}
+		if err := r.client.UpdateItem(ctx, r.tableName, currentKey, expression, nil, expressionValues); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	transactItems := []dynamodbclient.TransactWriteItem{
+		{
+			Update: &dynamodbclient.TransactUpdate{
+				TableName:        r.tableName,
+				Key:              currentKey,
+				UpdateExpression: "SET #name = :name, updated_at = :updated_at",
+				Condition:        "#name = :old_name",
+				ExpressionNames:  map[string]string{"#name": "name"},
+				ExpressionValues: map[string]any{
+					":name":       category.Name,
+					":updated_at": category.UpdatedAt.Format(time.RFC3339Nano),
+					":old_name":   current.Name,
+				},
+			},
+		},
+		{
+			Delete: &dynamodbclient.TransactDelete{
+				TableName: r.tableName,
+				Key: map[string]any{
+					"PK": pk,
+					"SK": fmt.Sprintf("CATEGORY_NAME#%s", current.Name),
+				},
+			},
+		},
+		{
+			Put: &dynamodbclient.TransactPut{
+				TableName: r.tableName,
+				Item: map[string]any{
+					"PK":          pk,
+					"SK":          fmt.Sprintf("CATEGORY_NAME#%s", category.Name),
+					"category_id": category.ID,
+				},
+				Condition: "attribute_not_exists(PK)",
+			},
+		},
+	}
+
+	err = r.client.TransactWriteItems(ctx, transactItems)
+	if err != nil {
+		if errors.Is(err, dynamodbclient.ErrItemExists) {
+			return port.ErrCategoryExists
+		}
+	}
+
+	return err
+}

@@ -54,3 +54,16 @@ func (c *LoggingCategoryRepository) FindOne(ctx context.Context, userID string, 
 	logger.Info("Category found", "category_id", categoryID)
 	return result, nil
 }
+
+func (c *LoggingCategoryRepository) Update(ctx context.Context, userID string, category entity.Category) error {
+	logger.Debug("Updating category", "id", category.ID)
+
+	if err := c.inner.Update(ctx, userID, category); err != nil {
+		logger.Warn("Failed to update category", "error", err)
+		return err
+	}
+
+	logger.Info("Category updated", "id", category.ID)
+
+	return nil
+}

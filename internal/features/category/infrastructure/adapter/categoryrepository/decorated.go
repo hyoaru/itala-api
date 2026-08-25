@@ -26,3 +26,7 @@ func (c *DecoratedCategoryRepository) Find(ctx context.Context, userID string, q
 func (c *DecoratedCategoryRepository) FindOne(ctx context.Context, userID string, categoryID string) (entity.Category, error) {
 	return c.inner.FindOne(ctx, userID, categoryID)
 }
+
+func (c *DecoratedCategoryRepository) Update(ctx context.Context, userID string, category entity.Category) error {
+	return c.inner.Update(ctx, userID, category)
+}

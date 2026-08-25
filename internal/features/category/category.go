@@ -37,3 +37,12 @@ type (
 func NewListCategories(categoryRepository CategoryRepository) usecase.UseCase[ListCategoriesRequest, categoryusecase.ListCategoriesResponse] {
 	return categoryusecase.NewListCategories(categoryRepository)
 }
+
+type (
+	UpdateCategoryRequest  = categoryusecase.UpdateCategoryRequest
+	UpdateCategoryResponse = categoryusecase.UpdateCategoryResponse
+)
+
+func NewUpdateCategory(categoryRepository CategoryRepository) usecase.UseCase[UpdateCategoryRequest, UpdateCategoryResponse] {
+	return categoryusecase.NewUpdateCategory(categoryRepository)
+}

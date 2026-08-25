@@ -28,6 +28,7 @@ func NewRouter(
 		r.Use(middleware.Authentication(identityProvider))
 		r.Post("/categories", categoryHandler.Create)
 		r.Get("/categories", categoryHandler.List)
+		r.Put("/categories/{id}", categoryHandler.Update)
 		r.Post("/accounts", accountHandler.Create)
 		r.Get("/accounts", accountHandler.List)
 		r.Post("/transactions", transactionHandler.Create)

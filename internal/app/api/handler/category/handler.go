@@ -8,4 +8,5 @@ import (
 type CategoryHandler struct {
 	CreateCategory usecase.UseCase[category.CreateCategoryRequest, category.CreateCategoryResponse]
 	ListCategories usecase.UseCase[category.ListCategoriesRequest, category.ListCategoriesResponse]
+	UpdateCategory usecase.UseCase[category.UpdateCategoryRequest, category.UpdateCategoryResponse]
 }
