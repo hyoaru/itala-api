@@ -63,14 +63,15 @@ func (i findTransactionItem) toDomain() (entities.Transaction, error) {
 	}
 
 	transaction := entities.Transaction{
-		ID:         i.ID,
-		Amount:     amount,
-		Type:       valueobjects.TransactionType(i.Type),
-		CategoryID: i.CategoryID,
-		AccountID:  i.AccountID,
-		OccurredAt: occurredAt,
-		CreatedAt:  createdAt,
-		UpdatedAt:  updatedAt,
+		ID:          i.ID,
+		Amount:      amount,
+		Type:        valueobjects.TransactionType(i.Type),
+		CategoryID:  i.CategoryID,
+		AccountID:   i.AccountID,
+		Description: i.Description,
+		OccurredAt:  occurredAt,
+		CreatedAt:   createdAt,
+		UpdatedAt:   updatedAt,
 	}
 
 	return transaction, nil
