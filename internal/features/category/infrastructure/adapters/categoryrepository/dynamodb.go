@@ -95,7 +95,7 @@ func (r *DynamoDBCategoryRepository) Create(ctx context.Context, userID string, 
 
 func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, query port.CategoryQuery) (port.CategoryPage, error) {
 	conditionExpression := "PK = :pk AND begins_with(SK, :sk)"
-	expressionValues := map[string]any{":pk": fmt.Sprintf("USER#%s", userID), ":sk": "ACCOUNT#"}
+	expressionValues := map[string]any{":pk": fmt.Sprintf("USER#%s", userID), ":sk": "CATEGORY#"}
 
 	var filters []string
 	if query.TransactionType != nil {
