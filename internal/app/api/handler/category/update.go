@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	req "github.com/hyoaru/itala-api/internal/app/api/request"
@@ -31,11 +30,6 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.UpdateCategory.Execute(r.Context(), useCaseRequest); err != nil {
-		if errors.Is(err, category.ErrCategoryExists) {
-			res.WriteError(w, "RESOURCE_CONFLICT", "category already exists", http.StatusConflict)
-			return
-		}
-
 		res.WriteError(w, "INTERNAL_SERVER_ERROR", "internal server error", http.StatusInternalServerError)
 		return
 	}
