@@ -50,7 +50,7 @@ func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransacti
 		return CreateTransactionResponse{}, err
 	}
 
-	if foundCategory.Status == category.CategoryStatusArchived {
+	if foundCategory.Status == category.StatusArchived {
 		return CreateTransactionResponse{}, category.ErrCategoryArchived
 	}
 
@@ -59,7 +59,7 @@ func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransacti
 		return CreateTransactionResponse{}, err
 	}
 
-	if foundAccount.Status == account.AccountStatusArchived {
+	if foundAccount.Status == account.StatusArchived {
 		return CreateTransactionResponse{}, account.ErrAccountArchived
 	}
 

@@ -9,6 +9,11 @@ http:
   headers:
     - name: Authorization
       value: Bearer {{ACCESS_TOKEN}}
+  params:
+    - name: status
+      value: ARCHIVED
+      type: query
+      disabled: true
   auth: inherit
 
 settings:

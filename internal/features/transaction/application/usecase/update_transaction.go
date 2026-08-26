@@ -49,7 +49,7 @@ func (u *UpdateTransaction) Execute(ctx context.Context, request UpdateTransacti
 		return UpdateTransactionResponse{}, err
 	}
 
-	if foundCategory.Status == category.CategoryStatusArchived {
+	if foundCategory.Status == category.StatusArchived {
 		return UpdateTransactionResponse{}, category.ErrCategoryArchived
 	}
 
@@ -58,7 +58,7 @@ func (u *UpdateTransaction) Execute(ctx context.Context, request UpdateTransacti
 		return UpdateTransactionResponse{}, err
 	}
 
-	if foundAccount.Status == account.AccountStatusArchived {
+	if foundAccount.Status == account.StatusArchived {
 		return UpdateTransactionResponse{}, account.ErrAccountArchived
 	}
 

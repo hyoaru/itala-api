@@ -7,8 +7,7 @@ import (
 	req "github.com/hyoaru/itala-api/internal/app/api/request"
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
 	"github.com/hyoaru/itala-api/internal/features/category"
-	categoryvo "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
-	identity "github.com/hyoaru/itala-api/internal/features/identity"
+	"github.com/hyoaru/itala-api/internal/features/identity"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
@@ -54,12 +53,12 @@ func (h *CategoryHandler) List(w http.ResponseWriter, r *http.Request) {
 		transactionType = &t
 	}
 
-	var status *categoryvo.Status
+	var status *category.Status
 	if request.Status == nil {
-		active := categoryvo.StatusActive
+		active := category.StatusActive
 		status = &active
 	} else if *request.Status != "ALL" {
-		s := categoryvo.Status(*request.Status)
+		s := category.Status(*request.Status)
 		status = &s
 	}
 

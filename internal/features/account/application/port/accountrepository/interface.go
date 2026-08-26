@@ -4,7 +4,7 @@ import (
 	"context"
 
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
-	"github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
+	valueobject "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 )
 
 type AccountQuery struct {

@@ -4,19 +4,20 @@ import (
 	accountrepositoryport "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	accountusecase "github.com/hyoaru/itala-api/internal/features/account/application/usecase"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
-	"github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
+	valueobject "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 	accountrepositoryadapter "github.com/hyoaru/itala-api/internal/features/account/infrastructure/adapter/accountrepository"
 	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
 
-type Account = entity.Account
-
-type AccountStatus = valueobject.Status
+type (
+	Account = entity.Account
+	Status  = valueobject.Status
+)
 
 const (
-	AccountStatusActive   = valueobject.StatusActive
-	AccountStatusArchived = valueobject.StatusArchived
+	StatusActive   = valueobject.StatusActive
+	StatusArchived = valueobject.StatusArchived
 )
 
 type AccountRepository = accountrepositoryport.AccountRepository

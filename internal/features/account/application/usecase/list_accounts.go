@@ -5,14 +5,14 @@ import (
 
 	accountrepository "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
-	accountvo "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
+	valueobject "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 )
 
 type ListAccountsRequest struct {
 	UserID string
 	Limit  int32
 	Name   *string
-	Status *accountvo.Status
+	Status *valueobject.Status
 	Cursor *string
 }
 

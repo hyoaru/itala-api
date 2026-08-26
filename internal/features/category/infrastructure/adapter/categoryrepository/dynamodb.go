@@ -11,7 +11,7 @@ import (
 
 	port "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
-	categoryvo "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
+	categoryvalueobject "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
@@ -35,11 +35,6 @@ type findCategoryItem struct {
 }
 
 func (i findCategoryItem) toDomain() (entity.Category, error) {
-	status := i.Status
-	if status == "" {
-		status = string(categoryvo.StatusActive)
-	}
-
 	createdAt, err := time.Parse(time.RFC3339Nano, i.CreatedAt)
 	if err != nil {
 		return entity.Category{}, fmt.Errorf("parse created_at: %w", err)
@@ -54,7 +49,7 @@ func (i findCategoryItem) toDomain() (entity.Category, error) {
 		ID:              i.ID,
 		Name:            i.Name,
 		TransactionType: valueobject.TransactionType(i.TransactionType),
-		Status:          categoryvo.Status(status),
+		Status:          categoryvalueobject.Status(i.Status),
 		CreatedAt:       createdAt,
 		UpdatedAt:       updatedAt,
 	}

@@ -6,7 +6,7 @@ import (
 
 	accountrepository "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
-	"github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
+	valueobject "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 )
 
 type UpdateAccountRequest struct {

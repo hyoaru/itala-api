@@ -26,18 +26,27 @@ func NewRouter(
 
 	mux.Group(func(r chi.Router) {
 		r.Use(middleware.Authentication(identityProvider))
-		r.Post("/categories", categoryHandler.Create)
-		r.Get("/categories", categoryHandler.List)
-		r.Get("/categories/{id}", categoryHandler.Get)
-		r.Put("/categories/{id}", categoryHandler.Update)
-		r.Post("/accounts", accountHandler.Create)
-		r.Get("/accounts", accountHandler.List)
-		r.Get("/accounts/{id}", accountHandler.Get)
-		r.Put("/accounts/{id}", accountHandler.Update)
-		r.Post("/transactions", transactionHandler.Create)
-		r.Get("/transactions", transactionHandler.List)
-		r.Get("/transactions/{id}", transactionHandler.Get)
-		r.Put("/transactions/{id}", transactionHandler.Update)
+
+		r.Route("/categories", func(r chi.Router) {
+			r.Post("/", categoryHandler.Create)
+			r.Get("/", categoryHandler.List)
+			r.Get("/{id}", categoryHandler.Get)
+			r.Put("/{id}", categoryHandler.Update)
+		})
+
+		r.Route("/accounts", func(r chi.Router) {
+			r.Post("/", accountHandler.Create)
+			r.Get("/", accountHandler.List)
+			r.Get("/{id}", accountHandler.Get)
+			r.Put("/{id}", accountHandler.Update)
+		})
+
+		r.Route("/transactions", func(r chi.Router) {
+			r.Post("/", transactionHandler.Create)
+			r.Get("/", transactionHandler.List)
+			r.Get("/{id}", transactionHandler.Get)
+			r.Put("/{id}", transactionHandler.Update)
+		})
 	})
 
 	return mux

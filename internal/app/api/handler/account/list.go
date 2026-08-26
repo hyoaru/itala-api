@@ -7,8 +7,7 @@ import (
 	req "github.com/hyoaru/itala-api/internal/app/api/request"
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
 	"github.com/hyoaru/itala-api/internal/features/account"
-	"github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
-	identity "github.com/hyoaru/itala-api/internal/features/identity"
+	"github.com/hyoaru/itala-api/internal/features/identity"
 )
 
 type listAccountsRequest struct {
@@ -46,12 +45,12 @@ func (h *AccountHandler) List(w http.ResponseWriter, r *http.Request) {
 		limit = 40
 	}
 
-	var status *valueobject.Status
+	var status *account.Status
 	if request.Status == nil {
-		active := valueobject.StatusActive
+		active := account.StatusActive
 		status = &active
 	} else if *request.Status != "ALL" {
-		s := valueobject.Status(*request.Status)
+		s := account.Status(*request.Status)
 		status = &s
 	}
 

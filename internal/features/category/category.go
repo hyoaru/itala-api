@@ -10,13 +10,14 @@ import (
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
 
-type Category = entity.Category
-
-type CategoryStatus = valueobject.Status
+type (
+	Category = entity.Category
+	Status   = valueobject.Status
+)
 
 const (
-	CategoryStatusActive   = valueobject.StatusActive
-	CategoryStatusArchived = valueobject.StatusArchived
+	StatusActive   = valueobject.StatusActive
+	StatusArchived = valueobject.StatusArchived
 )
 
 type CategoryRepository = categoryrepositoryport.CategoryRepository

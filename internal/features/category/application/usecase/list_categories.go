@@ -5,7 +5,7 @@ import (
 
 	categoryrepository "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
-	categoryvo "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
+	categoryvalueobject "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
@@ -14,7 +14,7 @@ type ListCategoriesRequest struct {
 	Limit           int32
 	Name            *string
 	TransactionType *valueobject.TransactionType
-	Status          *categoryvo.Status
+	Status          *categoryvalueobject.Status
 	Cursor          *string
 }
 

@@ -41,11 +41,6 @@ func (i findAccountItem) toDomain() (entity.Account, error) {
 		return entity.Account{}, fmt.Errorf("parse balance: %w", err)
 	}
 
-	status := i.Status
-	if status == "" {
-		status = string(accountvalueobject.StatusActive)
-	}
-
 	createdAt, err := time.Parse(time.RFC3339Nano, i.CreatedAt)
 	if err != nil {
 		return entity.Account{}, fmt.Errorf("parse created_at: %w", err)
@@ -60,7 +55,7 @@ func (i findAccountItem) toDomain() (entity.Account, error) {
 		ID:        i.ID,
 		Name:      i.Name,
 		Balance:   balance,
-		Status:    accountvalueobject.Status(status),
+		Status:    accountvalueobject.Status(i.Status),
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
 	}

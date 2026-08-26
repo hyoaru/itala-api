@@ -7,7 +7,7 @@ import (
 	req "github.com/hyoaru/itala-api/internal/app/api/request"
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
 	"github.com/hyoaru/itala-api/internal/features/category"
-	identity "github.com/hyoaru/itala-api/internal/features/identity"
+	"github.com/hyoaru/itala-api/internal/features/identity"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
