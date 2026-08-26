@@ -58,6 +58,15 @@ func NewUpdateTransaction(
 }
 
 type (
+	DeleteTransactionRequest  = transactionusecase.DeleteTransactionRequest
+	DeleteTransactionResponse = transactionusecase.DeleteTransactionResponse
+)
+
+func NewDeleteTransaction(transactionRepository TransactionRepository) usecase.UseCase[DeleteTransactionRequest, DeleteTransactionResponse] {
+	return transactionusecase.NewDeleteTransaction(transactionRepository)
+}
+
+type (
 	GetTransactionRequest  = transactionusecase.GetTransactionRequest
 	GetTransactionResponse = transactionusecase.GetTransactionResponse
 )

@@ -73,3 +73,16 @@ func (r *LoggingTransactionRepository) Update(ctx context.Context, userID string
 
 	return nil
 }
+
+func (r *LoggingTransactionRepository) Delete(ctx context.Context, userID string, id string) error {
+	logger.Debug("Deleting transaction", "id", id)
+
+	if err := r.inner.Delete(ctx, userID, id); err != nil {
+		logger.Warn("Failed to delete transaction", "error", err)
+		return err
+	}
+
+	logger.Info("Transaction deleted", "id", id)
+
+	return nil
+}

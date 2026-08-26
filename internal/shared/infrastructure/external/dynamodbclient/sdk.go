@@ -296,3 +296,30 @@ func (c *SDKDynamoDBClient) UpdateItem(
 
 	return nil
 }
+
+func (c *SDKDynamoDBClient) DeleteItem(ctx context.Context, tableName string, key map[string]any, condition string) error {
+	parsedKey, err := attributevalue.MarshalMap(key)
+	if err != nil {
+		return fmt.Errorf("marshal key: %w", err)
+	}
+
+	deleteItemInput := &dynamodb.DeleteItemInput{
+		TableName: aws.String(tableName),
+		Key:       parsedKey,
+	}
+
+	if condition != "" {
+		deleteItemInput.ConditionExpression = aws.String(condition)
+	}
+
+	_, err = c.client.DeleteItem(ctx, deleteItemInput)
+	if err != nil {
+		if _, ok := errors.AsType[*types.ConditionalCheckFailedException](err); ok {
+			return ErrConditionFailed
+		}
+
+		return err
+	}
+
+	return nil
+}

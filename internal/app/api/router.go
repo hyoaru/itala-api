@@ -50,6 +50,7 @@ func NewRouter(
 			r.Get("/", transactionHandler.List)
 			r.Get("/{id}", transactionHandler.Get)
 			r.Put("/{id}", transactionHandler.Update)
+			r.Delete("/{id}", transactionHandler.Delete)
 		})
 	})
 

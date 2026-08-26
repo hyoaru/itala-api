@@ -38,3 +38,7 @@ func (c *DecoratedTransactionRepository) FindOne(ctx context.Context, userID str
 func (c *DecoratedTransactionRepository) Update(ctx context.Context, userID string, transaction entity.Transaction) error {
 	return c.inner.Update(ctx, userID, transaction)
 }
+
+func (c *DecoratedTransactionRepository) Delete(ctx context.Context, userID string, id string) error {
+	return c.inner.Delete(ctx, userID, id)
+}

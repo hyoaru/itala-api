@@ -10,4 +10,5 @@ type TransactionHandler struct {
 	ListTransactions  usecase.UseCase[transaction.ListTransactionsRequest, transaction.ListTransactionsResponse]
 	GetTransaction    usecase.UseCase[transaction.GetTransactionRequest, transaction.GetTransactionResponse]
 	UpdateTransaction usecase.UseCase[transaction.UpdateTransactionRequest, transaction.UpdateTransactionResponse]
+	DeleteTransaction usecase.UseCase[transaction.DeleteTransactionRequest, transaction.DeleteTransactionResponse]
 }

@@ -304,3 +304,19 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 
 	return nil
 }
+
+func (r *DynamoDBTransactionRepository) Delete(ctx context.Context, userID string, id string) error {
+	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("TRANSACTION#%s", id)}
+	condition := "attribute_exists(PK)"
+
+	err := r.client.DeleteItem(ctx, r.tableName, key, condition)
+	if err != nil {
+		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
+			return port.ErrTransactionNotFound
+		}
+
+		return fmt.Errorf("delete transaction: %w", err)
+	}
+
+	return nil
+}
