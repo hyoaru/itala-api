@@ -1,0 +1,22 @@
+info:
+  name: Restore Category
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{BASE_URL}}/categories/:id/restore"
+  headers:
+    - name: Authorization
+      value: Bearer {{ACCESS_TOKEN}}
+  params:
+    - name: id
+      value: "{{CATEGORY_ID}}"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

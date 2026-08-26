@@ -42,6 +42,7 @@ type DynamoDBClient interface {
 		tableName string,
 		key map[string]any,
 		expression string,
+		condition string,
 		expressionNames map[string]string,
 		expressionValues map[string]any,
 	) error

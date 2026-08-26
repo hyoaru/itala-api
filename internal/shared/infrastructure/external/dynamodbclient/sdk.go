@@ -83,7 +83,7 @@ func (c *SDKDynamoDBClient) TransactWriteItems(ctx context.Context, items []Tran
 		return err
 	}
 
-	return err
+	return nil
 }
 
 func (c *SDKDynamoDBClient) toTransactWriteItem(writeItem TransactWriteItem) (types.TransactWriteItem, error) {
@@ -259,6 +259,7 @@ func (c *SDKDynamoDBClient) UpdateItem(
 	tableName string,
 	key map[string]any,
 	expression string,
+	condition string,
 	expressionNames map[string]string,
 	expressionValues map[string]any,
 ) error {
@@ -272,14 +273,24 @@ func (c *SDKDynamoDBClient) UpdateItem(
 		return fmt.Errorf("marshal expression values: %w", err)
 	}
 
-	_, err = c.client.UpdateItem(ctx, &dynamodb.UpdateItemInput{
+	updateItemInput := &dynamodb.UpdateItemInput{
 		TableName:                 aws.String(tableName),
 		Key:                       parsedKey,
 		UpdateExpression:          aws.String(expression),
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: parsedExpressionValues,
-	})
+	}
+
+	if condition != "" {
+		updateItemInput.ConditionExpression = aws.String(condition)
+	}
+
+	_, err = c.client.UpdateItem(ctx, updateItemInput)
 	if err != nil {
+		if _, ok := errors.AsType[*types.ConditionalCheckFailedException](err); ok {
+			return ErrConditionFailed
+		}
+
 		return err
 	}
 

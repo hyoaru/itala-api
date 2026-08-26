@@ -52,6 +52,15 @@ func NewListAccounts(accountRepository AccountRepository) usecase.UseCase[ListAc
 }
 
 type (
+	GetAccountRequest  = accountusecase.GetAccountRequest
+	GetAccountResponse = accountusecase.GetAccountResponse
+)
+
+func NewGetAccount(accountRepository AccountRepository) usecase.UseCase[GetAccountRequest, GetAccountResponse] {
+	return accountusecase.NewGetAccount(accountRepository)
+}
+
+type (
 	UpdateAccountRequest  = accountusecase.UpdateAccountRequest
 	UpdateAccountResponse = accountusecase.UpdateAccountResponse
 )
@@ -61,10 +70,19 @@ func NewUpdateAccount(accountRepository AccountRepository) usecase.UseCase[Updat
 }
 
 type (
-	GetAccountRequest  = accountusecase.GetAccountRequest
-	GetAccountResponse = accountusecase.GetAccountResponse
+	ArchiveAccountRequest  = accountusecase.ArchiveAccountRequest
+	ArchiveAccountResponse = accountusecase.ArchiveAccountResponse
 )
 
-func NewGetAccount(accountRepository AccountRepository) usecase.UseCase[GetAccountRequest, GetAccountResponse] {
-	return accountusecase.NewGetAccount(accountRepository)
+func NewArchiveAccount(accountRepository AccountRepository) usecase.UseCase[ArchiveAccountRequest, ArchiveAccountResponse] {
+	return accountusecase.NewArchiveAccount(accountRepository)
+}
+
+type (
+	RestoreAccountRequest  = accountusecase.RestoreAccountRequest
+	RestoreAccountResponse = accountusecase.RestoreAccountResponse
+)
+
+func NewRestoreAccount(accountRepository AccountRepository) usecase.UseCase[RestoreAccountRequest, RestoreAccountResponse] {
+	return accountusecase.NewRestoreAccount(accountRepository)
 }

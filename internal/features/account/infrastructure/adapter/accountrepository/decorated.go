@@ -30,3 +30,11 @@ func (c *DecoratedAccountRepository) FindOne(ctx context.Context, userID string,
 func (c *DecoratedAccountRepository) Update(ctx context.Context, userID string, account entity.Account) error {
 	return c.inner.Update(ctx, userID, account)
 }
+
+func (c *DecoratedAccountRepository) Archive(ctx context.Context, userID string, id string) error {
+	return c.inner.Archive(ctx, userID, id)
+}
+
+func (c *DecoratedAccountRepository) Restore(ctx context.Context, userID string, id string) error {
+	return c.inner.Restore(ctx, userID, id)
+}

@@ -27,16 +27,20 @@ func New(addr string) *App {
 	transactionRepository := transaction.NewDynamoDBTransactionRepository(dynamodbClient, dynamodbTableName)
 
 	categoryHandler := &handler.CategoryHandler{
-		CreateCategory: category.NewCreateCategory(categoryRepository),
-		ListCategories: category.NewListCategories(categoryRepository),
-		GetCategory:    category.NewGetCategory(categoryRepository),
-		UpdateCategory: category.NewUpdateCategory(categoryRepository),
+		CreateCategory:  category.NewCreateCategory(categoryRepository),
+		ListCategories:  category.NewListCategories(categoryRepository),
+		GetCategory:     category.NewGetCategory(categoryRepository),
+		UpdateCategory:  category.NewUpdateCategory(categoryRepository),
+		ArchiveCategory: category.NewArchiveCategory(categoryRepository),
+		RestoreCategory: category.NewRestoreCategory(categoryRepository),
 	}
 	accountHandler := &handler.AccountHandler{
-		CreateAccount: account.NewCreateAccount(accountRepository),
-		ListAccounts:  account.NewListAccounts(accountRepository),
-		GetAccount:    account.NewGetAccount(accountRepository),
-		UpdateAccount: account.NewUpdateAccount(accountRepository),
+		CreateAccount:  account.NewCreateAccount(accountRepository),
+		ListAccounts:   account.NewListAccounts(accountRepository),
+		GetAccount:     account.NewGetAccount(accountRepository),
+		UpdateAccount:  account.NewUpdateAccount(accountRepository),
+		ArchiveAccount: account.NewArchiveAccount(accountRepository),
+		RestoreAccount: account.NewRestoreAccount(accountRepository),
 	}
 	transactionHandler := &handler.TransactionHandler{
 		CreateTransaction: transaction.NewCreateTransaction(transactionRepository, categoryRepository, accountRepository),

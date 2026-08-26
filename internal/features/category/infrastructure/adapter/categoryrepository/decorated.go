@@ -30,3 +30,11 @@ func (c *DecoratedCategoryRepository) FindOne(ctx context.Context, userID string
 func (c *DecoratedCategoryRepository) Update(ctx context.Context, userID string, category entity.Category) error {
 	return c.inner.Update(ctx, userID, category)
 }
+
+func (c *DecoratedCategoryRepository) Archive(ctx context.Context, userID string, categoryID string) error {
+	return c.inner.Archive(ctx, userID, categoryID)
+}
+
+func (c *DecoratedCategoryRepository) Restore(ctx context.Context, userID string, categoryID string) error {
+	return c.inner.Restore(ctx, userID, categoryID)
+}

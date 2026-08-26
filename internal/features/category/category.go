@@ -68,3 +68,21 @@ type (
 func NewGetCategory(categoryRepository CategoryRepository) usecase.UseCase[GetCategoryRequest, GetCategoryResponse] {
 	return categoryusecase.NewGetCategory(categoryRepository)
 }
+
+type (
+	ArchiveCategoryRequest  = categoryusecase.ArchiveCategoryRequest
+	ArchiveCategoryResponse = categoryusecase.ArchiveCategoryResponse
+)
+
+func NewArchiveCategory(categoryRepository CategoryRepository) usecase.UseCase[ArchiveCategoryRequest, ArchiveCategoryResponse] {
+	return categoryusecase.NewArchiveCategory(categoryRepository)
+}
+
+type (
+	RestoreCategoryRequest  = categoryusecase.RestoreCategoryRequest
+	RestoreCategoryResponse = categoryusecase.RestoreCategoryResponse
+)
+
+func NewRestoreCategory(categoryRepository CategoryRepository) usecase.UseCase[RestoreCategoryRequest, RestoreCategoryResponse] {
+	return categoryusecase.NewRestoreCategory(categoryRepository)
+}

@@ -206,7 +206,7 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 		expression := "SET #status = :status, updated_at = :updated_at"
 		expressionNames := map[string]string{"#status": "status"}
 		expressionValues := map[string]any{":status": string(account.Status), ":updated_at": updatedAt}
-		if err := r.client.UpdateItem(ctx, r.tableName, currentKey, expression, expressionNames, expressionValues); err != nil {
+		if err := r.client.UpdateItem(ctx, r.tableName, currentKey, expression, "", expressionNames, expressionValues); err != nil {
 			return err
 		}
 		return nil
@@ -258,4 +258,68 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 	}
 
 	return err
+}
+
+func (r *DynamoDBAccountRepository) Archive(ctx context.Context, userID string, id string) error {
+	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("ACCOUNT#%s", id)}
+	expression := "SET #status = :status, updated_at = :updated_at"
+	condition := "#status = :active"
+	expressionNames := map[string]string{"#status": "status"}
+	expressionValues := map[string]any{
+		":status":     string(accountvalueobject.StatusArchived),
+		":active":     string(accountvalueobject.StatusActive),
+		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
+	}
+
+	err := r.client.UpdateItem(ctx, r.tableName, key, expression, condition, expressionNames, expressionValues)
+	if err == nil {
+		return nil
+	}
+
+	if !errors.Is(err, dynamodbclient.ErrConditionFailed) {
+		return err
+	}
+
+	current, err := r.FindOne(ctx, userID, id)
+	if err != nil {
+		return fmt.Errorf("get current account: %w", err)
+	}
+
+	if current.Status == accountvalueobject.StatusArchived {
+		return nil
+	}
+
+	return fmt.Errorf("archive account: unexpected status %q", current.Status)
+}
+
+func (r *DynamoDBAccountRepository) Restore(ctx context.Context, userID string, id string) error {
+	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("ACCOUNT#%s", id)}
+	expression := "SET #status = :status, updated_at = :updated_at"
+	condition := "#status = :archived"
+	expressionNames := map[string]string{"#status": "status"}
+	expressionValues := map[string]any{
+		":status":     string(accountvalueobject.StatusActive),
+		":archived":   string(accountvalueobject.StatusArchived),
+		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
+	}
+
+	err := r.client.UpdateItem(ctx, r.tableName, key, expression, condition, expressionNames, expressionValues)
+	if err == nil {
+		return nil
+	}
+
+	if !errors.Is(err, dynamodbclient.ErrConditionFailed) {
+		return err
+	}
+
+	current, err := r.FindOne(ctx, userID, id)
+	if err != nil {
+		return fmt.Errorf("get current account: %w", err)
+	}
+
+	if current.Status == accountvalueobject.StatusActive {
+		return nil
+	}
+
+	return fmt.Errorf("restore account: unexpected status %q", current.Status)
 }

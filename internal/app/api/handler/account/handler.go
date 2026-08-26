@@ -6,8 +6,10 @@ import (
 )
 
 type AccountHandler struct {
-	CreateAccount usecase.UseCase[account.CreateAccountRequest, account.CreateAccountResponse]
-	ListAccounts  usecase.UseCase[account.ListAccountsRequest, account.ListAccountsResponse]
-	GetAccount    usecase.UseCase[account.GetAccountRequest, account.GetAccountResponse]
-	UpdateAccount usecase.UseCase[account.UpdateAccountRequest, account.UpdateAccountResponse]
+	CreateAccount  usecase.UseCase[account.CreateAccountRequest, account.CreateAccountResponse]
+	ListAccounts   usecase.UseCase[account.ListAccountsRequest, account.ListAccountsResponse]
+	GetAccount     usecase.UseCase[account.GetAccountRequest, account.GetAccountResponse]
+	UpdateAccount  usecase.UseCase[account.UpdateAccountRequest, account.UpdateAccountResponse]
+	ArchiveAccount usecase.UseCase[account.ArchiveAccountRequest, account.ArchiveAccountResponse]
+	RestoreAccount usecase.UseCase[account.RestoreAccountRequest, account.RestoreAccountResponse]
 }

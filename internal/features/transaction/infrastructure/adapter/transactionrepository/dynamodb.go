@@ -298,7 +298,7 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 		":gsi4sk":      gsiSortKey,
 	}
 
-	if err := r.client.UpdateItem(ctx, r.tableName, key, expression, expressionNames, expressionValues); err != nil {
+	if err := r.client.UpdateItem(ctx, r.tableName, key, expression, "", expressionNames, expressionValues); err != nil {
 		return fmt.Errorf("update transaction: %w", err)
 	}
 

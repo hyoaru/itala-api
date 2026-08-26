@@ -26,4 +26,6 @@ type CategoryRepository interface {
 	Find(ctx context.Context, userID string, query CategoryQuery) (CategoryPage, error)
 	FindOne(ctx context.Context, userID string, categoryID string) (entity.Category, error)
 	Update(ctx context.Context, userID string, category entity.Category) error
+	Archive(ctx context.Context, userID string, categoryID string) error
+	Restore(ctx context.Context, userID string, categoryID string) error
 }
