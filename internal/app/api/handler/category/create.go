@@ -12,8 +12,8 @@ import (
 )
 
 type createCategoryRequest struct {
-	Name string `json:"name"`
-	Type string `json:"type" validate:"omitempty,oneof=INCOME EXPENSE"`
+	Name            string `json:"name"`
+	TransactionType string `json:"transaction_type" validate:"omitempty,oneof=INCOME EXPENSE"`
 }
 
 type createCategoryResponse struct {
@@ -32,7 +32,7 @@ func (h *CategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	useCaseRequest := category.CreateCategoryRequest{
 		UserID: user.ID,
 		Name:   request.Name,
-		Type:   valueobject.TransactionType(request.Type),
+		Type:   valueobject.TransactionType(request.TransactionType),
 	}
 
 	entity, err := h.CreateCategory.Execute(r.Context(), useCaseRequest)
