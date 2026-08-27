@@ -15,11 +15,11 @@ import (
 )
 
 type createTransactionRequest struct {
-	Amount      string    `json:"amount"`
-	AccountID   string    `json:"account_id"`
-	CategoryID  string    `json:"category_id"`
-	Description string    `json:"description"`
-	OccurredAt  time.Time `json:"occurred_at"`
+	Amount      string    `json:"amount" validate:"required"`
+	AccountID   string    `json:"account_id" validate:"required"`
+	CategoryID  string    `json:"category_id" validate:"required"`
+	Description string    `json:"description" validate:"required"`
+	OccurredAt  time.Time `json:"occurred_at" validate:"required"`
 }
 
 type createTransactionResponse struct {

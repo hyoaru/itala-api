@@ -11,7 +11,7 @@ import (
 )
 
 type createAccountRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required"`
 }
 
 type createAccountResponse struct {

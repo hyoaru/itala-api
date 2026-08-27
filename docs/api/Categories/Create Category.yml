@@ -14,7 +14,7 @@ http:
     data: |-
       {
         "name": "Salary",
-        "type": "INCOME"
+        "transaction_type": "INCOME"
       }
   auth: inherit
 

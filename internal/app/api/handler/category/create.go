@@ -12,8 +12,8 @@ import (
 )
 
 type createCategoryRequest struct {
-	Name            string `json:"name"`
-	TransactionType string `json:"transaction_type" validate:"omitempty,oneof=INCOME EXPENSE"`
+	Name            string `json:"name" validate:"required"`
+	TransactionType string `json:"transaction_type" validate:"required,oneof=INCOME EXPENSE"`
 }
 
 type createCategoryResponse struct {

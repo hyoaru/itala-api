@@ -10,8 +10,8 @@ import (
 )
 
 type updateCategoryRequest struct {
-	Name   string `json:"name"`
-	Status string `json:"status" validate:"oneof=ACTIVE ARCHIVED"`
+	Name   string `json:"name" validate:"required"`
+	Status string `json:"status" validate:"required,oneof=ACTIVE ARCHIVED"`
 }
 
 func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
