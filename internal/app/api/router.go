@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	handler "github.com/hyoaru/itala-api/internal/app/api/handler"
 	middleware "github.com/hyoaru/itala-api/internal/app/api/middleware"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
@@ -18,6 +19,24 @@ func NewRouter(
 	transactionHandler handler.TransactionHandler,
 ) http.Handler {
 	mux := chi.NewRouter()
+
+	mux.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{"http://localhost:5173"},
+		AllowedMethods: []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodPut,
+			http.MethodPatch,
+			http.MethodDelete,
+			http.MethodOptions,
+		},
+		AllowedHeaders: []string{
+			"Accept",
+			"Authorization",
+			"Content-Type",
+		},
+		MaxAge: 300,
+	}))
 
 	mux.Use(chiMiddleware.RequestID)
 	mux.Use(chiMiddleware.Logger)
