@@ -42,6 +42,7 @@ type DynamoDBClient interface {
 		tableName string,
 		indexName string,
 		limit int32,
+		scanIndexForward bool,
 		conditionExpression string,
 		filterExpression string,
 		expressionNames map[string]string,

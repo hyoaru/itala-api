@@ -171,6 +171,7 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 		r.tableName,
 		index.Name,
 		query.Limit,
+		false,
 		conditionExpression,
 		filterExpression,
 		expressionNames,

@@ -136,6 +136,7 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 		r.tableName,
 		"",
 		query.Limit,
+		true,
 		conditionExpression,
 		filterExpression,
 		expressionNames,
