@@ -11,7 +11,6 @@ type PutItemInput struct {
 type GetItemInput struct {
 	TableName string
 	Key       map[string]any
-	Output    any
 }
 
 type QueryInput struct {
@@ -24,7 +23,6 @@ type QueryInput struct {
 	ExpressionAttributeNames  map[string]string
 	ExpressionAttributeValues map[string]any
 	ExclusiveStartKey         map[string]any
-	Output                    any
 }
 
 type QueryOutput struct {
@@ -80,8 +78,8 @@ type TransactWriteItem struct {
 type DynamoDBClient interface {
 	PutItem(ctx context.Context, input *PutItemInput) error
 	TransactWriteItems(ctx context.Context, input *TransactWriteItemsInput) error
-	GetItem(ctx context.Context, input *GetItemInput) error
-	Query(ctx context.Context, input *QueryInput) (QueryOutput, error)
+	GetItem(ctx context.Context, input *GetItemInput, output any) error
+	Query(ctx context.Context, input *QueryInput, output any) (QueryOutput, error)
 	UpdateItem(ctx context.Context, input *UpdateItemInput) error
 	DeleteItem(ctx context.Context, input *DeleteItemInput) error
 }

@@ -157,7 +157,7 @@ func (c *SDKDynamoDBClient) toTransactDelete(operation *TransactDelete) (types.T
 	return types.TransactWriteItem{Delete: item}, nil
 }
 
-func (c *SDKDynamoDBClient) Query(ctx context.Context, input *QueryInput) (QueryOutput, error) {
+func (c *SDKDynamoDBClient) Query(ctx context.Context, input *QueryInput, output any) (QueryOutput, error) {
 	queryInput := &dynamodb.QueryInput{
 		TableName:                aws.String(input.TableName),
 		Limit:                    input.Limit,
@@ -189,7 +189,7 @@ func (c *SDKDynamoDBClient) Query(ctx context.Context, input *QueryInput) (Query
 		return QueryOutput{}, fmt.Errorf("query items: %w", err)
 	}
 
-	if err := attributevalue.UnmarshalListOfMaps(queryOutput.Items, input.Output); err != nil {
+	if err := attributevalue.UnmarshalListOfMaps(queryOutput.Items, output); err != nil {
 		return QueryOutput{}, fmt.Errorf("unmarshal items: %w", err)
 	}
 
@@ -205,7 +205,7 @@ func (c *SDKDynamoDBClient) Query(ctx context.Context, input *QueryInput) (Query
 	return QueryOutput{LastEvaluatedKey: lastEvaluatedKey}, nil
 }
 
-func (c *SDKDynamoDBClient) GetItem(ctx context.Context, input *GetItemInput) error {
+func (c *SDKDynamoDBClient) GetItem(ctx context.Context, input *GetItemInput, output any) error {
 	parsedKey, err := attributevalue.MarshalMap(input.Key)
 	if err != nil {
 		return fmt.Errorf("marshal key: %w", err)
@@ -226,7 +226,7 @@ func (c *SDKDynamoDBClient) GetItem(ctx context.Context, input *GetItemInput) er
 		return ErrItemNotFound
 	}
 
-	if err := attributevalue.UnmarshalMap(getItemOutput.Item, input.Output); err != nil {
+	if err := attributevalue.UnmarshalMap(getItemOutput.Item, output); err != nil {
 		return fmt.Errorf("unmarshal item: %w", err)
 	}
 
