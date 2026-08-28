@@ -5,9 +5,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
@@ -22,19 +22,26 @@ func NewDynamoDBIdempotencyStore(client dynamodbclient.DynamoDBClient, tableName
 }
 
 type acquireItem struct {
-	Status   string    `dynamodbav:"status"`
-	Result   string    `dynamodbav:"result"`
-	LockedAt time.Time `dynamodbav:"locked_at"`
+	Status string `dynamodbav:"status"`
+	Result string `dynamodbav:"result"`
 }
 
 func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, error) {
-	parts := strings.SplitN(key, ":", 2)
-	pk := fmt.Sprintf("IDEMPOTENCY#%s", hex.EncodeToString([]byte(parts[0])))
-	sk := fmt.Sprintf("#%s", parts[1])
+	pk := fmt.Sprintf("IDEMPOTENCY#%s", hex.EncodeToString([]byte(key)))
+	sk := "#LOCK"
+	now := time.Now().UTC()
+	ttlTimestamp := now.Add(time.Duration(ttl) * time.Second)
 
 	err := i.client.PutItem(ctx, &dynamodbclient.PutItemInput{
 		TableName: i.tableName,
-		Item:      map[string]any{"PK": pk, "SK": sk},
+		Item: map[string]any{
+			"PK":     pk,
+			"SK":     sk,
+			"status": string(IdempotencyStatusLocked),
+			"ttl":    ttlTimestamp.Unix(),
+		},
+		ConditionExpression:       aws.String("attribute_not_exists(PK) or ttl <= :now"),
+		ExpressionAttributeValues: map[string]any{":now": now.Unix()},
 	})
 
 	if err == nil {
@@ -42,25 +49,31 @@ func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl 
 	}
 
 	if _, ok := errors.AsType[*types.ConditionalCheckFailedException](err); !ok {
-		return IdempotencyLock{Status: IdempotencyStatusLocked, Result: nil}, nil
+		return IdempotencyLock{}, fmt.Errorf("acquire: %w", err)
 	}
 
 	var item acquireItem
-	if err = i.client.GetItem(ctx, &dynamodbclient.GetItemInput{
+	if err := i.client.GetItem(ctx, &dynamodbclient.GetItemInput{
 		TableName: i.tableName,
 		Key:       map[string]any{"PK": pk, "SK": sk},
-		Output:    &item,
-	}); err != nil {
+	}, &item); err != nil {
 		return IdempotencyLock{}, fmt.Errorf("get item: %w", err)
 	}
 
-	return IdempotencyLock{Status: IdempotencyStatusCompleted, Result: item.Result}, nil
+	switch IdempotencyStatus(item.Status) {
+	case IdempotencyStatusCompleted:
+		return IdempotencyLock{Status: IdempotencyStatusCompleted, Result: item.Result}, nil
+	case IdempotencyStatusLocked:
+		return IdempotencyLock{Status: IdempotencyStatusLocked, Result: nil}, nil
+	default:
+		return IdempotencyLock{}, fmt.Errorf("invalid idempotency status: %q", item.Status)
+	}
 }
 
-func (i *DynamoDBIdempotencyStore) Commit(ctx context.Context, key string, ttl uint16) error {
+func (i *DynamoDBIdempotencyStore) Commit(ctx context.Context, key string, result any) error {
 	return nil
 }
 
-func (i *DynamoDBIdempotencyStore) Release(ctx context.Context, key string, ttl uint16) error {
+func (i *DynamoDBIdempotencyStore) Release(ctx context.Context, key string) error {
 	return nil
 }

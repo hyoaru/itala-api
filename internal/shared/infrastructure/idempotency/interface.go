@@ -1,6 +1,8 @@
 package idempotency
 
-import "context"
+import (
+	"context"
+)
 
 type IdempotencyStatus string
 
