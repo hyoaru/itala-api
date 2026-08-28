@@ -169,19 +169,26 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 		}
 	}
 
-	var queryItems []findTransactionItem
-	metadata, err := r.client.Query(ctx, &dynamodbclient.QueryInput{
+	queryInput := &dynamodbclient.QueryInput{
 		TableName:                 r.tableName,
 		IndexName:                 aws.String(index.Name),
 		Limit:                     aws.Int32(query.Limit),
 		ScanIndexForward:          aws.Bool(false),
 		KeyConditionExpression:    aws.String(conditionExpression),
-		FilterExpression:          aws.String(filterExpression),
-		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 		ExclusiveStartKey:         startKey,
-		Output:                    &queryItems,
-	})
+	}
+
+	if filterExpression != "" {
+		queryInput.FilterExpression = aws.String(filterExpression)
+	}
+
+	if len(expressionNames) > 0 {
+		queryInput.ExpressionAttributeNames = expressionNames
+	}
+
+	var queryItems []findTransactionItem
+	metadata, err := r.client.Query(ctx, queryInput, &queryItems)
 	if err != nil {
 		return port.TransactionPage{}, fmt.Errorf("find transactions: %w", err)
 	}
@@ -245,7 +252,7 @@ func (r *DynamoDBTransactionRepository) FindOne(ctx context.Context, userID stri
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("TRANSACTION#%s", id)}
 
 	var findItem findTransactionItem
-	if err := r.client.GetItem(ctx, &dynamodbclient.GetItemInput{TableName: r.tableName, Key: key, Output: &findItem}); err != nil {
+	if err := r.client.GetItem(ctx, &dynamodbclient.GetItemInput{TableName: r.tableName, Key: key}, &findItem); err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemNotFound) {
 			return entity.Transaction{}, port.ErrTransactionNotFound
 		}

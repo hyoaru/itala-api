@@ -47,11 +47,22 @@ func (c *SDKDynamoDBClient) PutItem(ctx context.Context, input *PutItemInput) er
 		conditionExpression = *input.ConditionExpression
 	}
 
-	_, err = c.client.PutItem(ctx, &dynamodb.PutItemInput{
+	putItemInput := &dynamodb.PutItemInput{
 		TableName:           aws.String(input.TableName),
 		Item:                av,
 		ConditionExpression: aws.String(conditionExpression),
-	})
+	}
+
+	if input.ExpressionAttributeValues != nil {
+		parsedExpressionValues, err := attributevalue.MarshalMap(input.ExpressionAttributeValues)
+		if err != nil {
+			return fmt.Errorf("marshal expression values: %w", err)
+		}
+
+		putItemInput.ExpressionAttributeValues = parsedExpressionValues
+	}
+
+	_, err = c.client.PutItem(ctx, putItemInput)
 	if err != nil {
 		if _, ok := errors.AsType[*types.ConditionalCheckFailedException](err); ok {
 			return ErrItemExists

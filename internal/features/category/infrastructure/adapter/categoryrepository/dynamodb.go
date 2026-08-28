@@ -131,18 +131,25 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 		}
 	}
 
-	var queryItems []findCategoryItem
-	metadata, err := r.client.Query(ctx, &dynamodbclient.QueryInput{
+	queryInput := &dynamodbclient.QueryInput{
 		TableName:                 r.tableName,
 		Limit:                     aws.Int32(query.Limit),
 		ScanIndexForward:          aws.Bool(true),
 		KeyConditionExpression:    aws.String(conditionExpression),
-		FilterExpression:          aws.String(filterExpression),
-		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 		ExclusiveStartKey:         startKey,
-		Output:                    &queryItems,
-	})
+	}
+
+	if filterExpression != "" {
+		queryInput.FilterExpression = aws.String(filterExpression)
+	}
+
+	if len(expressionNames) > 0 {
+		queryInput.ExpressionAttributeNames = expressionNames
+	}
+
+	var queryItems []findCategoryItem
+	metadata, err := r.client.Query(ctx, queryInput, &queryItems)
 	if err != nil {
 		return port.CategoryPage{}, fmt.Errorf("find categories: %w", err)
 	}
@@ -173,7 +180,7 @@ func (r *DynamoDBCategoryRepository) FindOne(ctx context.Context, userID string,
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("CATEGORY#%s", categoryID)}
 
 	var findItem findCategoryItem
-	if err := r.client.GetItem(ctx, &dynamodbclient.GetItemInput{TableName: r.tableName, Key: key, Output: &findItem}); err != nil {
+	if err := r.client.GetItem(ctx, &dynamodbclient.GetItemInput{TableName: r.tableName, Key: key}, &findItem); err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemNotFound) {
 			return entity.Category{}, port.ErrCategoryNotFound
 		}

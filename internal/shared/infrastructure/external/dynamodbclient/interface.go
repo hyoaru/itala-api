@@ -3,9 +3,10 @@ package dynamodbclient
 import "context"
 
 type PutItemInput struct {
-	TableName           string
-	Item                map[string]any
-	ConditionExpression *string
+	TableName                 string
+	Item                      map[string]any
+	ConditionExpression       *string
+	ExpressionAttributeValues map[string]any
 }
 
 type GetItemInput struct {
