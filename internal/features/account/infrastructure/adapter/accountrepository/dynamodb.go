@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	port "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
@@ -88,7 +89,7 @@ func (r *DynamoDBAccountRepository) Create(ctx context.Context, userID string, a
 					"SK":         fmt.Sprintf("ACCOUNT_NAME#%s", account.Name),
 					"account_id": account.ID,
 				},
-				ConditionExpression: "attribute_not_exists(PK)",
+				ConditionExpression: aws.String("attribute_not_exists(PK)"),
 			},
 		},
 	}
@@ -135,10 +136,10 @@ func (r *DynamoDBAccountRepository) Find(ctx context.Context, userID string, que
 	var queryItems []findAccountItem
 	metadata, err := r.client.Query(ctx, &dynamodbclient.QueryInput{
 		TableName:                 r.tableName,
-		Limit:                     query.Limit,
-		ScanIndexForward:          true,
-		KeyConditionExpression:    conditionExpression,
-		FilterExpression:          filterExpression,
+		Limit:                     aws.Int32(query.Limit),
+		ScanIndexForward:          aws.Bool(true),
+		KeyConditionExpression:    aws.String(conditionExpression),
+		FilterExpression:          aws.String(filterExpression),
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 		ExclusiveStartKey:         startKey,
@@ -223,7 +224,7 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 				TableName:                r.tableName,
 				Key:                      currentKey,
 				UpdateExpression:         "SET #name = :name, #status = :status, updated_at = :updated_at",
-				ConditionExpression:      "#name = :old_name",
+				ConditionExpression:      aws.String("#name = :old_name"),
 				ExpressionAttributeNames: map[string]string{"#name": "name", "#status": "status"},
 				ExpressionAttributeValues: map[string]any{
 					":name":       account.Name,
@@ -250,7 +251,7 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 					"SK":         fmt.Sprintf("ACCOUNT_NAME#%s", account.Name),
 					"account_id": account.ID,
 				},
-				ConditionExpression: "attribute_not_exists(PK)",
+				ConditionExpression: aws.String("attribute_not_exists(PK)"),
 			},
 		},
 	}
@@ -280,7 +281,7 @@ func (r *DynamoDBAccountRepository) Archive(ctx context.Context, userID string, 
 		TableName:                 r.tableName,
 		Key:                       key,
 		UpdateExpression:          expression,
-		ConditionExpression:       condition,
+		ConditionExpression:       aws.String(condition),
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 	})
@@ -319,7 +320,7 @@ func (r *DynamoDBAccountRepository) Restore(ctx context.Context, userID string, 
 		TableName:                 r.tableName,
 		Key:                       key,
 		UpdateExpression:          expression,
-		ConditionExpression:       condition,
+		ConditionExpression:       aws.String(condition),
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 	})

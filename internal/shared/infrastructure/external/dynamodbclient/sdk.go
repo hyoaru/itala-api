@@ -42,9 +42,9 @@ func (c *SDKDynamoDBClient) PutItem(ctx context.Context, input *PutItemInput) er
 		return fmt.Errorf("marshal map: %w", err)
 	}
 
-	conditionExpression := input.ConditionExpression
-	if conditionExpression == "" {
-		conditionExpression = "attribute_not_exists(PK)"
+	conditionExpression := "attribute_not_exists(PK)"
+	if input.ConditionExpression != nil {
+		conditionExpression = *input.ConditionExpression
 	}
 
 	_, err = c.client.PutItem(ctx, &dynamodb.PutItemInput{
@@ -111,12 +111,9 @@ func (c *SDKDynamoDBClient) toTransactPut(operation *TransactPut) (types.Transac
 	}
 
 	item := &types.Put{
-		TableName: aws.String(operation.TableName),
-		Item:      parsedItem,
-	}
-
-	if operation.ConditionExpression != "" {
-		item.ConditionExpression = aws.String(operation.ConditionExpression)
+		TableName:           aws.String(operation.TableName),
+		Item:                parsedItem,
+		ConditionExpression: operation.ConditionExpression,
 	}
 
 	return types.TransactWriteItem{Put: item}, nil
@@ -137,12 +134,9 @@ func (c *SDKDynamoDBClient) toTransactUpdate(operation *TransactUpdate) (types.T
 		TableName:                 aws.String(operation.TableName),
 		Key:                       key,
 		UpdateExpression:          aws.String(operation.UpdateExpression),
+		ConditionExpression:       operation.ConditionExpression,
 		ExpressionAttributeValues: values,
 		ExpressionAttributeNames:  operation.ExpressionAttributeNames,
-	}
-
-	if operation.ConditionExpression != "" {
-		item.ConditionExpression = aws.String(operation.ConditionExpression)
 	}
 
 	return types.TransactWriteItem{Update: item}, nil
@@ -155,37 +149,31 @@ func (c *SDKDynamoDBClient) toTransactDelete(operation *TransactDelete) (types.T
 	}
 
 	item := &types.Delete{
-		TableName: aws.String(operation.TableName),
-		Key:       key,
-	}
-
-	if operation.ConditionExpression != "" {
-		item.ConditionExpression = aws.String(operation.ConditionExpression)
+		TableName:           aws.String(operation.TableName),
+		Key:                 key,
+		ConditionExpression: operation.ConditionExpression,
 	}
 
 	return types.TransactWriteItem{Delete: item}, nil
 }
 
 func (c *SDKDynamoDBClient) Query(ctx context.Context, input *QueryInput) (QueryOutput, error) {
-	parsedExpressionValues, err := attributevalue.MarshalMap(input.ExpressionAttributeValues)
-	if err != nil {
-		return QueryOutput{}, fmt.Errorf("marshal expression values: %w", err)
-	}
-
 	queryInput := &dynamodb.QueryInput{
-		Limit:                     aws.Int32(input.Limit),
-		TableName:                 aws.String(input.TableName),
-		KeyConditionExpression:    aws.String(input.KeyConditionExpression),
-		ExpressionAttributeValues: parsedExpressionValues,
-		ScanIndexForward:          aws.Bool(input.ScanIndexForward),
+		TableName:                aws.String(input.TableName),
+		Limit:                    input.Limit,
+		ScanIndexForward:         input.ScanIndexForward,
+		KeyConditionExpression:   input.KeyConditionExpression,
+		IndexName:                input.IndexName,
+		FilterExpression:         input.FilterExpression,
+		ExpressionAttributeNames: input.ExpressionAttributeNames,
 	}
 
-	if len(input.ExpressionAttributeNames) > 0 {
-		queryInput.ExpressionAttributeNames = input.ExpressionAttributeNames
-	}
-
-	if input.IndexName != "" {
-		queryInput.IndexName = aws.String(input.IndexName)
+	if input.ExpressionAttributeValues != nil {
+		parsedExpressionValues, err := attributevalue.MarshalMap(input.ExpressionAttributeValues)
+		if err != nil {
+			return QueryOutput{}, fmt.Errorf("marshal expression values: %w", err)
+		}
+		queryInput.ExpressionAttributeValues = parsedExpressionValues
 	}
 
 	if input.ExclusiveStartKey != nil {
@@ -194,10 +182,6 @@ func (c *SDKDynamoDBClient) Query(ctx context.Context, input *QueryInput) (Query
 			return QueryOutput{}, fmt.Errorf("marshal start key: %w", err)
 		}
 		queryInput.ExclusiveStartKey = parsedStartKey
-	}
-
-	if len(input.FilterExpression) > 0 {
-		queryInput.FilterExpression = aws.String(input.FilterExpression)
 	}
 
 	queryOutput, err := c.client.Query(ctx, queryInput)
@@ -264,12 +248,9 @@ func (c *SDKDynamoDBClient) UpdateItem(ctx context.Context, input *UpdateItemInp
 		TableName:                 aws.String(input.TableName),
 		Key:                       parsedKey,
 		UpdateExpression:          aws.String(input.UpdateExpression),
+		ConditionExpression:       input.ConditionExpression,
 		ExpressionAttributeNames:  input.ExpressionAttributeNames,
 		ExpressionAttributeValues: parsedExpressionValues,
-	}
-
-	if input.ConditionExpression != "" {
-		updateItemInput.ConditionExpression = aws.String(input.ConditionExpression)
 	}
 
 	_, err = c.client.UpdateItem(ctx, updateItemInput)
@@ -291,12 +272,9 @@ func (c *SDKDynamoDBClient) DeleteItem(ctx context.Context, input *DeleteItemInp
 	}
 
 	deleteItemInput := &dynamodb.DeleteItemInput{
-		TableName: aws.String(input.TableName),
-		Key:       parsedKey,
-	}
-
-	if input.ConditionExpression != "" {
-		deleteItemInput.ConditionExpression = aws.String(input.ConditionExpression)
+		TableName:           aws.String(input.TableName),
+		Key:                 parsedKey,
+		ConditionExpression: input.ConditionExpression,
 	}
 
 	_, err = c.client.DeleteItem(ctx, deleteItemInput)

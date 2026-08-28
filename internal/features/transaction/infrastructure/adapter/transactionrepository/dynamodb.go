@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	port "github.com/hyoaru/itala-api/internal/features/transaction/application/port/transactionrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/transaction/domain/entity"
@@ -171,11 +172,11 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 	var queryItems []findTransactionItem
 	metadata, err := r.client.Query(ctx, &dynamodbclient.QueryInput{
 		TableName:                 r.tableName,
-		IndexName:                 index.Name,
-		Limit:                     query.Limit,
-		ScanIndexForward:          false,
-		KeyConditionExpression:    conditionExpression,
-		FilterExpression:          filterExpression,
+		IndexName:                 aws.String(index.Name),
+		Limit:                     aws.Int32(query.Limit),
+		ScanIndexForward:          aws.Bool(false),
+		KeyConditionExpression:    aws.String(conditionExpression),
+		FilterExpression:          aws.String(filterExpression),
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 		ExclusiveStartKey:         startKey,
@@ -321,7 +322,7 @@ func (r *DynamoDBTransactionRepository) Delete(ctx context.Context, userID strin
 	err := r.client.DeleteItem(ctx, &dynamodbclient.DeleteItemInput{
 		TableName:           r.tableName,
 		Key:                 key,
-		ConditionExpression: condition,
+		ConditionExpression: aws.String(condition),
 	})
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrConditionFailed) {

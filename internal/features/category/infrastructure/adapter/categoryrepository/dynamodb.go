@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	port "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
 	categoryvalueobject "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
@@ -82,7 +83,7 @@ func (r *DynamoDBCategoryRepository) Create(ctx context.Context, userID string, 
 					"SK":          fmt.Sprintf("CATEGORY_NAME#%s", category.Name),
 					"category_id": category.ID,
 				},
-				ConditionExpression: "attribute_not_exists(PK)",
+				ConditionExpression: aws.String("attribute_not_exists(PK)"),
 			},
 		},
 	}
@@ -133,10 +134,10 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 	var queryItems []findCategoryItem
 	metadata, err := r.client.Query(ctx, &dynamodbclient.QueryInput{
 		TableName:                 r.tableName,
-		Limit:                     query.Limit,
-		ScanIndexForward:          true,
-		KeyConditionExpression:    conditionExpression,
-		FilterExpression:          filterExpression,
+		Limit:                     aws.Int32(query.Limit),
+		ScanIndexForward:          aws.Bool(true),
+		KeyConditionExpression:    aws.String(conditionExpression),
+		FilterExpression:          aws.String(filterExpression),
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 		ExclusiveStartKey:         startKey,
@@ -221,7 +222,7 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 				TableName:                r.tableName,
 				Key:                      currentKey,
 				UpdateExpression:         "SET #name = :name, #status = :status, updated_at = :updated_at",
-				ConditionExpression:      "#name = :old_name",
+				ConditionExpression:      aws.String("#name = :old_name"),
 				ExpressionAttributeNames: map[string]string{"#name": "name", "#status": "status"},
 				ExpressionAttributeValues: map[string]any{
 					":name":       category.Name,
@@ -248,7 +249,7 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 					"SK":          fmt.Sprintf("CATEGORY_NAME#%s", category.Name),
 					"category_id": category.ID,
 				},
-				ConditionExpression: "attribute_not_exists(PK)",
+				ConditionExpression: aws.String("attribute_not_exists(PK)"),
 			},
 		},
 	}
@@ -278,7 +279,7 @@ func (r *DynamoDBCategoryRepository) Archive(ctx context.Context, userID string,
 		TableName:                 r.tableName,
 		Key:                       key,
 		UpdateExpression:          expression,
-		ConditionExpression:       condition,
+		ConditionExpression:       aws.String(condition),
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 	})
@@ -317,7 +318,7 @@ func (r *DynamoDBCategoryRepository) Restore(ctx context.Context, userID string,
 		TableName:                 r.tableName,
 		Key:                       key,
 		UpdateExpression:          expression,
-		ConditionExpression:       condition,
+		ConditionExpression:       aws.String(condition),
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 	})

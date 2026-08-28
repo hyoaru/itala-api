@@ -5,7 +5,7 @@ import "context"
 type PutItemInput struct {
 	TableName           string
 	Item                map[string]any
-	ConditionExpression string
+	ConditionExpression *string
 }
 
 type GetItemInput struct {
@@ -16,11 +16,11 @@ type GetItemInput struct {
 
 type QueryInput struct {
 	TableName                 string
-	IndexName                 string
-	Limit                     int32
-	ScanIndexForward          bool
-	KeyConditionExpression    string
-	FilterExpression          string
+	IndexName                 *string
+	Limit                     *int32
+	ScanIndexForward          *bool
+	KeyConditionExpression    *string
+	FilterExpression          *string
 	ExpressionAttributeNames  map[string]string
 	ExpressionAttributeValues map[string]any
 	ExclusiveStartKey         map[string]any
@@ -35,7 +35,7 @@ type UpdateItemInput struct {
 	TableName                 string
 	Key                       map[string]any
 	UpdateExpression          string
-	ConditionExpression       string
+	ConditionExpression       *string
 	ExpressionAttributeNames  map[string]string
 	ExpressionAttributeValues map[string]any
 }
@@ -43,7 +43,7 @@ type UpdateItemInput struct {
 type DeleteItemInput struct {
 	TableName           string
 	Key                 map[string]any
-	ConditionExpression string
+	ConditionExpression *string
 }
 
 type TransactWriteItemsInput struct {
@@ -53,7 +53,7 @@ type TransactWriteItemsInput struct {
 type TransactPut struct {
 	TableName           string
 	Item                map[string]any
-	ConditionExpression string
+	ConditionExpression *string
 }
 
 type TransactUpdate struct {
@@ -62,13 +62,13 @@ type TransactUpdate struct {
 	UpdateExpression          string
 	ExpressionAttributeValues map[string]any
 	ExpressionAttributeNames  map[string]string
-	ConditionExpression       string
+	ConditionExpression       *string
 }
 
 type TransactDelete struct {
 	TableName           string
 	Key                 map[string]any
-	ConditionExpression string
+	ConditionExpression *string
 }
 
 type TransactWriteItem struct {
