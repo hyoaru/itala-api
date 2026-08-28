@@ -88,12 +88,12 @@ func (r *DynamoDBAccountRepository) Create(ctx context.Context, userID string, a
 					"SK":         fmt.Sprintf("ACCOUNT_NAME#%s", account.Name),
 					"account_id": account.ID,
 				},
-				Condition: "attribute_not_exists(PK)",
+				ConditionExpression: "attribute_not_exists(PK)",
 			},
 		},
 	}
 
-	err := r.client.TransactWriteItems(ctx, transactItems)
+	err := r.client.TransactWriteItems(ctx, &dynamodbclient.TransactWriteItemsInput{TransactItems: transactItems})
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemExists) {
 			return port.ErrAccountExists
@@ -133,19 +133,17 @@ func (r *DynamoDBAccountRepository) Find(ctx context.Context, userID string, que
 	}
 
 	var queryItems []findAccountItem
-	metadata, err := r.client.Query(
-		ctx,
-		r.tableName,
-		"",
-		query.Limit,
-		true,
-		conditionExpression,
-		filterExpression,
-		expressionNames,
-		expressionValues,
-		startKey,
-		&queryItems,
-	)
+	metadata, err := r.client.Query(ctx, &dynamodbclient.QueryInput{
+		TableName:                 r.tableName,
+		Limit:                     query.Limit,
+		ScanIndexForward:          true,
+		KeyConditionExpression:    conditionExpression,
+		FilterExpression:          filterExpression,
+		ExpressionAttributeNames:  expressionNames,
+		ExpressionAttributeValues: expressionValues,
+		ExclusiveStartKey:         startKey,
+		Output:                    &queryItems,
+	})
 	if err != nil {
 		return port.AccountPage{}, fmt.Errorf("find accounts: %w", err)
 	}
@@ -176,7 +174,7 @@ func (r *DynamoDBAccountRepository) FindOne(ctx context.Context, userID string, 
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("ACCOUNT#%s", id)}
 
 	var findItem findAccountItem
-	if err := r.client.GetItem(ctx, r.tableName, key, &findItem); err != nil {
+	if err := r.client.GetItem(ctx, &dynamodbclient.GetItemInput{TableName: r.tableName, Key: key, Output: &findItem}); err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemNotFound) {
 			return entity.Account{}, port.ErrAccountNotFound
 		}
@@ -207,7 +205,13 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 		expression := "SET #status = :status, updated_at = :updated_at"
 		expressionNames := map[string]string{"#status": "status"}
 		expressionValues := map[string]any{":status": string(account.Status), ":updated_at": updatedAt}
-		if err := r.client.UpdateItem(ctx, r.tableName, currentKey, expression, "", expressionNames, expressionValues); err != nil {
+		if err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
+			TableName:                 r.tableName,
+			Key:                       currentKey,
+			UpdateExpression:          expression,
+			ExpressionAttributeNames:  expressionNames,
+			ExpressionAttributeValues: expressionValues,
+		}); err != nil {
 			return err
 		}
 		return nil
@@ -216,12 +220,12 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 	transactItems := []dynamodbclient.TransactWriteItem{
 		{
 			Update: &dynamodbclient.TransactUpdate{
-				TableName:        r.tableName,
-				Key:              currentKey,
-				UpdateExpression: "SET #name = :name, #status = :status, updated_at = :updated_at",
-				Condition:        "#name = :old_name",
-				ExpressionNames:  map[string]string{"#name": "name", "#status": "status"},
-				ExpressionValues: map[string]any{
+				TableName:                r.tableName,
+				Key:                      currentKey,
+				UpdateExpression:         "SET #name = :name, #status = :status, updated_at = :updated_at",
+				ConditionExpression:      "#name = :old_name",
+				ExpressionAttributeNames: map[string]string{"#name": "name", "#status": "status"},
+				ExpressionAttributeValues: map[string]any{
 					":name":       account.Name,
 					":status":     string(account.Status),
 					":updated_at": updatedAt,
@@ -246,12 +250,12 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 					"SK":         fmt.Sprintf("ACCOUNT_NAME#%s", account.Name),
 					"account_id": account.ID,
 				},
-				Condition: "attribute_not_exists(PK)",
+				ConditionExpression: "attribute_not_exists(PK)",
 			},
 		},
 	}
 
-	err = r.client.TransactWriteItems(ctx, transactItems)
+	err = r.client.TransactWriteItems(ctx, &dynamodbclient.TransactWriteItemsInput{TransactItems: transactItems})
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemExists) {
 			return port.ErrAccountExists
@@ -272,7 +276,14 @@ func (r *DynamoDBAccountRepository) Archive(ctx context.Context, userID string, 
 		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
 	}
 
-	err := r.client.UpdateItem(ctx, r.tableName, key, expression, condition, expressionNames, expressionValues)
+	err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
+		TableName:                 r.tableName,
+		Key:                       key,
+		UpdateExpression:          expression,
+		ConditionExpression:       condition,
+		ExpressionAttributeNames:  expressionNames,
+		ExpressionAttributeValues: expressionValues,
+	})
 	if err == nil {
 		return nil
 	}
@@ -304,7 +315,14 @@ func (r *DynamoDBAccountRepository) Restore(ctx context.Context, userID string, 
 		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
 	}
 
-	err := r.client.UpdateItem(ctx, r.tableName, key, expression, condition, expressionNames, expressionValues)
+	err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
+		TableName:                 r.tableName,
+		Key:                       key,
+		UpdateExpression:          expression,
+		ConditionExpression:       condition,
+		ExpressionAttributeNames:  expressionNames,
+		ExpressionAttributeValues: expressionValues,
+	})
 	if err == nil {
 		return nil
 	}

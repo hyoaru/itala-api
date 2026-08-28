@@ -32,7 +32,10 @@ func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl 
 	pk := fmt.Sprintf("IDEMPOTENCY#%s", hex.EncodeToString([]byte(parts[0])))
 	sk := fmt.Sprintf("#%s", parts[1])
 
-	err := i.client.PutItem(ctx, i.tableName, map[string]any{"PK": pk, "SK": sk})
+	err := i.client.PutItem(ctx, &dynamodbclient.PutItemInput{
+		TableName: i.tableName,
+		Item:      map[string]any{"PK": pk, "SK": sk},
+	})
 
 	if err == nil {
 		return IdempotencyLock{Status: IdempotencyStatusAcquired, Result: nil}, nil
@@ -43,7 +46,11 @@ func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl 
 	}
 
 	var item acquireItem
-	if err = i.client.GetItem(ctx, i.tableName, map[string]any{"PK": pk, "SK": sk}, &item); err != nil {
+	if err = i.client.GetItem(ctx, &dynamodbclient.GetItemInput{
+		TableName: i.tableName,
+		Key:       map[string]any{"PK": pk, "SK": sk},
+		Output:    &item,
+	}); err != nil {
 		return IdempotencyLock{}, fmt.Errorf("get item: %w", err)
 	}
 

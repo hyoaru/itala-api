@@ -36,16 +36,21 @@ func (d Decimal) MarshalDynamoDBAttributeValue() (types.AttributeValue, error) {
 	}, nil
 }
 
-func (c *SDKDynamoDBClient) PutItem(ctx context.Context, tableName string, item map[string]any) error {
-	av, err := attributevalue.MarshalMap(item)
+func (c *SDKDynamoDBClient) PutItem(ctx context.Context, input *PutItemInput) error {
+	av, err := attributevalue.MarshalMap(input.Item)
 	if err != nil {
 		return fmt.Errorf("marshal map: %w", err)
 	}
 
+	conditionExpression := input.ConditionExpression
+	if conditionExpression == "" {
+		conditionExpression = "attribute_not_exists(PK)"
+	}
+
 	_, err = c.client.PutItem(ctx, &dynamodb.PutItemInput{
-		TableName:           aws.String(tableName),
+		TableName:           aws.String(input.TableName),
 		Item:                av,
-		ConditionExpression: aws.String("attribute_not_exists(PK)"),
+		ConditionExpression: aws.String(conditionExpression),
 	})
 	if err != nil {
 		if _, ok := errors.AsType[*types.ConditionalCheckFailedException](err); ok {
@@ -58,10 +63,10 @@ func (c *SDKDynamoDBClient) PutItem(ctx context.Context, tableName string, item 
 	return nil
 }
 
-func (c *SDKDynamoDBClient) TransactWriteItems(ctx context.Context, items []TransactWriteItem) error {
-	parsedTransactItems := make([]types.TransactWriteItem, 0, len(items))
+func (c *SDKDynamoDBClient) TransactWriteItems(ctx context.Context, input *TransactWriteItemsInput) error {
+	parsedTransactItems := make([]types.TransactWriteItem, 0, len(input.TransactItems))
 
-	for _, item := range items {
+	for _, item := range input.TransactItems {
 		parsedTransactItem, err := c.toTransactWriteItem(item)
 		if err != nil {
 			return err
@@ -110,8 +115,8 @@ func (c *SDKDynamoDBClient) toTransactPut(operation *TransactPut) (types.Transac
 		Item:      parsedItem,
 	}
 
-	if operation.Condition != "" {
-		item.ConditionExpression = aws.String(operation.Condition)
+	if operation.ConditionExpression != "" {
+		item.ConditionExpression = aws.String(operation.ConditionExpression)
 	}
 
 	return types.TransactWriteItem{Put: item}, nil
@@ -123,7 +128,7 @@ func (c *SDKDynamoDBClient) toTransactUpdate(operation *TransactUpdate) (types.T
 		return types.TransactWriteItem{}, err
 	}
 
-	values, err := attributevalue.MarshalMap(operation.ExpressionValues)
+	values, err := attributevalue.MarshalMap(operation.ExpressionAttributeValues)
 	if err != nil {
 		return types.TransactWriteItem{}, err
 	}
@@ -133,11 +138,11 @@ func (c *SDKDynamoDBClient) toTransactUpdate(operation *TransactUpdate) (types.T
 		Key:                       key,
 		UpdateExpression:          aws.String(operation.UpdateExpression),
 		ExpressionAttributeValues: values,
-		ExpressionAttributeNames:  operation.ExpressionNames,
+		ExpressionAttributeNames:  operation.ExpressionAttributeNames,
 	}
 
-	if operation.Condition != "" {
-		item.ConditionExpression = aws.String(operation.Condition)
+	if operation.ConditionExpression != "" {
+		item.ConditionExpression = aws.String(operation.ConditionExpression)
 	}
 
 	return types.TransactWriteItem{Update: item}, nil
@@ -154,88 +159,76 @@ func (c *SDKDynamoDBClient) toTransactDelete(operation *TransactDelete) (types.T
 		Key:       key,
 	}
 
-	if operation.Condition != "" {
-		item.ConditionExpression = aws.String(operation.Condition)
+	if operation.ConditionExpression != "" {
+		item.ConditionExpression = aws.String(operation.ConditionExpression)
 	}
 
 	return types.TransactWriteItem{Delete: item}, nil
 }
 
-func (c *SDKDynamoDBClient) Query(
-	ctx context.Context,
-	tableName string,
-	indexName string,
-	limit int32,
-	scanIndexForward bool,
-	conditionExpression string,
-	filterExpression string,
-	expressionNames map[string]string,
-	expressionValues map[string]any,
-	startKey map[string]any,
-	output any,
-) (QueryMetadata, error) {
-	parsedExpressionValues, err := attributevalue.MarshalMap(expressionValues)
+func (c *SDKDynamoDBClient) Query(ctx context.Context, input *QueryInput) (QueryOutput, error) {
+	parsedExpressionValues, err := attributevalue.MarshalMap(input.ExpressionAttributeValues)
 	if err != nil {
-		return QueryMetadata{}, fmt.Errorf("marshal expression values: %w", err)
+		return QueryOutput{}, fmt.Errorf("marshal expression values: %w", err)
 	}
 
 	queryInput := &dynamodb.QueryInput{
-		Limit:                     aws.Int32(limit),
-		TableName:                 aws.String(tableName),
-		KeyConditionExpression:    aws.String(conditionExpression),
+		Limit:                     aws.Int32(input.Limit),
+		TableName:                 aws.String(input.TableName),
+		KeyConditionExpression:    aws.String(input.KeyConditionExpression),
 		ExpressionAttributeValues: parsedExpressionValues,
-		ScanIndexForward:          aws.Bool(scanIndexForward),
+		ScanIndexForward:          aws.Bool(input.ScanIndexForward),
 	}
 
-	if len(expressionNames) > 0 {
-		queryInput.ExpressionAttributeNames = expressionNames
+	if len(input.ExpressionAttributeNames) > 0 {
+		queryInput.ExpressionAttributeNames = input.ExpressionAttributeNames
 	}
 
-	if indexName != "" {
-		queryInput.IndexName = aws.String(indexName)
+	if input.IndexName != "" {
+		queryInput.IndexName = aws.String(input.IndexName)
 	}
 
-	if startKey != nil {
-		parsedStartKey, err := attributevalue.MarshalMap(startKey)
+	if input.ExclusiveStartKey != nil {
+		parsedStartKey, err := attributevalue.MarshalMap(input.ExclusiveStartKey)
 		if err != nil {
-			return QueryMetadata{}, fmt.Errorf("marshal start key: %w", err)
+			return QueryOutput{}, fmt.Errorf("marshal start key: %w", err)
 		}
 		queryInput.ExclusiveStartKey = parsedStartKey
 	}
 
-	if len(filterExpression) > 0 {
-		queryInput.FilterExpression = aws.String(filterExpression)
+	if len(input.FilterExpression) > 0 {
+		queryInput.FilterExpression = aws.String(input.FilterExpression)
 	}
 
 	queryOutput, err := c.client.Query(ctx, queryInput)
 	if err != nil {
-		return QueryMetadata{}, fmt.Errorf("query items: %w", err)
+		return QueryOutput{}, fmt.Errorf("query items: %w", err)
 	}
 
-	if err := attributevalue.UnmarshalListOfMaps(queryOutput.Items, output); err != nil {
-		return QueryMetadata{}, fmt.Errorf("unmarshal items: %w", err)
+	if err := attributevalue.UnmarshalListOfMaps(queryOutput.Items, input.Output); err != nil {
+		return QueryOutput{}, fmt.Errorf("unmarshal items: %w", err)
 	}
 
 	if queryOutput.LastEvaluatedKey == nil {
-		return QueryMetadata{}, nil
+		return QueryOutput{}, nil
 	}
 
 	var lastEvaluatedKey map[string]any
 	if err = attributevalue.UnmarshalMap(queryOutput.LastEvaluatedKey, &lastEvaluatedKey); err != nil {
-		return QueryMetadata{}, fmt.Errorf("unmarshal last evaluated key: %w", err)
+		return QueryOutput{}, fmt.Errorf("unmarshal last evaluated key: %w", err)
 	}
 
-	return QueryMetadata{LastEvaluatedKey: lastEvaluatedKey}, nil
+	return QueryOutput{LastEvaluatedKey: lastEvaluatedKey}, nil
 }
 
-func (c *SDKDynamoDBClient) GetItem(ctx context.Context, tableName string, key map[string]any, output any) error {
-	parsedKey, err := attributevalue.MarshalMap(key)
+func (c *SDKDynamoDBClient) GetItem(ctx context.Context, input *GetItemInput) error {
+	parsedKey, err := attributevalue.MarshalMap(input.Key)
 	if err != nil {
 		return fmt.Errorf("marshal key: %w", err)
 	}
 
 	getItemOutput, err := c.client.GetItem(ctx, &dynamodb.GetItemInput{
-		TableName: aws.String(tableName),
+		TableName: aws.String(input.TableName),
 		Key:       parsedKey,
 	})
 	if err != nil {
@@ -249,42 +242,34 @@ func (c *SDKDynamoDBClient) GetItem(ctx context.Context, tableName string, key m
 		return ErrItemNotFound
 	}
 
-	if err := attributevalue.UnmarshalMap(getItemOutput.Item, output); err != nil {
+	if err := attributevalue.UnmarshalMap(getItemOutput.Item, input.Output); err != nil {
 		return fmt.Errorf("unmarshal item: %w", err)
 	}
 
 	return nil
 }
 
-func (c *SDKDynamoDBClient) UpdateItem(
-	ctx context.Context,
-	tableName string,
-	key map[string]any,
-	expression string,
-	condition string,
-	expressionNames map[string]string,
-	expressionValues map[string]any,
-) error {
-	parsedKey, err := attributevalue.MarshalMap(key)
+func (c *SDKDynamoDBClient) UpdateItem(ctx context.Context, input *UpdateItemInput) error {
+	parsedKey, err := attributevalue.MarshalMap(input.Key)
 	if err != nil {
 		return fmt.Errorf("marshal key: %w", err)
 	}
 
-	parsedExpressionValues, err := attributevalue.MarshalMap(expressionValues)
+	parsedExpressionValues, err := attributevalue.MarshalMap(input.ExpressionAttributeValues)
 	if err != nil {
 		return fmt.Errorf("marshal expression values: %w", err)
 	}
 
 	updateItemInput := &dynamodb.UpdateItemInput{
-		TableName:                 aws.String(tableName),
+		TableName:                 aws.String(input.TableName),
 		Key:                       parsedKey,
-		UpdateExpression:          aws.String(expression),
-		ExpressionAttributeNames:  expressionNames,
+		UpdateExpression:          aws.String(input.UpdateExpression),
+		ExpressionAttributeNames:  input.ExpressionAttributeNames,
 		ExpressionAttributeValues: parsedExpressionValues,
 	}
 
-	if condition != "" {
-		updateItemInput.ConditionExpression = aws.String(condition)
+	if input.ConditionExpression != "" {
+		updateItemInput.ConditionExpression = aws.String(input.ConditionExpression)
 	}
 
 	_, err = c.client.UpdateItem(ctx, updateItemInput)
@@ -299,19 +284,19 @@ func (c *SDKDynamoDBClient) UpdateItem(
 	return nil
 }
 
-func (c *SDKDynamoDBClient) DeleteItem(ctx context.Context, tableName string, key map[string]any, condition string) error {
-	parsedKey, err := attributevalue.MarshalMap(key)
+func (c *SDKDynamoDBClient) DeleteItem(ctx context.Context, input *DeleteItemInput) error {
+	parsedKey, err := attributevalue.MarshalMap(input.Key)
 	if err != nil {
 		return fmt.Errorf("marshal key: %w", err)
 	}
 
 	deleteItemInput := &dynamodb.DeleteItemInput{
-		TableName: aws.String(tableName),
+		TableName: aws.String(input.TableName),
 		Key:       parsedKey,
 	}
 
-	if condition != "" {
-		deleteItemInput.ConditionExpression = aws.String(condition)
+	if input.ConditionExpression != "" {
+		deleteItemInput.ConditionExpression = aws.String(input.ConditionExpression)
 	}
 
 	_, err = c.client.DeleteItem(ctx, deleteItemInput)

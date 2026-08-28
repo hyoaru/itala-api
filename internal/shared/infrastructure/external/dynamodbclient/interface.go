@@ -2,25 +2,73 @@ package dynamodbclient
 
 import "context"
 
-type TransactPut struct {
+type PutItemInput struct {
+	TableName           string
+	Item                map[string]any
+	ConditionExpression string
+}
+
+type GetItemInput struct {
 	TableName string
-	Item      map[string]any
-	Condition string
+	Key       map[string]any
+	Output    any
+}
+
+type QueryInput struct {
+	TableName                 string
+	IndexName                 string
+	Limit                     int32
+	ScanIndexForward          bool
+	KeyConditionExpression    string
+	FilterExpression          string
+	ExpressionAttributeNames  map[string]string
+	ExpressionAttributeValues map[string]any
+	ExclusiveStartKey         map[string]any
+	Output                    any
+}
+
+type QueryOutput struct {
+	LastEvaluatedKey map[string]any
+}
+
+type UpdateItemInput struct {
+	TableName                 string
+	Key                       map[string]any
+	UpdateExpression          string
+	ConditionExpression       string
+	ExpressionAttributeNames  map[string]string
+	ExpressionAttributeValues map[string]any
+}
+
+type DeleteItemInput struct {
+	TableName           string
+	Key                 map[string]any
+	ConditionExpression string
+}
+
+type TransactWriteItemsInput struct {
+	TransactItems []TransactWriteItem
+}
+
+type TransactPut struct {
+	TableName           string
+	Item                map[string]any
+	ConditionExpression string
 }
 
 type TransactUpdate struct {
-	TableName        string
-	Key              map[string]any
-	UpdateExpression string
-	ExpressionValues map[string]any
-	ExpressionNames  map[string]string
-	Condition        string
+	TableName                 string
+	Key                       map[string]any
+	UpdateExpression          string
+	ExpressionAttributeValues map[string]any
+	ExpressionAttributeNames  map[string]string
+	ConditionExpression       string
 }
 
 type TransactDelete struct {
-	TableName string
-	Key       map[string]any
-	Condition string
+	TableName           string
+	Key                 map[string]any
+	ConditionExpression string
 }
 
 type TransactWriteItem struct {
@@ -29,35 +77,11 @@ type TransactWriteItem struct {
 	Delete *TransactDelete
 }
 
-type QueryMetadata struct {
-	LastEvaluatedKey map[string]any
-}
-
 type DynamoDBClient interface {
-	PutItem(ctx context.Context, tableName string, item map[string]any) error
-	TransactWriteItems(ctx context.Context, items []TransactWriteItem) error
-	GetItem(ctx context.Context, tableName string, key map[string]any, output any) error
-	Query(
-		ctx context.Context,
-		tableName string,
-		indexName string,
-		limit int32,
-		scanIndexForward bool,
-		conditionExpression string,
-		filterExpression string,
-		expressionNames map[string]string,
-		expressionValues map[string]any,
-		startKey map[string]any,
-		output any,
-	) (QueryMetadata, error)
-	UpdateItem(
-		ctx context.Context,
-		tableName string,
-		key map[string]any,
-		expression string,
-		condition string,
-		expressionNames map[string]string,
-		expressionValues map[string]any,
-	) error
-	DeleteItem(ctx context.Context, tableName string, key map[string]any, condition string) error
+	PutItem(ctx context.Context, input *PutItemInput) error
+	TransactWriteItems(ctx context.Context, input *TransactWriteItemsInput) error
+	GetItem(ctx context.Context, input *GetItemInput) error
+	Query(ctx context.Context, input *QueryInput) (QueryOutput, error)
+	UpdateItem(ctx context.Context, input *UpdateItemInput) error
+	DeleteItem(ctx context.Context, input *DeleteItemInput) error
 }

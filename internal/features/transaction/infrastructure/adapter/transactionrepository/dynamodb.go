@@ -83,36 +83,39 @@ func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID strin
 	occurredAt := transaction.OccurredAt.Format(time.RFC3339Nano)
 	gsiSortKey := fmt.Sprintf("TRANSACTION#%s%s", occurredAt, transaction.ID)
 
-	return r.client.PutItem(ctx, r.tableName, map[string]any{
-		// Base table
-		"PK": fmt.Sprintf("USER#%s", userID),
-		"SK": fmt.Sprintf("TRANSACTION#%s", transaction.ID),
+	return r.client.PutItem(ctx, &dynamodbclient.PutItemInput{
+		TableName: r.tableName,
+		Item: map[string]any{
+			// Base table
+			"PK": fmt.Sprintf("USER#%s", userID),
+			"SK": fmt.Sprintf("TRANSACTION#%s", transaction.ID),
 
-		// Chronological index
-		"GSI1PK": fmt.Sprintf("USER#%s", userID),
-		"GSI1SK": gsiSortKey,
+			// Chronological index
+			"GSI1PK": fmt.Sprintf("USER#%s", userID),
+			"GSI1SK": gsiSortKey,
 
-		// Transaction type index
-		"GSI2PK": fmt.Sprintf("USER#%s#TYPE#%s", userID, string(transaction.Type)),
-		"GSI2SK": gsiSortKey,
+			// Transaction type index
+			"GSI2PK": fmt.Sprintf("USER#%s#TYPE#%s", userID, string(transaction.Type)),
+			"GSI2SK": gsiSortKey,
 
-		// Account index
-		"GSI3PK": fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, transaction.AccountID),
-		"GSI3SK": gsiSortKey,
+			// Account index
+			"GSI3PK": fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, transaction.AccountID),
+			"GSI3SK": gsiSortKey,
 
-		// Category index
-		"GSI4PK": fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
-		"GSI4SK": gsiSortKey,
+			// Category index
+			"GSI4PK": fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
+			"GSI4SK": gsiSortKey,
 
-		"id":          transaction.ID,
-		"amount":      dynamodbclient.Decimal(transaction.Amount),
-		"type":        string(transaction.Type),
-		"account_id":  transaction.AccountID,
-		"category_id": transaction.CategoryID,
-		"description": transaction.Description,
-		"occurred_at": transaction.OccurredAt.Format(time.RFC3339Nano),
-		"created_at":  transaction.CreatedAt.Format(time.RFC3339Nano),
-		"updated_at":  transaction.UpdatedAt.Format(time.RFC3339Nano),
+			"id":          transaction.ID,
+			"amount":      dynamodbclient.Decimal(transaction.Amount),
+			"type":        string(transaction.Type),
+			"account_id":  transaction.AccountID,
+			"category_id": transaction.CategoryID,
+			"description": transaction.Description,
+			"occurred_at": transaction.OccurredAt.Format(time.RFC3339Nano),
+			"created_at":  transaction.CreatedAt.Format(time.RFC3339Nano),
+			"updated_at":  transaction.UpdatedAt.Format(time.RFC3339Nano),
+		},
 	})
 }
 
@@ -166,19 +169,18 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 	}
 
 	var queryItems []findTransactionItem
-	metadata, err := r.client.Query(
-		ctx,
-		r.tableName,
-		index.Name,
-		query.Limit,
-		false,
-		conditionExpression,
-		filterExpression,
-		expressionNames,
-		expressionValues,
-		startKey,
-		&queryItems,
-	)
+	metadata, err := r.client.Query(ctx, &dynamodbclient.QueryInput{
+		TableName:                 r.tableName,
+		IndexName:                 index.Name,
+		Limit:                     query.Limit,
+		ScanIndexForward:          false,
+		KeyConditionExpression:    conditionExpression,
+		FilterExpression:          filterExpression,
+		ExpressionAttributeNames:  expressionNames,
+		ExpressionAttributeValues: expressionValues,
+		ExclusiveStartKey:         startKey,
+		Output:                    &queryItems,
+	})
 	if err != nil {
 		return port.TransactionPage{}, fmt.Errorf("find transactions: %w", err)
 	}
@@ -242,7 +244,7 @@ func (r *DynamoDBTransactionRepository) FindOne(ctx context.Context, userID stri
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("TRANSACTION#%s", id)}
 
 	var findItem findTransactionItem
-	if err := r.client.GetItem(ctx, r.tableName, key, &findItem); err != nil {
+	if err := r.client.GetItem(ctx, &dynamodbclient.GetItemInput{TableName: r.tableName, Key: key, Output: &findItem}); err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemNotFound) {
 			return entity.Transaction{}, port.ErrTransactionNotFound
 		}
@@ -299,7 +301,13 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 		":gsi4sk":      gsiSortKey,
 	}
 
-	if err := r.client.UpdateItem(ctx, r.tableName, key, expression, "", expressionNames, expressionValues); err != nil {
+	if err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
+		TableName:                 r.tableName,
+		Key:                       key,
+		UpdateExpression:          expression,
+		ExpressionAttributeNames:  expressionNames,
+		ExpressionAttributeValues: expressionValues,
+	}); err != nil {
 		return fmt.Errorf("update transaction: %w", err)
 	}
 
@@ -310,7 +318,11 @@ func (r *DynamoDBTransactionRepository) Delete(ctx context.Context, userID strin
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("TRANSACTION#%s", id)}
 	condition := "attribute_exists(PK)"
 
-	err := r.client.DeleteItem(ctx, r.tableName, key, condition)
+	err := r.client.DeleteItem(ctx, &dynamodbclient.DeleteItemInput{
+		TableName:           r.tableName,
+		Key:                 key,
+		ConditionExpression: condition,
+	})
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
 			return port.ErrTransactionNotFound
