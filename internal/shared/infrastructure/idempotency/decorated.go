@@ -11,7 +11,7 @@ type DecoratedIdempotencyStore struct {
 
 func NewDecoratedIdempotencyStore(inner IdempotencyStore) *DecoratedIdempotencyStore {
 	logging := NewLoggingIdempotencyStore(inner)
-	retry := NewRetryIdempotencyStore(logging, 5, 1*time.Second)
+	retry := NewRetryIdempotencyStore(logging, 5, 1*time.Millisecond, 2*time.Second)
 	return &DecoratedIdempotencyStore{inner: retry}
 }
 
