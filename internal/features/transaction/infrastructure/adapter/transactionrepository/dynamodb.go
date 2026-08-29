@@ -80,7 +80,7 @@ func (i findTransactionItem) toDomain() (entity.Transaction, error) {
 	return transaction, nil
 }
 
-func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID string, transaction entity.Transaction) error {
+func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID string, transaction entity.Transaction, idempotencyKey string) error {
 	occurredAt := transaction.OccurredAt.Format(time.RFC3339Nano)
 	gsiSortKey := fmt.Sprintf("TRANSACTION#%s%s", occurredAt, transaction.ID)
 

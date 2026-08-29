@@ -75,7 +75,8 @@ func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransacti
 		UpdatedAt:   now,
 	}
 
-	if err := u.transactionRepository.Create(ctx, request.UserID, transaction); err != nil {
+	idempotencyKey := uuid.New().String()
+	if err := u.transactionRepository.Create(ctx, request.UserID, transaction, idempotencyKey); err != nil {
 		return CreateTransactionResponse{}, err
 	}
 

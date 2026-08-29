@@ -19,8 +19,9 @@ func (c *DecoratedTransactionRepository) Create(
 	ctx context.Context,
 	userID string,
 	transaction entity.Transaction,
+	idempotencyKey string,
 ) error {
-	return c.inner.Create(ctx, userID, transaction)
+	return c.inner.Create(ctx, userID, transaction, idempotencyKey)
 }
 
 func (c *DecoratedTransactionRepository) Find(

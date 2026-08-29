@@ -24,7 +24,7 @@ type TransactionPage struct {
 }
 
 type TransactionRepository interface {
-	Create(ctx context.Context, userID string, transaction entity.Transaction) error
+	Create(ctx context.Context, userID string, transaction entity.Transaction, idempotencyKey string) error
 	Find(ctx context.Context, userID string, query TransactionQuery) (TransactionPage, error)
 	FindOne(ctx context.Context, userID string, id string) (entity.Transaction, error)
 	Update(ctx context.Context, userID string, transaction entity.Transaction) error

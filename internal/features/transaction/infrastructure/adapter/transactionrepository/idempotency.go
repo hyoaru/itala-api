@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
-
 	port "github.com/hyoaru/itala-api/internal/features/transaction/application/port/transactionrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/transaction/domain/entity"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
@@ -20,9 +18,8 @@ func NewIdempotencyTransactionRepository(inner port.TransactionRepository, store
 	return &IdempotencyTransactionRepository{inner: inner, store: store}
 }
 
-func (r *IdempotencyTransactionRepository) Create(ctx context.Context, userID string, transaction entity.Transaction) error {
-	key := uuid.New().String()
-	lock, status, _, err := r.store.Acquire(ctx, key, 900)
+func (r *IdempotencyTransactionRepository) Create(ctx context.Context, userID string, transaction entity.Transaction, idempotencyKey string) error {
+	lock, status, _, err := r.store.Acquire(ctx, idempotencyKey, 900)
 	if err != nil {
 		return err
 	}
@@ -34,7 +31,7 @@ func (r *IdempotencyTransactionRepository) Create(ctx context.Context, userID st
 		return nil
 	}
 
-	if err = r.inner.Create(ctx, userID, transaction); err != nil {
+	if err = r.inner.Create(ctx, userID, transaction, idempotencyKey); err != nil {
 		if !errors.Is(err, port.ErrTransactionExists) {
 			_ = r.store.Release(ctx, lock)
 			return err

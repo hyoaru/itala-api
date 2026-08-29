@@ -16,10 +16,10 @@ func NewLoggingTransactionRepository(inner port.TransactionRepository) *LoggingT
 	return &LoggingTransactionRepository{inner: inner}
 }
 
-func (r *LoggingTransactionRepository) Create(ctx context.Context, userID string, transaction entity.Transaction) error {
+func (r *LoggingTransactionRepository) Create(ctx context.Context, userID string, transaction entity.Transaction, idempotencyKey string) error {
 	logger.Debug("Creating transaction", "amount", transaction.Amount, "type", transaction.Type)
 
-	if err := r.inner.Create(ctx, userID, transaction); err != nil {
+	if err := r.inner.Create(ctx, userID, transaction, idempotencyKey); err != nil {
 		logger.Warn("Failed to create transaction", "error", err)
 		return err
 	}
