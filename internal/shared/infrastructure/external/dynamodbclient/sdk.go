@@ -68,7 +68,7 @@ func (c *SDKDynamoDBClient) PutItem(ctx context.Context, input *PutItemInput) er
 			return ErrItemExists
 		}
 
-		return err
+		return fmt.Errorf("put item: %w", err)
 	}
 
 	return nil
