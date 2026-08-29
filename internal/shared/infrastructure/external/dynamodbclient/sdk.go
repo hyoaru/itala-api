@@ -230,7 +230,7 @@ func (c *SDKDynamoDBClient) GetItem(ctx context.Context, input *GetItemInput, ou
 		if _, ok := errors.AsType[*types.ResourceNotFoundException](err); ok {
 			return ErrItemNotFound
 		}
-		return err
+		return fmt.Errorf("get item: %w", err)
 	}
 
 	if getItemOutput.Item == nil {
@@ -270,7 +270,11 @@ func (c *SDKDynamoDBClient) UpdateItem(ctx context.Context, input *UpdateItemInp
 			return ErrConditionFailed
 		}
 
-		return err
+		if _, ok := errors.AsType[*types.ResourceNotFoundException](err); ok {
+			return ErrItemNotFound
+		}
+
+		return fmt.Errorf("update item: %w", err)
 	}
 
 	return nil
@@ -282,10 +286,17 @@ func (c *SDKDynamoDBClient) DeleteItem(ctx context.Context, input *DeleteItemInp
 		return fmt.Errorf("marshal key: %w", err)
 	}
 
+	parsedExpressionValues, err := attributevalue.MarshalMap(input.ExpressionAttributeValues)
+	if err != nil {
+		return fmt.Errorf("marshal expression values: %w", err)
+	}
+
 	deleteItemInput := &dynamodb.DeleteItemInput{
-		TableName:           aws.String(input.TableName),
-		Key:                 parsedKey,
-		ConditionExpression: input.ConditionExpression,
+		TableName:                 aws.String(input.TableName),
+		Key:                       parsedKey,
+		ConditionExpression:       input.ConditionExpression,
+		ExpressionAttributeNames:  input.ExpressionAttributeNames,
+		ExpressionAttributeValues: parsedExpressionValues,
 	}
 
 	_, err = c.client.DeleteItem(ctx, deleteItemInput)
@@ -294,7 +305,11 @@ func (c *SDKDynamoDBClient) DeleteItem(ctx context.Context, input *DeleteItemInp
 			return ErrConditionFailed
 		}
 
-		return err
+		if _, ok := errors.AsType[*types.ResourceNotFoundException](err); ok {
+			return ErrItemNotFound
+		}
+
+		return fmt.Errorf("delete item: %w", err)
 	}
 
 	return nil

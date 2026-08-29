@@ -40,9 +40,11 @@ type UpdateItemInput struct {
 }
 
 type DeleteItemInput struct {
-	TableName           string
-	Key                 map[string]any
-	ConditionExpression *string
+	TableName                 string
+	Key                       map[string]any
+	ConditionExpression       *string
+	ExpressionAttributeNames  map[string]string
+	ExpressionAttributeValues map[string]any
 }
 
 type TransactWriteItemsInput struct {
