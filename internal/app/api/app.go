@@ -12,6 +12,7 @@ import (
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
 	"github.com/hyoaru/itala-api/internal/features/transaction"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
 )
 
@@ -20,11 +21,12 @@ type App struct{ server *http.Server }
 func New(addr string) *App {
 	dynamodbTableName := os.Getenv("DYNAMODB_TABLE_NAME")
 	dynamodbClient := dynamodbclient.NewSDKDynamoDBClient()
+	idempotencyStore := idempotency.NewDecoratedIdempotencyStore(idempotency.NewDynamoDBIdempotencyStore(dynamodbClient, dynamodbTableName))
 
 	identityProvider := identity.NewCognitoIdentityProvider(os.Getenv("AWS_REGION"), os.Getenv("COGNITO_USER_POOL_ID"))
 	categoryRepository := category.NewDynamoDBCategoryRepository(dynamodbClient, dynamodbTableName)
 	accountRepository := account.NewDynamoDBAccountRepository(dynamodbClient, dynamodbTableName)
-	transactionRepository := transaction.NewDynamoDBTransactionRepository(dynamodbClient, dynamodbTableName)
+	transactionRepository := transaction.NewDynamoDBTransactionRepository(dynamodbClient, dynamodbTableName, idempotencyStore)
 
 	categoryHandler := &handler.CategoryHandler{
 		CreateCategory:  category.NewCreateCategory(categoryRepository),

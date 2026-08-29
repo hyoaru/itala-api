@@ -9,9 +9,9 @@ type DecoratedIdempotencyStore struct {
 	inner IdempotencyStore
 }
 
-func NewDecoratedIdempotencyStore(inner IdempotencyStore) *DecoratedIdempotencyStore {
+func NewDecoratedIdempotencyStore(inner IdempotencyStore) IdempotencyStore {
 	logging := NewLoggingIdempotencyStore(inner)
-	retry := NewRetryIdempotencyStore(logging, 5, 1*time.Millisecond, 2*time.Second)
+	retry := NewRetryIdempotencyStore(logging, 5, 100*time.Millisecond, 2*time.Second)
 	return &DecoratedIdempotencyStore{inner: retry}
 }
 

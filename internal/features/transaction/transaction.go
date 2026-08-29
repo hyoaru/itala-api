@@ -9,6 +9,7 @@ import (
 	transactionrepositoryadapter "github.com/hyoaru/itala-api/internal/features/transaction/infrastructure/adapter/transactionrepository"
 	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
 )
 
 type Transaction = entity.Transaction
@@ -17,9 +18,9 @@ type TransactionRepository = transactionrepositoryport.TransactionRepository
 
 var ErrTransactionNotFound = transactionrepositoryport.ErrTransactionNotFound
 
-func NewDynamoDBTransactionRepository(client dynamodbclient.DynamoDBClient, tableName string) TransactionRepository {
+func NewDynamoDBTransactionRepository(client dynamodbclient.DynamoDBClient, tableName string, idempotencyStore idempotency.IdempotencyStore) TransactionRepository {
 	r := transactionrepositoryadapter.NewDynamoDBTransactionRepository(client, tableName)
-	return transactionrepositoryadapter.NewDecoratedTransactionRepository(r)
+	return transactionrepositoryadapter.NewDecoratedTransactionRepository(r, idempotencyStore)
 }
 
 type (

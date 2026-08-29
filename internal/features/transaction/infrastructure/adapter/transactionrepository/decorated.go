@@ -2,17 +2,22 @@ package transaction
 
 import (
 	"context"
+	"time"
 
 	port "github.com/hyoaru/itala-api/internal/features/transaction/application/port/transactionrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/transaction/domain/entity"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
 )
 
 type DecoratedTransactionRepository struct {
 	inner port.TransactionRepository
 }
 
-func NewDecoratedTransactionRepository(inner port.TransactionRepository) *DecoratedTransactionRepository {
-	return &DecoratedTransactionRepository{inner: NewLoggingTransactionRepository(inner)}
+func NewDecoratedTransactionRepository(inner port.TransactionRepository, idempotencyStore idempotency.IdempotencyStore) port.TransactionRepository {
+	logging := NewLoggingTransactionRepository(inner)
+	idempotency := NewIdempotencyTransactionRepository(logging, idempotencyStore)
+	retry := NewRetryTransactionRepository(idempotency, 5, 100*time.Millisecond, 2*time.Second)
+	return &DecoratedTransactionRepository{inner: retry}
 }
 
 func (c *DecoratedTransactionRepository) Create(
