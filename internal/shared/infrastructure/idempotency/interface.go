@@ -4,7 +4,10 @@ import (
 	"context"
 )
 
-type IdempotencyStatus string
+type (
+	IdempotencyStatus string
+	ResultJSON        string
+)
 
 const (
 	IdempotencyStatusAcquired  IdempotencyStatus = "ACQUIRED"
@@ -13,12 +16,12 @@ const (
 )
 
 type IdempotencyLock struct {
-	Status IdempotencyStatus
-	Result any
+	Key   string
+	Token string
 }
 
 type IdempotencyStore interface {
-	Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, error)
-	Commit(ctx context.Context, key string, result any) error
-	Release(ctx context.Context, key string) error
+	Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, *IdempotencyStatus, *ResultJSON, error)
+	Commit(ctx context.Context, Lock IdempotencyLock, resultJSON string) error
+	Release(ctx context.Context, Lock IdempotencyLock) error
 }
