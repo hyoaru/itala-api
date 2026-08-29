@@ -1,13 +1,18 @@
 package idempotency
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type DecoratedIdempotencyStore struct {
 	inner IdempotencyStore
 }
 
 func NewDecoratedIdempotencyStore(inner IdempotencyStore) *DecoratedIdempotencyStore {
-	return &DecoratedIdempotencyStore{inner: NewLoggingIdempotencyStore(inner)}
+	logging := NewLoggingIdempotencyStore(inner)
+	retry := NewRetryIdempotencyStore(logging, 5, 1*time.Second)
+	return &DecoratedIdempotencyStore{inner: retry}
 }
 
 func (d *DecoratedIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
