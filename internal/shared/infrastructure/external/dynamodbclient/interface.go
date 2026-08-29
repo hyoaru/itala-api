@@ -6,6 +6,7 @@ type PutItemInput struct {
 	TableName                 string
 	Item                      map[string]any
 	ConditionExpression       *string
+	ExpressionAttributeNames  map[string]string
 	ExpressionAttributeValues map[string]any
 }
 

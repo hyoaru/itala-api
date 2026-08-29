@@ -45,7 +45,8 @@ func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl 
 			"status": string(IdempotencyStatusLocked),
 			"token":  token,
 		},
-		ConditionExpression:       aws.String("attribute_not_exists(PK) or ttl <= :now"),
+		ConditionExpression:       aws.String("attribute_not_exists(PK) or #ttl <= :now"),
+		ExpressionAttributeNames:  map[string]string{"#ttl": "ttl"},
 		ExpressionAttributeValues: map[string]any{":now": now.Unix()},
 	})
 
@@ -81,17 +82,22 @@ func (i *DynamoDBIdempotencyStore) Commit(ctx context.Context, lock IdempotencyL
 	pk := fmt.Sprintf("IDEMPOTENCY#%s", sha256.Sum256([]byte(lock.Key)))
 	sk := "#LOCK"
 
-	conditionExpression := "status = :locked AND token = :token"
+	conditionExpression := "#status = :locked AND #token = :token"
 	err := i.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
 		TableName:           i.tableName,
 		Key:                 map[string]any{"PK": pk, "SK": sk},
-		UpdateExpression:    "SET result = :result, status = :completed",
+		UpdateExpression:    "SET #result = :result, #status = :completed",
 		ConditionExpression: &conditionExpression,
 		ExpressionAttributeValues: map[string]any{
 			":result":    result,
 			":locked":    IdempotencyStatusLocked,
 			":token":     lock.Token,
 			":completed": IdempotencyStatusCompleted,
+		},
+		ExpressionAttributeNames: map[string]string{
+			"#status": "status",
+			"#token":  "token",
+			"#result": "result",
 		},
 	})
 	if err != nil {
@@ -109,12 +115,13 @@ func (i *DynamoDBIdempotencyStore) Release(ctx context.Context, lock Idempotency
 	pk := fmt.Sprintf("IDEMPOTENCY#%s", sha256.Sum256([]byte(lock.Key)))
 	sk := "#LOCK"
 
-	conditionExpression := "status = :locked AND token = :token"
+	conditionExpression := "#status = :locked AND #token = :token"
 	err := i.client.DeleteItem(ctx, &dynamodbclient.DeleteItemInput{
 		TableName:                 i.tableName,
 		Key:                       map[string]any{"PK": pk, "SK": sk},
 		ConditionExpression:       &conditionExpression,
 		ExpressionAttributeValues: map[string]any{":token": lock.Token, ":locked": IdempotencyStatusLocked},
+		ExpressionAttributeNames:  map[string]string{"#status": "status", "#token": "token"},
 	})
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrConditionFailed) {

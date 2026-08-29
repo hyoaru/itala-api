@@ -48,9 +48,10 @@ func (c *SDKDynamoDBClient) PutItem(ctx context.Context, input *PutItemInput) er
 	}
 
 	putItemInput := &dynamodb.PutItemInput{
-		TableName:           aws.String(input.TableName),
-		Item:                av,
-		ConditionExpression: aws.String(conditionExpression),
+		TableName:                aws.String(input.TableName),
+		Item:                     av,
+		ConditionExpression:      aws.String(conditionExpression),
+		ExpressionAttributeNames: input.ExpressionAttributeNames,
 	}
 
 	if input.ExpressionAttributeValues != nil {
