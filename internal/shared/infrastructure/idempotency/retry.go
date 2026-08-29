@@ -2,6 +2,7 @@ package idempotency
 
 import (
 	"context"
+	"errors"
 	"math"
 	"time"
 )
@@ -29,6 +30,15 @@ func sleep(ctx context.Context, delay time.Duration) error {
 	}
 }
 
+func isRetryable(err error) bool {
+	if errors.Is(err, context.Canceled) ||
+		errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+
+	return true
+}
+
 func (s *RetryIdempotencyStore) backoff(attempt int8) time.Duration {
 	delay := s.delay * time.Duration(math.Pow(2, float64(attempt)))
 
@@ -53,6 +63,10 @@ func (s *RetryIdempotencyStore) Acquire(ctx context.Context, key string, ttl uin
 			return lock, status, result, nil
 		}
 
+		if !isRetryable(err) {
+			return IdempotencyLock{}, "", "", err
+		}
+
 		if attempt == s.maxAttempts-1 {
 			break
 		}
@@ -72,6 +86,10 @@ func (s *RetryIdempotencyStore) Commit(ctx context.Context, lock IdempotencyLock
 			return nil
 		}
 
+		if !isRetryable(err) {
+			return err
+		}
+
 		if attempt == s.maxAttempts-1 {
 			break
 		}
@@ -89,6 +107,10 @@ func (s *RetryIdempotencyStore) Release(ctx context.Context, lock IdempotencyLoc
 	for attempt := int8(0); attempt < s.maxAttempts; attempt++ {
 		if err = s.inner.Release(ctx, lock); err == nil {
 			return nil
+		}
+
+		if !isRetryable(err) {
+			return err
 		}
 
 		if attempt == s.maxAttempts-1 {

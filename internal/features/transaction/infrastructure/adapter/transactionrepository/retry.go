@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"context"
+	"errors"
 	"math"
 	"time"
 
@@ -32,6 +33,23 @@ func sleep(ctx context.Context, delay time.Duration) error {
 	}
 }
 
+func isRetryable(err error) bool {
+	if errors.Is(err, context.Canceled) ||
+		errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+
+	if errors.Is(err, port.ErrTransactionExists) {
+		return false
+	}
+
+	if errors.Is(err, port.ErrTransactionNotFound) {
+		return false
+	}
+
+	return true
+}
+
 func (r *RetryTransactionRepository) backoff(attempt int8) time.Duration {
 	delay := r.delay * time.Duration(math.Pow(2, float64(attempt)))
 
@@ -47,6 +65,10 @@ func (r *RetryTransactionRepository) Create(ctx context.Context, userID string, 
 	for attempt := int8(0); attempt < r.maxAttempts; attempt++ {
 		if err = r.inner.Create(ctx, userID, transaction, idempotencyKey); err == nil {
 			return nil
+		}
+
+		if !isRetryable(err) {
+			return err
 		}
 
 		if attempt == r.maxAttempts-1 {
@@ -72,6 +94,10 @@ func (r *RetryTransactionRepository) Find(ctx context.Context, userID string, qu
 			return transactionPage, nil
 		}
 
+		if !isRetryable(err) {
+			return port.TransactionPage{}, err
+		}
+
 		if attempt == r.maxAttempts-1 {
 			break
 		}
@@ -81,7 +107,7 @@ func (r *RetryTransactionRepository) Find(ctx context.Context, userID string, qu
 		}
 	}
 
-	return transactionPage, err
+	return port.TransactionPage{}, err
 }
 
 func (r *RetryTransactionRepository) FindOne(ctx context.Context, userID string, id string) (entity.Transaction, error) {
@@ -94,6 +120,10 @@ func (r *RetryTransactionRepository) FindOne(ctx context.Context, userID string,
 		transaction, err = r.inner.FindOne(ctx, userID, id)
 		if err == nil {
 			return transaction, nil
+		}
+
+		if !isRetryable(err) {
+			return entity.Transaction{}, err
 		}
 
 		if attempt == r.maxAttempts-1 {
@@ -115,6 +145,10 @@ func (r *RetryTransactionRepository) Update(ctx context.Context, userID string, 
 			return nil
 		}
 
+		if !isRetryable(err) {
+			return err
+		}
+
 		if attempt == r.maxAttempts-1 {
 			break
 		}
@@ -132,6 +166,10 @@ func (r *RetryTransactionRepository) Delete(ctx context.Context, userID string, 
 	for attempt := int8(0); attempt < r.maxAttempts; attempt++ {
 		if err = r.inner.Delete(ctx, userID, id); err == nil {
 			return nil
+		}
+
+		if !isRetryable(err) {
+			return err
 		}
 
 		if attempt == r.maxAttempts-1 {
