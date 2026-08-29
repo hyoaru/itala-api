@@ -84,7 +84,7 @@ func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID strin
 	occurredAt := transaction.OccurredAt.Format(time.RFC3339Nano)
 	gsiSortKey := fmt.Sprintf("TRANSACTION#%s%s", occurredAt, transaction.ID)
 
-	return r.client.PutItem(ctx, &dynamodbclient.PutItemInput{
+	err := r.client.PutItem(ctx, &dynamodbclient.PutItemInput{
 		TableName: r.tableName,
 		Item: map[string]any{
 			// Base table
@@ -118,6 +118,15 @@ func (r *DynamoDBTransactionRepository) Create(ctx context.Context, userID strin
 			"updated_at":  transaction.UpdatedAt.Format(time.RFC3339Nano),
 		},
 	})
+	if err != nil {
+		if errors.Is(err, dynamodbclient.ErrItemExists) {
+			return port.ErrTransactionExists
+		}
+
+		return fmt.Errorf("create transaction: %w", err)
+	}
+
+	return nil
 }
 
 func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index transactionIndex, pk string, query port.TransactionQuery) (port.TransactionPage, error) {
