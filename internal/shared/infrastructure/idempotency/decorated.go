@@ -10,7 +10,7 @@ func NewDecoratedIdempotencyStore(inner IdempotencyStore) *DecoratedIdempotencyS
 	return &DecoratedIdempotencyStore{inner: NewLoggingIdempotencyStore(inner)}
 }
 
-func (d *DecoratedIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, *IdempotencyStatus, *ResultJSON, error) {
+func (d *DecoratedIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
 	return d.inner.Acquire(ctx, key, ttl)
 }
 

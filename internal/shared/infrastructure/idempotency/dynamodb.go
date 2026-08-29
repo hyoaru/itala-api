@@ -2,7 +2,7 @@ package idempotency
 
 import (
 	"context"
-	"encoding/hex"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"time"
@@ -28,8 +28,8 @@ type acquireItem struct {
 	Token  string `dynamodbav:"token"`
 }
 
-func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, *IdempotencyStatus, *ResultJSON, error) {
-	pk := fmt.Sprintf("IDEMPOTENCY#%s", hex.EncodeToString([]byte(key)))
+func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
+	pk := fmt.Sprintf("IDEMPOTENCY#%s", sha256.Sum256([]byte(key)))
 	sk := "#LOCK"
 	now := time.Now().UTC()
 	token := uuid.New().String()
@@ -50,39 +50,35 @@ func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl 
 	})
 
 	if err == nil {
-		s := IdempotencyStatusAcquired
-		return IdempotencyLock{Key: key, Token: token}, &s, nil, nil
+		return IdempotencyLock{Key: key, Token: token}, IdempotencyStatusAcquired, "", nil
 	}
 
 	if !errors.Is(err, dynamodbclient.ErrConditionFailed) {
-		return IdempotencyLock{}, nil, nil, fmt.Errorf("acquire idempotency: %w", err)
+		return IdempotencyLock{}, "", "", fmt.Errorf("acquire idempotency: %w", err)
 	}
 
 	var item acquireItem
 	err = i.client.GetItem(ctx, &dynamodbclient.GetItemInput{TableName: i.tableName, Key: map[string]any{"PK": pk, "SK": sk}}, &item)
 	if err != nil {
 		if !errors.Is(err, dynamodbclient.ErrItemNotFound) {
-			return IdempotencyLock{}, nil, nil, fmt.Errorf("get item: %w", err)
+			return IdempotencyLock{}, "", "", fmt.Errorf("get existing idempotency item: %w", err)
 		}
 
-		return IdempotencyLock{}, nil, nil, ErrItemNotFound
+		return IdempotencyLock{}, "", "", ErrItemNotFound
 	}
 
 	switch IdempotencyStatus(item.Status) {
 	case IdempotencyStatusCompleted:
-		s := IdempotencyStatusCompleted
-		r := ResultJSON(item.Result)
-		return IdempotencyLock{}, &s, &r, nil
+		return IdempotencyLock{}, IdempotencyStatusCompleted, ResultJSON(item.Result), nil
 	case IdempotencyStatusLocked:
-		s := IdempotencyStatusLocked
-		return IdempotencyLock{}, &s, nil, nil
+		return IdempotencyLock{}, IdempotencyStatusLocked, "", nil
 	default:
-		return IdempotencyLock{}, nil, nil, fmt.Errorf("invalid idempotency status: %q", item.Status)
+		return IdempotencyLock{}, "", "", fmt.Errorf("invalid idempotency status: %q", item.Status)
 	}
 }
 
 func (i *DynamoDBIdempotencyStore) Commit(ctx context.Context, lock IdempotencyLock, result string) error {
-	pk := fmt.Sprintf("IDEMPOTENCY#%s", hex.EncodeToString([]byte(lock.Key)))
+	pk := fmt.Sprintf("IDEMPOTENCY#%s", sha256.Sum256([]byte(lock.Key)))
 	sk := "#LOCK"
 
 	conditionExpression := "status = :locked AND token = :token"
@@ -110,7 +106,7 @@ func (i *DynamoDBIdempotencyStore) Commit(ctx context.Context, lock IdempotencyL
 }
 
 func (i *DynamoDBIdempotencyStore) Release(ctx context.Context, lock IdempotencyLock) error {
-	pk := fmt.Sprintf("IDEMPOTENCY#%s", hex.EncodeToString([]byte(lock.Key)))
+	pk := fmt.Sprintf("IDEMPOTENCY#%s", sha256.Sum256([]byte(lock.Key)))
 	sk := "#LOCK"
 
 	conditionExpression := "status = :locked AND token = :token"

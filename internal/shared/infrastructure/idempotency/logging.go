@@ -14,7 +14,7 @@ func NewLoggingIdempotencyStore(inner IdempotencyStore) *LoggingIdempotencyStore
 	return &LoggingIdempotencyStore{inner: inner}
 }
 
-func (l *LoggingIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, *IdempotencyStatus, *ResultJSON, error) {
+func (l *LoggingIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
 	logger.Debug("Acquiring idempotency lock", "key", key, "ttl", ttl)
 	lock, status, result, err := l.inner.Acquire(ctx, key, ttl)
 	if err != nil {

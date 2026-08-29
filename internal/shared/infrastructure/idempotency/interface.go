@@ -21,7 +21,7 @@ type IdempotencyLock struct {
 }
 
 type IdempotencyStore interface {
-	Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, *IdempotencyStatus, *ResultJSON, error)
+	Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error)
 	Commit(ctx context.Context, Lock IdempotencyLock, resultJSON string) error
 	Release(ctx context.Context, Lock IdempotencyLock) error
 }
