@@ -29,7 +29,7 @@ type acquireItem struct {
 }
 
 func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
-	pk := fmt.Sprintf("IDEMPOTENCY#%s", sha256.Sum256([]byte(key)))
+	pk := fmt.Sprintf("IDEMPOTENCY#%x", sha256.Sum256([]byte(key)))
 	sk := "#LOCK"
 	now := time.Now().UTC()
 	token := uuid.New().String()
@@ -79,7 +79,7 @@ func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl 
 }
 
 func (i *DynamoDBIdempotencyStore) Commit(ctx context.Context, lock IdempotencyLock, result string) error {
-	pk := fmt.Sprintf("IDEMPOTENCY#%s", sha256.Sum256([]byte(lock.Key)))
+	pk := fmt.Sprintf("IDEMPOTENCY#%x", sha256.Sum256([]byte(lock.Key)))
 	sk := "#LOCK"
 
 	conditionExpression := "#status = :locked AND #token = :token"
@@ -112,7 +112,7 @@ func (i *DynamoDBIdempotencyStore) Commit(ctx context.Context, lock IdempotencyL
 }
 
 func (i *DynamoDBIdempotencyStore) Release(ctx context.Context, lock IdempotencyLock) error {
-	pk := fmt.Sprintf("IDEMPOTENCY#%s", sha256.Sum256([]byte(lock.Key)))
+	pk := fmt.Sprintf("IDEMPOTENCY#%x", sha256.Sum256([]byte(lock.Key)))
 	sk := "#LOCK"
 
 	conditionExpression := "#status = :locked AND #token = :token"
