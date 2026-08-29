@@ -36,12 +36,12 @@ func (r *IdempotencyTransactionRepository) Create(ctx context.Context, userID st
 
 	if err = r.inner.Create(ctx, userID, transaction); err != nil {
 		if !errors.Is(err, port.ErrTransactionExists) {
-			r.store.Release(ctx, lock)
+			_ = r.store.Release(ctx, lock)
 			return err
 		}
 		return err
 	}
 
-	r.store.Commit(ctx, lock, "null")
+	_ = r.store.Commit(ctx, lock, "null")
 	return nil
 }
