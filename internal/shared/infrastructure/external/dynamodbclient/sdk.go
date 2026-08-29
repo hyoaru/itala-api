@@ -270,10 +270,6 @@ func (c *SDKDynamoDBClient) UpdateItem(ctx context.Context, input *UpdateItemInp
 			return ErrConditionFailed
 		}
 
-		if _, ok := errors.AsType[*types.ResourceNotFoundException](err); ok {
-			return ErrItemNotFound
-		}
-
 		return fmt.Errorf("update item: %w", err)
 	}
 
@@ -303,10 +299,6 @@ func (c *SDKDynamoDBClient) DeleteItem(ctx context.Context, input *DeleteItemInp
 	if err != nil {
 		if _, ok := errors.AsType[*types.ConditionalCheckFailedException](err); ok {
 			return ErrConditionFailed
-		}
-
-		if _, ok := errors.AsType[*types.ResourceNotFoundException](err); ok {
-			return ErrItemNotFound
 		}
 
 		return fmt.Errorf("delete item: %w", err)

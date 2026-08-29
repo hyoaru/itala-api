@@ -280,6 +280,7 @@ func (r *DynamoDBTransactionRepository) FindOne(ctx context.Context, userID stri
 func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID string, transaction entity.Transaction) error {
 	gsiSortKey := fmt.Sprintf("TRANSACTION#%s#%s", transaction.OccurredAt.Format(time.RFC3339Nano), transaction.ID)
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("TRANSACTION#%s", transaction.ID)}
+	condition := "attribute_exists(PK)"
 
 	expression := `
 		SET
@@ -321,10 +322,15 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 	if err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
 		TableName:                 r.tableName,
 		Key:                       key,
+		ConditionExpression:       &condition,
 		UpdateExpression:          expression,
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 	}); err != nil {
+		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
+			return port.ErrTransactionNotFound
+		}
+
 		return fmt.Errorf("update transaction: %w", err)
 	}
 
@@ -338,7 +344,7 @@ func (r *DynamoDBTransactionRepository) Delete(ctx context.Context, userID strin
 	err := r.client.DeleteItem(ctx, &dynamodbclient.DeleteItemInput{
 		TableName:           r.tableName,
 		Key:                 key,
-		ConditionExpression: aws.String(condition),
+		ConditionExpression: &condition,
 	})
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
