@@ -4,13 +4,14 @@ import (
 	"context"
 
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
-	valueobject "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
+	accountvalueobject "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
+	valueobject "github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
 type AccountQuery struct {
 	Limit  int32
 	Name   *string
-	Status *valueobject.Status
+	Status *accountvalueobject.Status
 	Cursor *string
 }
 
@@ -26,4 +27,5 @@ type AccountRepository interface {
 	Update(ctx context.Context, userID string, account entity.Account) error
 	Archive(ctx context.Context, userID string, id string) error
 	Restore(ctx context.Context, userID string, id string) error
+	AdjustBalance(ctx context.Context, userID string, accountID string, idempotencyKey string, delta valueobject.Decimal) error
 }

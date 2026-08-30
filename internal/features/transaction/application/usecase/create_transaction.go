@@ -75,8 +75,18 @@ func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransacti
 		UpdatedAt:   now,
 	}
 
-	idempotencyKey := uuid.New().String()
-	if err := u.transactionRepository.Create(ctx, request.UserID, transaction, idempotencyKey); err != nil {
+	transactionIdempotencyKey := uuid.New().String()
+	if err := u.transactionRepository.Create(ctx, request.UserID, transaction, transactionIdempotencyKey); err != nil {
+		return CreateTransactionResponse{}, err
+	}
+
+	delta := transaction.Amount
+	if transaction.Type == valueobject.TransactionTypeExpense {
+		delta = delta.Negate()
+	}
+
+	balanceIdempotencyKey := uuid.New().String()
+	if err := u.accountRepository.AdjustBalance(ctx, request.UserID, request.AccountID, balanceIdempotencyKey, delta); err != nil {
 		return CreateTransactionResponse{}, err
 	}
 

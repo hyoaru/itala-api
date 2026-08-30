@@ -28,6 +28,10 @@ func (d Decimal) Subtract(amount Decimal) Decimal {
 	return Decimal{d.value.Sub(amount.value)}
 }
 
+func (d Decimal) Negate() Decimal {
+	return Decimal{d.value.Neg()}
+}
+
 func (d Decimal) Multiply(amount Decimal) Decimal {
 	return Decimal{d.value.Mul(amount.value)}
 }

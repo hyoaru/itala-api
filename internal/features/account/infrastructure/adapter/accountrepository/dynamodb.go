@@ -370,3 +370,30 @@ func (r *DynamoDBAccountRepository) Restore(ctx context.Context, userID string, 
 
 	return fmt.Errorf("restore account: unexpected status %q", current.Status)
 }
+
+func (r *DynamoDBAccountRepository) AdjustBalance(ctx context.Context, userID string, accountID string, idempotencyKey string, delta valueobject.Decimal) error {
+	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("ACCOUNT#%s", accountID)}
+	expression := "SET balance = balance + :delta, updated_at = :updated_at"
+	condition := "attribute_exists(PK)"
+	expressionValues := map[string]any{
+		":delta":      dynamodbclient.Decimal(delta),
+		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
+	}
+
+	err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
+		TableName:                 r.tableName,
+		Key:                       key,
+		UpdateExpression:          expression,
+		ConditionExpression:       aws.String(condition),
+		ExpressionAttributeValues: expressionValues,
+	})
+	if err != nil {
+		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
+			return port.ErrAccountNotFound
+		}
+
+		return fmt.Errorf("adjust account balance: %w", err)
+	}
+
+	return nil
+}

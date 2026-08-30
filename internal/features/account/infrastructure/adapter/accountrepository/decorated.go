@@ -2,17 +2,23 @@ package account
 
 import (
 	"context"
+	"time"
 
 	port "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
+	valueobject "github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
 )
 
 type DecoratedAccountRepository struct {
 	inner port.AccountRepository
 }
 
-func NewDecoratedAccountRepository(inner port.AccountRepository) *DecoratedAccountRepository {
-	return &DecoratedAccountRepository{inner: NewLoggingAccountRepository(inner)}
+func NewDecoratedAccountRepository(inner port.AccountRepository, idempotencyStore idempotency.IdempotencyStore) *DecoratedAccountRepository {
+	logging := NewLoggingAccountRepository(inner)
+	idempotency := NewIdempotencyAccountRepository(logging, idempotencyStore)
+	retry := NewRetryAccountRepository(idempotency, 5, 100*time.Millisecond, 2*time.Second)
+	return &DecoratedAccountRepository{inner: retry}
 }
 
 func (c *DecoratedAccountRepository) Create(ctx context.Context, userID string, account entity.Account) error {
@@ -37,4 +43,8 @@ func (c *DecoratedAccountRepository) Archive(ctx context.Context, userID string,
 
 func (c *DecoratedAccountRepository) Restore(ctx context.Context, userID string, id string) error {
 	return c.inner.Restore(ctx, userID, id)
+}
+
+func (c *DecoratedAccountRepository) AdjustBalance(ctx context.Context, userID string, accountID string, idempotencyKey string, delta valueobject.Decimal) error {
+	return c.inner.AdjustBalance(ctx, userID, accountID, idempotencyKey, delta)
 }

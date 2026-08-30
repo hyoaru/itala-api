@@ -25,7 +25,7 @@ func New(addr string) *App {
 
 	identityProvider := identity.NewCognitoIdentityProvider(os.Getenv("AWS_REGION"), os.Getenv("COGNITO_USER_POOL_ID"))
 	categoryRepository := category.NewDynamoDBCategoryRepository(dynamodbClient, dynamodbTableName)
-	accountRepository := account.NewDynamoDBAccountRepository(dynamodbClient, dynamodbTableName)
+	accountRepository := account.NewDynamoDBAccountRepository(dynamodbClient, dynamodbTableName, idempotencyStore)
 	transactionRepository := transaction.NewDynamoDBTransactionRepository(dynamodbClient, dynamodbTableName, idempotencyStore)
 
 	categoryHandler := &handler.CategoryHandler{

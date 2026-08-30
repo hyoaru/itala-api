@@ -5,6 +5,7 @@ import (
 
 	port "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
+	valueobject "github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
 )
 
@@ -91,6 +92,19 @@ func (c *LoggingAccountRepository) Restore(ctx context.Context, userID string, i
 	}
 
 	logger.Info("Account restored", "id", id)
+
+	return nil
+}
+
+func (c *LoggingAccountRepository) AdjustBalance(ctx context.Context, userID string, accountID string, idempotencyKey string, delta valueobject.Decimal) error {
+	logger.Debug("Adjusting account balance", "id", accountID, "delta", delta.String())
+
+	if err := c.inner.AdjustBalance(ctx, userID, accountID, idempotencyKey, delta); err != nil {
+		logger.Warn("Failed to adjust account balance", "error", err)
+		return err
+	}
+
+	logger.Info("Account balance adjusted", "id", accountID)
 
 	return nil
 }

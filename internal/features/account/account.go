@@ -8,6 +8,7 @@ import (
 	accountrepositoryadapter "github.com/hyoaru/itala-api/internal/features/account/infrastructure/adapter/accountrepository"
 	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
 )
 
 type (
@@ -28,9 +29,9 @@ var (
 	ErrAccountArchived = accountrepositoryport.ErrAccountArchived
 )
 
-func NewDynamoDBAccountRepository(client dynamodbclient.DynamoDBClient, tableName string) AccountRepository {
+func NewDynamoDBAccountRepository(client dynamodbclient.DynamoDBClient, tableName string, idempotencyStore idempotency.IdempotencyStore) AccountRepository {
 	r := accountrepositoryadapter.NewDynamoDBAccountRepository(client, tableName)
-	return accountrepositoryadapter.NewDecoratedAccountRepository(r)
+	return accountrepositoryadapter.NewDecoratedAccountRepository(r, idempotencyStore)
 }
 
 type (
