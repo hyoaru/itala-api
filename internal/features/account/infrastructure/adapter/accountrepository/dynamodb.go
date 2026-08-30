@@ -96,12 +96,14 @@ func (r *DynamoDBAccountRepository) Create(ctx context.Context, userID string, a
 
 	err := r.client.TransactWriteItems(ctx, &dynamodbclient.TransactWriteItemsInput{TransactItems: transactItems})
 	if err != nil {
-		if errors.Is(err, dynamodbclient.ErrItemExists) {
+		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
 			return port.ErrAccountExists
 		}
+
+		return fmt.Errorf("create account: %w", err)
 	}
 
-	return err
+	return nil
 }
 
 func (r *DynamoDBAccountRepository) Find(ctx context.Context, userID string, query port.AccountQuery) (port.AccountPage, error) {
@@ -206,38 +208,53 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 
 	pk := fmt.Sprintf("USER#%s", userID)
 	accountSK := fmt.Sprintf("ACCOUNT#%s", account.ID)
+	oldUpdatedAt := current.UpdatedAt.Format(time.RFC3339Nano)
 	updatedAt := account.UpdatedAt.Format(time.RFC3339Nano)
 	currentKey := map[string]any{"PK": pk, "SK": accountSK}
 
 	if current.Name == account.Name {
+		condition := "updated_at = :old_updated_at"
 		expression := "SET #status = :status, updated_at = :updated_at"
 		expressionNames := map[string]string{"#status": "status"}
-		expressionValues := map[string]any{":status": string(account.Status), ":updated_at": updatedAt}
+		expressionValues := map[string]any{
+			":status":         string(account.Status),
+			":updated_at":     updatedAt,
+			":old_updated_at": oldUpdatedAt,
+		}
+
 		if err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
 			TableName:                 r.tableName,
 			Key:                       currentKey,
+			ConditionExpression:       &condition,
 			UpdateExpression:          expression,
 			ExpressionAttributeNames:  expressionNames,
 			ExpressionAttributeValues: expressionValues,
 		}); err != nil {
-			return err
+			if errors.Is(err, dynamodbclient.ErrConditionFailed) {
+				return port.ErrConcurrentModification
+			}
+
+			return fmt.Errorf("update account: %w", err)
 		}
 		return nil
 	}
 
+	updateCondition := "updated_at = :old_updated_at"
+	deleteCondition := "attribute_exists(PK)"
+	putCondition := "attribute_not_exists(PK)"
 	transactItems := []dynamodbclient.TransactWriteItem{
 		{
 			Update: &dynamodbclient.TransactUpdate{
 				TableName:                r.tableName,
 				Key:                      currentKey,
 				UpdateExpression:         "SET #name = :name, #status = :status, updated_at = :updated_at",
-				ConditionExpression:      aws.String("#name = :old_name"),
+				ConditionExpression:      &updateCondition,
 				ExpressionAttributeNames: map[string]string{"#name": "name", "#status": "status"},
 				ExpressionAttributeValues: map[string]any{
-					":name":       account.Name,
-					":status":     string(account.Status),
-					":updated_at": updatedAt,
-					":old_name":   current.Name,
+					":name":           account.Name,
+					":status":         string(account.Status),
+					":updated_at":     updatedAt,
+					":old_updated_at": oldUpdatedAt,
 				},
 			},
 		},
@@ -248,6 +265,7 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 					"PK": pk,
 					"SK": fmt.Sprintf("ACCOUNT_NAME#%s", current.Name),
 				},
+				ConditionExpression: &deleteCondition,
 			},
 		},
 		{
@@ -258,19 +276,21 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 					"SK":         fmt.Sprintf("ACCOUNT_NAME#%s", account.Name),
 					"account_id": account.ID,
 				},
-				ConditionExpression: aws.String("attribute_not_exists(PK)"),
+				ConditionExpression: &putCondition,
 			},
 		},
 	}
 
 	err = r.client.TransactWriteItems(ctx, &dynamodbclient.TransactWriteItemsInput{TransactItems: transactItems})
 	if err != nil {
-		if errors.Is(err, dynamodbclient.ErrItemExists) {
+		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
 			return port.ErrAccountExists
 		}
+
+		return fmt.Errorf("update account: %w", err)
 	}
 
-	return err
+	return nil
 }
 
 func (r *DynamoDBAccountRepository) Archive(ctx context.Context, userID string, id string) error {

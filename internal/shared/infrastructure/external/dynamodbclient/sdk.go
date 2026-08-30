@@ -81,7 +81,7 @@ func (c *SDKDynamoDBClient) TransactWriteItems(ctx context.Context, input *Trans
 	for _, item := range input.TransactItems {
 		parsedTransactItem, err := c.toTransactWriteItem(item)
 		if err != nil {
-			return err
+			return fmt.Errorf("marshal transact write item: %w", err)
 		}
 
 		parsedTransactItems = append(parsedTransactItems, parsedTransactItem)
@@ -92,7 +92,7 @@ func (c *SDKDynamoDBClient) TransactWriteItems(ctx context.Context, input *Trans
 		if canceled, ok := errors.AsType[*types.TransactionCanceledException](err); ok {
 			for _, reason := range canceled.CancellationReasons {
 				if reason.Code != nil && *reason.Code == "ConditionalCheckFailed" {
-					return ErrItemExists
+					return ErrConditionFailed
 				}
 			}
 		}

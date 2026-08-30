@@ -90,12 +90,14 @@ func (r *DynamoDBCategoryRepository) Create(ctx context.Context, userID string, 
 
 	err := r.client.TransactWriteItems(ctx, &dynamodbclient.TransactWriteItemsInput{TransactItems: transactItems})
 	if err != nil {
-		if errors.Is(err, dynamodbclient.ErrItemExists) {
+		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
 			return port.ErrCategoryExists
 		}
+
+		return fmt.Errorf("create category: %w", err)
 	}
 
-	return err
+	return nil
 }
 
 func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, query port.CategoryQuery) (port.CategoryPage, error) {
@@ -204,38 +206,52 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 
 	pk := fmt.Sprintf("USER#%s", userID)
 	categorySK := fmt.Sprintf("CATEGORY#%s", category.ID)
+	oldUpdatedAt := current.UpdatedAt.Format(time.RFC3339Nano)
 	updatedAt := category.UpdatedAt.Format(time.RFC3339Nano)
 	currentKey := map[string]any{"PK": pk, "SK": categorySK}
 
 	if current.Name == category.Name {
+		condition := "updated_at = :old_updated_at"
 		expression := "SET #status = :status, updated_at = :updated_at"
 		expressionNames := map[string]string{"#status": "status"}
-		expressionValues := map[string]any{":status": string(category.Status), ":updated_at": updatedAt}
+		expressionValues := map[string]any{
+			":status":         string(category.Status),
+			":updated_at":     updatedAt,
+			":old_updated_at": oldUpdatedAt,
+		}
 		if err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
 			TableName:                 r.tableName,
 			Key:                       currentKey,
+			ConditionExpression:       &condition,
 			UpdateExpression:          expression,
 			ExpressionAttributeNames:  expressionNames,
 			ExpressionAttributeValues: expressionValues,
 		}); err != nil {
-			return err
+			if errors.Is(err, dynamodbclient.ErrConditionFailed) {
+				return port.ErrConcurrentModification
+			}
+
+			return fmt.Errorf("update category: %w", err)
 		}
 		return nil
 	}
 
+	updateCondition := "updated_at = :old_updated_at"
+	deleteCondition := "attribute_exists(PK)"
+	putCondition := "attribute_not_exists(PK)"
 	transactItems := []dynamodbclient.TransactWriteItem{
 		{
 			Update: &dynamodbclient.TransactUpdate{
 				TableName:                r.tableName,
 				Key:                      currentKey,
 				UpdateExpression:         "SET #name = :name, #status = :status, updated_at = :updated_at",
-				ConditionExpression:      aws.String("#name = :old_name"),
+				ConditionExpression:      &updateCondition,
 				ExpressionAttributeNames: map[string]string{"#name": "name", "#status": "status"},
 				ExpressionAttributeValues: map[string]any{
-					":name":       category.Name,
-					":status":     string(category.Status),
-					":updated_at": category.UpdatedAt.Format(time.RFC3339Nano),
-					":old_name":   current.Name,
+					":name":           category.Name,
+					":status":         string(category.Status),
+					":updated_at":     category.UpdatedAt.Format(time.RFC3339Nano),
+					":old_updated_at": oldUpdatedAt,
 				},
 			},
 		},
@@ -246,6 +262,7 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 					"PK": pk,
 					"SK": fmt.Sprintf("CATEGORY_NAME#%s", current.Name),
 				},
+				ConditionExpression: &deleteCondition,
 			},
 		},
 		{
@@ -256,19 +273,20 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 					"SK":          fmt.Sprintf("CATEGORY_NAME#%s", category.Name),
 					"category_id": category.ID,
 				},
-				ConditionExpression: aws.String("attribute_not_exists(PK)"),
+				ConditionExpression: &putCondition,
 			},
 		},
 	}
 
 	err = r.client.TransactWriteItems(ctx, &dynamodbclient.TransactWriteItemsInput{TransactItems: transactItems})
 	if err != nil {
-		if errors.Is(err, dynamodbclient.ErrItemExists) {
+		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
 			return port.ErrCategoryExists
 		}
+		return fmt.Errorf("update category: %w", err)
 	}
 
-	return err
+	return nil
 }
 
 func (r *DynamoDBCategoryRepository) Archive(ctx context.Context, userID string, categoryID string) error {
