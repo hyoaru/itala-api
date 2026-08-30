@@ -13,7 +13,7 @@ http:
     type: json
     data: |-
       {
-        "name": "Salary",
+        "name": "Side Hustle",
         "transaction_type": "INCOME"
       }
   auth: inherit

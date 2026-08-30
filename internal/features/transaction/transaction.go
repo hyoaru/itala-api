@@ -63,8 +63,11 @@ type (
 	DeleteTransactionResponse = transactionusecase.DeleteTransactionResponse
 )
 
-func NewDeleteTransaction(transactionRepository TransactionRepository) usecase.UseCase[DeleteTransactionRequest, DeleteTransactionResponse] {
-	return transactionusecase.NewDeleteTransaction(transactionRepository)
+func NewDeleteTransaction(
+	transactionRepository TransactionRepository,
+	accountRepository account.AccountRepository,
+) usecase.UseCase[DeleteTransactionRequest, DeleteTransactionResponse] {
+	return transactionusecase.NewDeleteTransaction(transactionRepository, accountRepository)
 }
 
 type (

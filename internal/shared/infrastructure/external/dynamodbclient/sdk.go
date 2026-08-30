@@ -137,9 +137,12 @@ func (c *SDKDynamoDBClient) toTransactUpdate(operation *TransactUpdate) (types.T
 		return types.TransactWriteItem{}, err
 	}
 
-	values, err := attributevalue.MarshalMap(operation.ExpressionAttributeValues)
-	if err != nil {
-		return types.TransactWriteItem{}, err
+	var values map[string]types.AttributeValue
+	if len(operation.ExpressionAttributeValues) > 0 {
+		values, err = attributevalue.MarshalMap(operation.ExpressionAttributeValues)
+		if err != nil {
+			return types.TransactWriteItem{}, err
+		}
 	}
 
 	item := &types.Update{
@@ -251,9 +254,12 @@ func (c *SDKDynamoDBClient) UpdateItem(ctx context.Context, input *UpdateItemInp
 		return fmt.Errorf("marshal key: %w", err)
 	}
 
-	parsedExpressionValues, err := attributevalue.MarshalMap(input.ExpressionAttributeValues)
-	if err != nil {
-		return fmt.Errorf("marshal expression values: %w", err)
+	var parsedExpressionValues map[string]types.AttributeValue
+	if len(input.ExpressionAttributeValues) > 0 {
+		parsedExpressionValues, err = attributevalue.MarshalMap(input.ExpressionAttributeValues)
+		if err != nil {
+			return fmt.Errorf("marshal expression values: %w", err)
+		}
 	}
 
 	updateItemInput := &dynamodb.UpdateItemInput{
@@ -283,9 +289,12 @@ func (c *SDKDynamoDBClient) DeleteItem(ctx context.Context, input *DeleteItemInp
 		return fmt.Errorf("marshal key: %w", err)
 	}
 
-	parsedExpressionValues, err := attributevalue.MarshalMap(input.ExpressionAttributeValues)
-	if err != nil {
-		return fmt.Errorf("marshal expression values: %w", err)
+	var parsedExpressionValues map[string]types.AttributeValue
+	if len(input.ExpressionAttributeValues) > 0 {
+		parsedExpressionValues, err = attributevalue.MarshalMap(input.ExpressionAttributeValues)
+		if err != nil {
+			return fmt.Errorf("marshal expression values: %w", err)
+		}
 	}
 
 	deleteItemInput := &dynamodb.DeleteItemInput{
