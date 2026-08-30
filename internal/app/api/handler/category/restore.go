@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	res "github.com/hyoaru/itala-api/internal/app/api/response"
@@ -17,6 +18,11 @@ func (h *CategoryHandler) Restore(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := h.RestoreCategory.Execute(r.Context(), useCaseRequest); err != nil {
+		if errors.Is(err, category.ErrCategoryNotFound) {
+			res.WriteError(w, "RESOURCE_NOT_FOUND", "category not found", http.StatusNotFound)
+			return
+		}
+
 		res.WriteError(w, "INTERNAL_SERVER_ERROR", "internal server error", http.StatusInternalServerError)
 		return
 	}

@@ -292,11 +292,10 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 func (r *DynamoDBCategoryRepository) Archive(ctx context.Context, userID string, categoryID string) error {
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("CATEGORY#%s", categoryID)}
 	expression := "SET #status = :status, updated_at = :updated_at"
-	condition := "#status = :active"
+	condition := "attribute_exists(PK)"
 	expressionNames := map[string]string{"#status": "status"}
 	expressionValues := map[string]any{
 		":status":     string(categoryvalueobject.StatusArchived),
-		":active":     string(categoryvalueobject.StatusActive),
 		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
 	}
 
@@ -308,34 +307,24 @@ func (r *DynamoDBCategoryRepository) Archive(ctx context.Context, userID string,
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 	})
-	if err == nil {
-		return nil
-	}
+	if err != nil {
+		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
+			return port.ErrCategoryNotFound
+		}
 
-	if !errors.Is(err, dynamodbclient.ErrConditionFailed) {
 		return fmt.Errorf("archive category: %w", err)
 	}
 
-	category, err := r.FindOne(ctx, userID, categoryID)
-	if err != nil {
-		return fmt.Errorf("get current category: %w", err)
-	}
-
-	if category.Status == categoryvalueobject.StatusArchived {
-		return nil
-	}
-
-	return port.ErrCategoryNotActive
+	return nil
 }
 
 func (r *DynamoDBCategoryRepository) Restore(ctx context.Context, userID string, categoryID string) error {
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("CATEGORY#%s", categoryID)}
 	expression := "SET #status = :status, updated_at = :updated_at"
-	condition := "#status = :archived"
+	condition := "attribute_exists(PK)"
 	expressionNames := map[string]string{"#status": "status"}
 	expressionValues := map[string]any{
 		":status":     string(categoryvalueobject.StatusActive),
-		":archived":   string(categoryvalueobject.StatusArchived),
 		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
 	}
 
@@ -347,22 +336,13 @@ func (r *DynamoDBCategoryRepository) Restore(ctx context.Context, userID string,
 		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 	})
-	if err == nil {
-		return nil
-	}
-
-	if !errors.Is(err, dynamodbclient.ErrConditionFailed) {
-		return err
-	}
-
-	current, err := r.FindOne(ctx, userID, categoryID)
 	if err != nil {
-		return fmt.Errorf("get current category: %w", err)
+		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
+			return port.ErrCategoryNotFound
+		}
+
+		return fmt.Errorf("restore category: %w", err)
 	}
 
-	if current.Status == categoryvalueobject.StatusActive {
-		return nil
-	}
-
-	return port.ErrCategoryNotArchived
+	return nil
 }
