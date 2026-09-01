@@ -25,6 +25,15 @@ func NewUpdateAccount(accountRepository accountrepository.AccountRepository) *Up
 }
 
 func (u *UpdateAccount) Execute(ctx context.Context, request UpdateAccountRequest) (UpdateAccountResponse, error) {
+	current, err := u.accountRepository.FindOne(ctx, request.UserID, request.ID)
+	if err != nil {
+		return UpdateAccountResponse{}, err
+	}
+
+	if current.DeletedAt != nil {
+		return UpdateAccountResponse{}, accountrepository.ErrAccountNotFound
+	}
+
 	now := time.Now().UTC()
 
 	account := entity.Account{

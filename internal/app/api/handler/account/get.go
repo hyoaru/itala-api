@@ -38,6 +38,11 @@ func (h *AccountHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if entity.DeletedAt != nil {
+		res.WriteError(w, "RESOURCE_NOT_FOUND", "account not found", http.StatusNotFound)
+		return
+	}
+
 	response := getAccountResponse{
 		ID:        entity.ID,
 		Name:      entity.Name,

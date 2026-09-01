@@ -25,6 +25,15 @@ func NewUpdateCategory(categoryRepository categoryrepository.CategoryRepository)
 }
 
 func (u *UpdateCategory) Execute(ctx context.Context, request UpdateCategoryRequest) (UpdateCategoryResponse, error) {
+	current, err := u.categoryRepository.FindOne(ctx, request.UserID, request.ID)
+	if err != nil {
+		return UpdateCategoryResponse{}, err
+	}
+
+	if current.DeletedAt != nil {
+		return UpdateCategoryResponse{}, categoryrepository.ErrCategoryNotFound
+	}
+
 	now := time.Now().UTC()
 
 	category := entity.Category{

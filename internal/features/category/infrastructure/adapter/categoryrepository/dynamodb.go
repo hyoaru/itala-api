@@ -198,10 +198,6 @@ func (r *DynamoDBCategoryRepository) FindOne(ctx context.Context, userID string,
 		return entity.Category{}, fmt.Errorf("parse category: %w", err)
 	}
 
-	if category.DeletedAt != nil {
-		return entity.Category{}, port.ErrCategoryNotFound
-	}
-
 	return category, nil
 }
 

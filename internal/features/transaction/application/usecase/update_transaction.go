@@ -49,9 +49,17 @@ func (u *UpdateTransaction) Execute(ctx context.Context, request UpdateTransacti
 		return UpdateTransactionResponse{}, err
 	}
 
-	_, err = u.accountRepository.FindOne(ctx, request.UserID, request.AccountID)
+	if foundCategory.DeletedAt != nil {
+		return UpdateTransactionResponse{}, category.ErrCategoryNotFound
+	}
+
+	foundAccount, err := u.accountRepository.FindOne(ctx, request.UserID, request.AccountID)
 	if err != nil {
 		return UpdateTransactionResponse{}, err
+	}
+
+	if foundAccount.DeletedAt != nil {
+		return UpdateTransactionResponse{}, account.ErrAccountNotFound
 	}
 
 	transaction := entity.Transaction{
