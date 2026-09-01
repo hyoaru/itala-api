@@ -15,8 +15,8 @@ func NewDecoratedIdempotencyStore(inner IdempotencyStore) IdempotencyStore {
 	return &DecoratedIdempotencyStore{inner: retry}
 }
 
-func (d *DecoratedIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
-	return d.inner.Acquire(ctx, key, ttl)
+func (d *DecoratedIdempotencyStore) Acquire(ctx context.Context, key string, expiresAt uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
+	return d.inner.Acquire(ctx, key, expiresAt)
 }
 
 func (d *DecoratedIdempotencyStore) Commit(ctx context.Context, lock IdempotencyLock, result string) error {

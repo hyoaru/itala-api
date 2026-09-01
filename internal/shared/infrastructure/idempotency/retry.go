@@ -49,7 +49,7 @@ func (s *RetryIdempotencyStore) backoff(attempt int8) time.Duration {
 	return delay
 }
 
-func (s *RetryIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
+func (s *RetryIdempotencyStore) Acquire(ctx context.Context, key string, expiresAt uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
 	var (
 		lock   IdempotencyLock
 		status IdempotencyStatus
@@ -58,7 +58,7 @@ func (s *RetryIdempotencyStore) Acquire(ctx context.Context, key string, ttl uin
 	)
 
 	for attempt := int8(0); attempt < s.maxAttempts; attempt++ {
-		lock, status, result, err = s.inner.Acquire(ctx, key, ttl)
+		lock, status, result, err = s.inner.Acquire(ctx, key, expiresAt)
 		if err == nil {
 			return lock, status, result, nil
 		}

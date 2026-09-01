@@ -28,25 +28,25 @@ type acquireItem struct {
 	Token  string `dynamodbav:"token"`
 }
 
-func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, ttl uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
+func (i *DynamoDBIdempotencyStore) Acquire(ctx context.Context, key string, expiresAt uint16) (IdempotencyLock, IdempotencyStatus, ResultJSON, error) {
 	pk := fmt.Sprintf("IDEMPOTENCY#%x", sha256.Sum256([]byte(key)))
 	sk := "#LOCK"
 	now := time.Now().UTC()
 	token := uuid.New().String()
 
-	ttlTimestamp := now.Add(time.Duration(ttl) * time.Second)
+	expiresTimestamp := now.Add(time.Duration(expiresAt) * time.Second)
 
 	err := i.client.PutItem(ctx, &dynamodbclient.PutItemInput{
 		TableName: i.tableName,
 		Item: map[string]any{
-			"PK":     pk,
-			"SK":     sk,
-			"ttl":    ttlTimestamp.Unix(),
-			"status": string(IdempotencyStatusLocked),
-			"token":  token,
+			"PK":         pk,
+			"SK":         sk,
+			"expires_at": expiresTimestamp.Unix(),
+			"status":     string(IdempotencyStatusLocked),
+			"token":      token,
 		},
-		ConditionExpression:       aws.String("attribute_not_exists(PK) or #ttl <= :now"),
-		ExpressionAttributeNames:  map[string]string{"#ttl": "ttl"},
+		ConditionExpression:       aws.String("attribute_not_exists(PK) or #expires_at <= :now"),
+		ExpressionAttributeNames:  map[string]string{"#expires_at": "expires_at"},
 		ExpressionAttributeValues: map[string]any{":now": now.Unix()},
 	})
 
