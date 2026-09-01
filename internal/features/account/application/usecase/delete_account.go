@@ -22,15 +22,6 @@ func NewDeleteAccount(accountRepository accountrepository.AccountRepository) *De
 }
 
 func (u *DeleteAccount) Execute(ctx context.Context, request DeleteAccountRequest) (DeleteAccountResponse, error) {
-	current, err := u.accountRepository.FindOne(ctx, request.UserID, request.ID)
-	if err != nil {
-		return DeleteAccountResponse{}, err
-	}
-
-	if current.DeletedAt != nil {
-		return DeleteAccountResponse{}, accountrepository.ErrAccountNotFound
-	}
-
 	if err := u.accountRepository.Delete(ctx, request.UserID, request.ID); err != nil {
 		return DeleteAccountResponse{}, err
 	}

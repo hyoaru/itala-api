@@ -22,15 +22,6 @@ func NewDeleteCategory(categoryRepository categoryrepository.CategoryRepository)
 }
 
 func (u *DeleteCategory) Execute(ctx context.Context, request DeleteCategoryRequest) (DeleteCategoryResponse, error) {
-	current, err := u.categoryRepository.FindOne(ctx, request.UserID, request.ID)
-	if err != nil {
-		return DeleteCategoryResponse{}, err
-	}
-
-	if current.DeletedAt != nil {
-		return DeleteCategoryResponse{}, categoryrepository.ErrCategoryNotFound
-	}
-
 	if err := u.categoryRepository.Delete(ctx, request.UserID, request.ID); err != nil {
 		return DeleteCategoryResponse{}, err
 	}

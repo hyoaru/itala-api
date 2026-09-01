@@ -38,11 +38,6 @@ func (h *CategoryHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if entity.DeletedAt != nil {
-		res.WriteError(w, "RESOURCE_NOT_FOUND", "category not found", http.StatusNotFound)
-		return
-	}
-
 	response := getCategoryResponse{
 		ID:              entity.ID,
 		Name:            entity.Name,

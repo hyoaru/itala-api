@@ -200,6 +200,10 @@ func (r *DynamoDBAccountRepository) FindOne(ctx context.Context, userID string, 
 		return entity.Account{}, fmt.Errorf("parse account: %w", err)
 	}
 
+	if account.DeletedAt != nil {
+		return entity.Account{}, port.ErrAccountNotFound
+	}
+
 	return account, nil
 }
 
