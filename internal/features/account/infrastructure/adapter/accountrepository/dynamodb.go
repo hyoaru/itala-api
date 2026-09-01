@@ -119,8 +119,7 @@ func (r *DynamoDBAccountRepository) Find(ctx context.Context, userID string, que
 
 	var filters []string
 	expressionNames := map[string]string{}
-	filters = append(filters, "attribute_not_exists(#deleted_at)")
-	expressionNames["#deleted_at"] = "deleted_at"
+	filters = append(filters, "attribute_not_exists(deleted_at)")
 	if query.Name != nil {
 		filters = append(filters, "#name = :name")
 		expressionNames["#name"] = "name"
@@ -299,9 +298,8 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 
 func (r *DynamoDBAccountRepository) Delete(ctx context.Context, userID string, id string) error {
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("ACCOUNT#%s", id)}
-	expression := "SET #deleted_at = :deleted_at, updated_at = :updated_at"
+	expression := "SET deleted_at = :deleted_at, updated_at = :updated_at"
 	condition := "attribute_exists(PK)"
-	expressionNames := map[string]string{"#deleted_at": "deleted_at"}
 	expressionValues := map[string]any{
 		":deleted_at": time.Now().UTC().Format(time.RFC3339Nano),
 		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
@@ -312,7 +310,6 @@ func (r *DynamoDBAccountRepository) Delete(ctx context.Context, userID string, i
 		Key:                       key,
 		UpdateExpression:          expression,
 		ConditionExpression:       aws.String(condition),
-		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 	})
 	if err != nil {

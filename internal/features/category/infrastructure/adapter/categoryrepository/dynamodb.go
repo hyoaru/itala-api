@@ -113,8 +113,7 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 
 	var filters []string
 	expressionNames := map[string]string{}
-	filters = append(filters, "attribute_not_exists(#deleted_at)")
-	expressionNames["#deleted_at"] = "deleted_at"
+	filters = append(filters, "attribute_not_exists(deleted_at)")
 	if query.TransactionType != nil {
 		filters = append(filters, "transaction_type = :transaction_type")
 		expressionValues[":transaction_type"] = string(*query.TransactionType)
@@ -295,9 +294,8 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 
 func (r *DynamoDBCategoryRepository) Delete(ctx context.Context, userID string, categoryID string) error {
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("CATEGORY#%s", categoryID)}
-	expression := "SET #deleted_at = :deleted_at, updated_at = :updated_at"
+	expression := "SET deleted_at = :deleted_at, updated_at = :updated_at"
 	condition := "attribute_exists(PK)"
-	expressionNames := map[string]string{"#deleted_at": "deleted_at"}
 	expressionValues := map[string]any{
 		":deleted_at": time.Now().UTC().Format(time.RFC3339Nano),
 		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
@@ -308,7 +306,6 @@ func (r *DynamoDBCategoryRepository) Delete(ctx context.Context, userID string, 
 		Key:                       key,
 		UpdateExpression:          expression,
 		ConditionExpression:       aws.String(condition),
-		ExpressionAttributeNames:  expressionNames,
 		ExpressionAttributeValues: expressionValues,
 	})
 	if err != nil {
