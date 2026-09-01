@@ -16,4 +16,5 @@ type Transaction struct {
 	OccurredAt  time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	DeletedAt   *time.Time
 }

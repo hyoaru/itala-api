@@ -42,6 +42,7 @@ type findTransactionItem struct {
 	OccurredAt  string                `dynamodbav:"occurred_at"`
 	CreatedAt   string                `dynamodbav:"created_at"`
 	UpdatedAt   string                `dynamodbav:"updated_at"`
+	DeletedAt   *string               `dynamodbav:"deleted_at"`
 }
 
 func (i findTransactionItem) toDomain() (entity.Transaction, error) {
@@ -65,6 +66,15 @@ func (i findTransactionItem) toDomain() (entity.Transaction, error) {
 		return entity.Transaction{}, fmt.Errorf("parse updated_at: %w", err)
 	}
 
+	var deletedAt *time.Time
+	if i.DeletedAt != nil {
+		parsed, err := time.Parse(time.RFC3339Nano, *i.DeletedAt)
+		if err != nil {
+			return entity.Transaction{}, fmt.Errorf("parse deleted_at: %w", err)
+		}
+		deletedAt = &parsed
+	}
+
 	transaction := entity.Transaction{
 		ID:          i.ID,
 		Amount:      amount,
@@ -75,6 +85,7 @@ func (i findTransactionItem) toDomain() (entity.Transaction, error) {
 		OccurredAt:  occurredAt,
 		CreatedAt:   createdAt,
 		UpdatedAt:   updatedAt,
+		DeletedAt:   deletedAt,
 	}
 
 	return transaction, nil
@@ -152,6 +163,7 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 
 	var filters []string
 	expressionNames := map[string]string{}
+	filters = append(filters, "attribute_null(deleted_at)")
 	if query.Type != nil {
 		filters = append(filters, "#type = :type")
 		expressionNames["#type"] = "type"
@@ -274,6 +286,10 @@ func (r *DynamoDBTransactionRepository) FindOne(ctx context.Context, userID stri
 		return entity.Transaction{}, fmt.Errorf("parse transaction: %w", err)
 	}
 
+	if transaction.DeletedAt != nil {
+		return entity.Transaction{}, port.ErrTransactionNotFound
+	}
+
 	return transaction, nil
 }
 
@@ -339,12 +355,17 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 
 func (r *DynamoDBTransactionRepository) Delete(ctx context.Context, userID string, id string) error {
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("TRANSACTION#%s", id)}
-	condition := "attribute_exists(PK)"
+	now := time.Now().UTC().Format(time.RFC3339Nano)
 
-	err := r.client.DeleteItem(ctx, &dynamodbclient.DeleteItemInput{
-		TableName:           r.tableName,
-		Key:                 key,
-		ConditionExpression: &condition,
+	err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
+		TableName: r.tableName,
+		Key:       key,
+		UpdateExpression:    "SET deleted_at = :deleted_at, updated_at = :updated_at",
+		ConditionExpression: aws.String("attribute_exists(PK)"),
+		ExpressionAttributeValues: map[string]any{
+			":deleted_at": now,
+			":updated_at": now,
+		},
 	})
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
