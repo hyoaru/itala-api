@@ -34,6 +34,7 @@ func NewRouter(
 			"Accept",
 			"Authorization",
 			"Content-Type",
+			"Idempotency-Key",
 		},
 		MaxAge: 300,
 	}))
