@@ -10,15 +10,17 @@ import (
 	transactionrepository "github.com/hyoaru/itala-api/internal/features/transaction/application/port/transactionrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/transaction/domain/entity"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
 )
 
 type CreateTransactionRequest struct {
-	UserID      string
-	Amount      valueobject.Decimal
-	AccountID   string
-	CategoryID  string
-	Description string
-	OccurredAt  time.Time
+	UserID         string
+	Amount         valueobject.Decimal
+	AccountID      string
+	CategoryID     string
+	Description    string
+	OccurredAt     time.Time
+	IdempotencyKey string
 }
 
 type CreateTransactionResponse entity.Transaction
@@ -27,21 +29,41 @@ type CreateTransaction struct {
 	transactionRepository transactionrepository.TransactionRepository
 	categoryRepository    category.CategoryRepository
 	accountRepository     account.AccountRepository
+	idempotencyStore      idempotency.IdempotencyStore
 }
 
 func NewCreateTransaction(
 	transactionRepository transactionrepository.TransactionRepository,
 	categoryRepository category.CategoryRepository,
 	accountRepository account.AccountRepository,
+	idempotencyStore idempotency.IdempotencyStore,
 ) *CreateTransaction {
 	return &CreateTransaction{
 		transactionRepository: transactionRepository,
 		categoryRepository:    categoryRepository,
 		accountRepository:     accountRepository,
+		idempotencyStore:      idempotencyStore,
 	}
 }
 
 func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransactionRequest) (CreateTransactionResponse, error) {
+	lock, status, _, err := u.idempotencyStore.Acquire(ctx, request.IdempotencyKey, 900)
+	if err != nil {
+		return CreateTransactionResponse{}, err
+	}
+
+	if status == idempotency.IdempotencyStatusLocked {
+		return CreateTransactionResponse{}, idempotency.ErrResourceLocked
+	}
+
+	if status == idempotency.IdempotencyStatusCompleted {
+		return CreateTransactionResponse{}, nil
+	}
+
+	defer func() {
+		_ = u.idempotencyStore.Commit(ctx, lock, "null")
+	}()
+
 	id := uuid.Must(uuid.NewV7())
 	now := time.Now().UTC()
 
@@ -67,8 +89,7 @@ func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransacti
 		UpdatedAt:   now,
 	}
 
-	transactionIdempotencyKey := uuid.New().String()
-	if err := u.transactionRepository.Create(ctx, request.UserID, transaction, transactionIdempotencyKey); err != nil {
+	if err := u.transactionRepository.Create(ctx, request.UserID, transaction, request.IdempotencyKey); err != nil {
 		return CreateTransactionResponse{}, err
 	}
 

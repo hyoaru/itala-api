@@ -12,6 +12,7 @@ import (
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
 	"github.com/hyoaru/itala-api/internal/features/transaction"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
+	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
 )
 
 type createTransactionRequest struct {
@@ -29,6 +30,12 @@ type createTransactionResponse struct {
 func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user := identity.UserFromContext(r.Context())
 
+	idempotencyKey := r.Header.Get("Idempotency-Key")
+	if idempotencyKey == "" {
+		res.WriteError(w, "INVALID_REQUEST", "Idempotency-Key header is required", http.StatusBadRequest)
+		return
+	}
+
 	var request createTransactionRequest
 	if err := req.DecodeJSON(r, &request); err != nil {
 		res.WriteError(w, "INVALID_REQUEST", "invalid request body", http.StatusBadRequest)
@@ -42,12 +49,13 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	useCaseRequest := transaction.CreateTransactionRequest{
-		UserID:      user.ID,
-		Amount:      amount,
-		AccountID:   request.AccountID,
-		CategoryID:  request.CategoryID,
-		Description: request.Description,
-		OccurredAt:  request.OccurredAt.UTC(),
+		UserID:         user.ID,
+		Amount:         amount,
+		AccountID:      request.AccountID,
+		CategoryID:     request.CategoryID,
+		Description:    request.Description,
+		OccurredAt:     request.OccurredAt.UTC(),
+		IdempotencyKey: idempotencyKey,
 	}
 
 	entity, err := h.CreateTransaction.Execute(r.Context(), useCaseRequest)
@@ -59,6 +67,11 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 		if errors.Is(err, account.ErrAccountNotFound) {
 			res.WriteError(w, "RESOURCE_NOT_FOUND", "account not found", http.StatusNotFound)
+			return
+		}
+
+		if errors.Is(err, idempotency.ErrResourceLocked) {
+			res.WriteError(w, "RESOURCE_LOCKED", "operation in progress", http.StatusConflict)
 			return
 		}
 
