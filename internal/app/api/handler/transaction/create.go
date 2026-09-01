@@ -52,13 +52,13 @@ func (h *TransactionHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	entity, err := h.CreateTransaction.Execute(r.Context(), useCaseRequest)
 	if err != nil {
-		if errors.Is(err, category.ErrCategoryArchived) {
-			res.WriteError(w, "RESOURCE_CONFLICT", "category is archived", http.StatusConflict)
+		if errors.Is(err, category.ErrCategoryNotFound) {
+			res.WriteError(w, "RESOURCE_NOT_FOUND", "category not found", http.StatusNotFound)
 			return
 		}
 
-		if errors.Is(err, account.ErrAccountArchived) {
-			res.WriteError(w, "RESOURCE_CONFLICT", "account is archived", http.StatusConflict)
+		if errors.Is(err, account.ErrAccountNotFound) {
+			res.WriteError(w, "RESOURCE_NOT_FOUND", "account not found", http.StatusNotFound)
 			return
 		}
 

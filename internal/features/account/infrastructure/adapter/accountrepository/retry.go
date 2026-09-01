@@ -30,7 +30,7 @@ func isRetryable(err error) bool {
 
 	if errors.Is(err, port.ErrAccountExists) ||
 		errors.Is(err, port.ErrAccountNotFound) ||
-		errors.Is(err, port.ErrAccountArchived) ||
+		errors.Is(err, port.ErrAccountDeleted) ||
 		errors.Is(err, port.ErrConcurrentModification) {
 		return false
 	}
@@ -173,33 +173,10 @@ func (r *RetryAccountRepository) Update(ctx context.Context, userID string, acco
 	return err
 }
 
-func (r *RetryAccountRepository) Archive(ctx context.Context, userID string, id string) error {
+func (r *RetryAccountRepository) Delete(ctx context.Context, userID string, id string) error {
 	var err error
 	for attempt := int8(0); attempt < r.maxAttempts; attempt++ {
-		if err = r.inner.Archive(ctx, userID, id); err == nil {
-			return nil
-		}
-
-		if !isRetryable(err) {
-			return err
-		}
-
-		if attempt == r.maxAttempts-1 {
-			break
-		}
-
-		if err = sleep(ctx, r.backoff(attempt)); err != nil {
-			return err
-		}
-	}
-
-	return err
-}
-
-func (r *RetryAccountRepository) Restore(ctx context.Context, userID string, id string) error {
-	var err error
-	for attempt := int8(0); attempt < r.maxAttempts; attempt++ {
-		if err = r.inner.Restore(ctx, userID, id); err == nil {
+		if err = r.inner.Delete(ctx, userID, id); err == nil {
 			return nil
 		}
 

@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	port "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
-	categoryvalueobject "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
@@ -27,12 +26,12 @@ func NewDynamoDBCategoryRepository(client dynamodbclient.DynamoDBClient, tableNa
 }
 
 type findCategoryItem struct {
-	ID              string `dynamodbav:"id"`
-	Name            string `dynamodbav:"name"`
-	TransactionType string `dynamodbav:"transaction_type"`
-	Status          string `dynamodbav:"status"`
-	CreatedAt       string `dynamodbav:"created_at"`
-	UpdatedAt       string `dynamodbav:"updated_at"`
+	ID              string  `dynamodbav:"id"`
+	Name            string  `dynamodbav:"name"`
+	TransactionType string  `dynamodbav:"transaction_type"`
+	DeletedAt       *string `dynamodbav:"deleted_at"`
+	CreatedAt       string  `dynamodbav:"created_at"`
+	UpdatedAt       string  `dynamodbav:"updated_at"`
 }
 
 func (i findCategoryItem) toDomain() (entity.Category, error) {
@@ -46,11 +45,20 @@ func (i findCategoryItem) toDomain() (entity.Category, error) {
 		return entity.Category{}, fmt.Errorf("parse updated_at: %w", err)
 	}
 
+	var deletedAt *time.Time
+	if i.DeletedAt != nil {
+		parsed, err := time.Parse(time.RFC3339Nano, *i.DeletedAt)
+		if err != nil {
+			return entity.Category{}, fmt.Errorf("parse deleted_at: %w", err)
+		}
+		deletedAt = &parsed
+	}
+
 	category := entity.Category{
 		ID:              i.ID,
 		Name:            i.Name,
 		TransactionType: valueobject.TransactionType(i.TransactionType),
-		Status:          categoryvalueobject.Status(i.Status),
+		DeletedAt:       deletedAt,
 		CreatedAt:       createdAt,
 		UpdatedAt:       updatedAt,
 	}
@@ -69,7 +77,6 @@ func (r *DynamoDBCategoryRepository) Create(ctx context.Context, userID string, 
 					"id":               category.ID,
 					"name":             category.Name,
 					"transaction_type": string(category.TransactionType),
-					"status":           string(category.Status),
 					"created_at":       category.CreatedAt.Format(time.RFC3339Nano),
 					"updated_at":       category.UpdatedAt.Format(time.RFC3339Nano),
 				},
@@ -106,6 +113,8 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 
 	var filters []string
 	expressionNames := map[string]string{}
+	filters = append(filters, "attribute_not_exists(#deleted_at)")
+	expressionNames["#deleted_at"] = "deleted_at"
 	if query.TransactionType != nil {
 		filters = append(filters, "transaction_type = :transaction_type")
 		expressionValues[":transaction_type"] = string(*query.TransactionType)
@@ -114,11 +123,6 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 		filters = append(filters, "#name = :name")
 		expressionNames["#name"] = "name"
 		expressionValues[":name"] = *query.Name
-	}
-	if query.Status != nil {
-		filters = append(filters, "#status = :status")
-		expressionNames["#status"] = "status"
-		expressionValues[":status"] = string(*query.Status)
 	}
 	filterExpression := strings.Join(filters, " AND ")
 
@@ -195,6 +199,10 @@ func (r *DynamoDBCategoryRepository) FindOne(ctx context.Context, userID string,
 		return entity.Category{}, fmt.Errorf("parse category: %w", err)
 	}
 
+	if category.DeletedAt != nil {
+		return entity.Category{}, port.ErrCategoryNotFound
+	}
+
 	return category, nil
 }
 
@@ -212,10 +220,8 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 
 	if current.Name == category.Name {
 		condition := "updated_at = :old_updated_at"
-		expression := "SET #status = :status, updated_at = :updated_at"
-		expressionNames := map[string]string{"#status": "status"}
+		expression := "SET updated_at = :updated_at"
 		expressionValues := map[string]any{
-			":status":         string(category.Status),
 			":updated_at":     updatedAt,
 			":old_updated_at": oldUpdatedAt,
 		}
@@ -224,7 +230,6 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 			Key:                       currentKey,
 			ConditionExpression:       &condition,
 			UpdateExpression:          expression,
-			ExpressionAttributeNames:  expressionNames,
 			ExpressionAttributeValues: expressionValues,
 		}); err != nil {
 			if errors.Is(err, dynamodbclient.ErrConditionFailed) {
@@ -242,14 +247,13 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 	transactItems := []dynamodbclient.TransactWriteItem{
 		{
 			Update: &dynamodbclient.TransactUpdate{
-				TableName:                r.tableName,
-				Key:                      currentKey,
-				UpdateExpression:         "SET #name = :name, #status = :status, updated_at = :updated_at",
-				ConditionExpression:      &updateCondition,
-				ExpressionAttributeNames: map[string]string{"#name": "name", "#status": "status"},
+				TableName:           r.tableName,
+				Key:                 currentKey,
+				UpdateExpression:    "SET #name = :name, updated_at = :updated_at",
+				ConditionExpression: &updateCondition,
+				ExpressionAttributeNames: map[string]string{"#name": "name"},
 				ExpressionAttributeValues: map[string]any{
 					":name":           category.Name,
-					":status":         string(category.Status),
 					":updated_at":     category.UpdatedAt.Format(time.RFC3339Nano),
 					":old_updated_at": oldUpdatedAt,
 				},
@@ -289,13 +293,13 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 	return nil
 }
 
-func (r *DynamoDBCategoryRepository) Archive(ctx context.Context, userID string, categoryID string) error {
+func (r *DynamoDBCategoryRepository) Delete(ctx context.Context, userID string, categoryID string) error {
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("CATEGORY#%s", categoryID)}
-	expression := "SET #status = :status, updated_at = :updated_at"
+	expression := "SET #deleted_at = :deleted_at, updated_at = :updated_at"
 	condition := "attribute_exists(PK)"
-	expressionNames := map[string]string{"#status": "status"}
+	expressionNames := map[string]string{"#deleted_at": "deleted_at"}
 	expressionValues := map[string]any{
-		":status":     string(categoryvalueobject.StatusArchived),
+		":deleted_at": time.Now().UTC().Format(time.RFC3339Nano),
 		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
 	}
 
@@ -312,36 +316,7 @@ func (r *DynamoDBCategoryRepository) Archive(ctx context.Context, userID string,
 			return port.ErrCategoryNotFound
 		}
 
-		return fmt.Errorf("archive category: %w", err)
-	}
-
-	return nil
-}
-
-func (r *DynamoDBCategoryRepository) Restore(ctx context.Context, userID string, categoryID string) error {
-	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("CATEGORY#%s", categoryID)}
-	expression := "SET #status = :status, updated_at = :updated_at"
-	condition := "attribute_exists(PK)"
-	expressionNames := map[string]string{"#status": "status"}
-	expressionValues := map[string]any{
-		":status":     string(categoryvalueobject.StatusActive),
-		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
-	}
-
-	err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
-		TableName:                 r.tableName,
-		Key:                       key,
-		UpdateExpression:          expression,
-		ConditionExpression:       aws.String(condition),
-		ExpressionAttributeNames:  expressionNames,
-		ExpressionAttributeValues: expressionValues,
-	})
-	if err != nil {
-		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
-			return port.ErrCategoryNotFound
-		}
-
-		return fmt.Errorf("restore category: %w", err)
+		return fmt.Errorf("delete category: %w", err)
 	}
 
 	return nil

@@ -15,7 +15,7 @@ http:
       type: path
   body:
     type: json
-    data: '{"name": "BPI Emergency", "status": "ACTIVE"}'
+    data: '{"name": "BPI Emergency"}'
   auth: inherit
 
 settings:

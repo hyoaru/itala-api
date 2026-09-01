@@ -4,28 +4,19 @@ import (
 	categoryrepositoryport "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
 	categoryusecase "github.com/hyoaru/itala-api/internal/features/category/application/usecase"
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
-	"github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	categoryrepositoryadapter "github.com/hyoaru/itala-api/internal/features/category/infrastructure/adapter/categoryrepository"
 	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 )
 
-type (
-	Category = entity.Category
-	Status   = valueobject.Status
-)
-
-const (
-	StatusActive   = valueobject.StatusActive
-	StatusArchived = valueobject.StatusArchived
-)
+type Category = entity.Category
 
 type CategoryRepository = categoryrepositoryport.CategoryRepository
 
 var (
 	ErrCategoryExists   = categoryrepositoryport.ErrCategoryExists
 	ErrCategoryNotFound = categoryrepositoryport.ErrCategoryNotFound
-	ErrCategoryArchived = categoryrepositoryport.ErrCategoryArchived
+	ErrCategoryDeleted  = categoryrepositoryport.ErrCategoryDeleted
 )
 
 func NewDynamoDBCategoryRepository(client dynamodbclient.DynamoDBClient, tableName string) CategoryRepository {
@@ -70,19 +61,10 @@ func NewGetCategory(categoryRepository CategoryRepository) usecase.UseCase[GetCa
 }
 
 type (
-	ArchiveCategoryRequest  = categoryusecase.ArchiveCategoryRequest
-	ArchiveCategoryResponse = categoryusecase.ArchiveCategoryResponse
+	DeleteCategoryRequest  = categoryusecase.DeleteCategoryRequest
+	DeleteCategoryResponse = categoryusecase.DeleteCategoryResponse
 )
 
-func NewArchiveCategory(categoryRepository CategoryRepository) usecase.UseCase[ArchiveCategoryRequest, ArchiveCategoryResponse] {
-	return categoryusecase.NewArchiveCategory(categoryRepository)
-}
-
-type (
-	RestoreCategoryRequest  = categoryusecase.RestoreCategoryRequest
-	RestoreCategoryResponse = categoryusecase.RestoreCategoryResponse
-)
-
-func NewRestoreCategory(categoryRepository CategoryRepository) usecase.UseCase[RestoreCategoryRequest, RestoreCategoryResponse] {
-	return categoryusecase.NewRestoreCategory(categoryRepository)
+func NewDeleteCategory(categoryRepository CategoryRepository) usecase.UseCase[DeleteCategoryRequest, DeleteCategoryResponse] {
+	return categoryusecase.NewDeleteCategory(categoryRepository)
 }

@@ -10,8 +10,7 @@ import (
 )
 
 type updateCategoryRequest struct {
-	Name   string `json:"name" validate:"required"`
-	Status string `json:"status" validate:"required,oneof=ACTIVE ARCHIVED"`
+	Name string `json:"name" validate:"required"`
 }
 
 func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +27,6 @@ func (h *CategoryHandler) Update(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 		ID:     id,
 		Name:   request.Name,
-		Status: category.Status(request.Status),
 	}
 
 	if _, err := h.UpdateCategory.Execute(r.Context(), useCaseRequest); err != nil {

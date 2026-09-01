@@ -1,11 +1,11 @@
 info:
-  name: Restore Account
+  name: Delete Account
   type: http
-  seq: 6
+  seq: 5
 
 http:
-  method: POST
-  url: "{{BASE_URL}}/accounts/:id/restore"
+  method: DELETE
+  url: "{{BASE_URL}}/accounts/:id"
   headers:
     - name: Authorization
       value: Bearer {{ACCESS_TOKEN}}

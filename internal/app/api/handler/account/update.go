@@ -10,8 +10,7 @@ import (
 )
 
 type updateAccountRequest struct {
-	Name   string `json:"name" validate:"required"`
-	Status string `json:"status" validate:"required,oneof=ACTIVE ARCHIVED"`
+	Name string `json:"name" validate:"required"`
 }
 
 func (h *AccountHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +27,6 @@ func (h *AccountHandler) Update(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 		ID:     id,
 		Name:   request.Name,
-		Status: account.Status(request.Status),
 	}
 
 	if _, err := h.UpdateAccount.Execute(r.Context(), useCaseRequest); err != nil {

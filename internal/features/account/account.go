@@ -4,29 +4,20 @@ import (
 	accountrepositoryport "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	accountusecase "github.com/hyoaru/itala-api/internal/features/account/application/usecase"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
-	valueobject "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 	accountrepositoryadapter "github.com/hyoaru/itala-api/internal/features/account/infrastructure/adapter/accountrepository"
 	"github.com/hyoaru/itala-api/internal/shared/application/usecase"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
 )
 
-type (
-	Account = entity.Account
-	Status  = valueobject.Status
-)
-
-const (
-	StatusActive   = valueobject.StatusActive
-	StatusArchived = valueobject.StatusArchived
-)
+type Account = entity.Account
 
 type AccountRepository = accountrepositoryport.AccountRepository
 
 var (
 	ErrAccountExists   = accountrepositoryport.ErrAccountExists
 	ErrAccountNotFound = accountrepositoryport.ErrAccountNotFound
-	ErrAccountArchived = accountrepositoryport.ErrAccountArchived
+	ErrAccountDeleted  = accountrepositoryport.ErrAccountDeleted
 )
 
 func NewDynamoDBAccountRepository(client dynamodbclient.DynamoDBClient, tableName string, idempotencyStore idempotency.IdempotencyStore) AccountRepository {
@@ -71,19 +62,10 @@ func NewUpdateAccount(accountRepository AccountRepository) usecase.UseCase[Updat
 }
 
 type (
-	ArchiveAccountRequest  = accountusecase.ArchiveAccountRequest
-	ArchiveAccountResponse = accountusecase.ArchiveAccountResponse
+	DeleteAccountRequest  = accountusecase.DeleteAccountRequest
+	DeleteAccountResponse = accountusecase.DeleteAccountResponse
 )
 
-func NewArchiveAccount(accountRepository AccountRepository) usecase.UseCase[ArchiveAccountRequest, ArchiveAccountResponse] {
-	return accountusecase.NewArchiveAccount(accountRepository)
-}
-
-type (
-	RestoreAccountRequest  = accountusecase.RestoreAccountRequest
-	RestoreAccountResponse = accountusecase.RestoreAccountResponse
-)
-
-func NewRestoreAccount(accountRepository AccountRepository) usecase.UseCase[RestoreAccountRequest, RestoreAccountResponse] {
-	return accountusecase.NewRestoreAccount(accountRepository)
+func NewDeleteAccount(accountRepository AccountRepository) usecase.UseCase[DeleteAccountRequest, DeleteAccountResponse] {
+	return accountusecase.NewDeleteAccount(accountRepository)
 }

@@ -50,17 +50,9 @@ func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransacti
 		return CreateTransactionResponse{}, err
 	}
 
-	if foundCategory.Status == category.StatusArchived {
-		return CreateTransactionResponse{}, category.ErrCategoryArchived
-	}
-
-	foundAccount, err := u.accountRepository.FindOne(ctx, request.UserID, request.AccountID)
+	_, err = u.accountRepository.FindOne(ctx, request.UserID, request.AccountID)
 	if err != nil {
 		return CreateTransactionResponse{}, err
-	}
-
-	if foundAccount.Status == account.StatusArchived {
-		return CreateTransactionResponse{}, account.ErrAccountArchived
 	}
 
 	transaction := entity.Transaction{

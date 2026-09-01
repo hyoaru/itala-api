@@ -5,6 +5,6 @@ import "errors"
 var (
 	ErrCategoryExists         = errors.New("category already exists")
 	ErrCategoryNotFound       = errors.New("category not found")
-	ErrCategoryArchived       = errors.New("category is archived")
+	ErrCategoryDeleted         = errors.New("category is deleted")
 	ErrConcurrentModification = errors.New("concurrent modification")
 )

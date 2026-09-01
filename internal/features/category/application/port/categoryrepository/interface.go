@@ -4,7 +4,6 @@ import (
 	"context"
 
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
-	categoryvalueobject "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
@@ -12,7 +11,6 @@ type CategoryQuery struct {
 	Limit           int32
 	TransactionType *valueobject.TransactionType
 	Name            *string
-	Status          *categoryvalueobject.Status
 	Cursor          *string
 }
 
@@ -26,6 +24,5 @@ type CategoryRepository interface {
 	Find(ctx context.Context, userID string, query CategoryQuery) (CategoryPage, error)
 	FindOne(ctx context.Context, userID string, categoryID string) (entity.Category, error)
 	Update(ctx context.Context, userID string, category entity.Category) error
-	Archive(ctx context.Context, userID string, categoryID string) error
-	Restore(ctx context.Context, userID string, categoryID string) error
+	Delete(ctx context.Context, userID string, categoryID string) error
 }

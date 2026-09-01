@@ -70,28 +70,15 @@ func (c *LoggingAccountRepository) Update(ctx context.Context, userID string, ac
 	return nil
 }
 
-func (c *LoggingAccountRepository) Archive(ctx context.Context, userID string, id string) error {
-	logger.Debug("Archiving account", "id", id)
+func (c *LoggingAccountRepository) Delete(ctx context.Context, userID string, id string) error {
+	logger.Debug("Deleting account", "id", id)
 
-	if err := c.inner.Archive(ctx, userID, id); err != nil {
-		logger.Warn("Failed to archive account", "error", err)
+	if err := c.inner.Delete(ctx, userID, id); err != nil {
+		logger.Warn("Failed to delete account", "error", err)
 		return err
 	}
 
-	logger.Info("Account archived", "id", id)
-
-	return nil
-}
-
-func (c *LoggingAccountRepository) Restore(ctx context.Context, userID string, id string) error {
-	logger.Debug("Restoring account", "id", id)
-
-	if err := c.inner.Restore(ctx, userID, id); err != nil {
-		logger.Warn("Failed to restore account", "error", err)
-		return err
-	}
-
-	logger.Info("Account restored", "id", id)
+	logger.Info("Account deleted", "id", id)
 
 	return nil
 }

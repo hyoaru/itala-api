@@ -5,7 +5,6 @@ import (
 
 	categoryrepository "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/category/domain/entity"
-	categoryvalueobject "github.com/hyoaru/itala-api/internal/features/category/domain/valueobject"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
 )
 
@@ -14,7 +13,6 @@ type ListCategoriesRequest struct {
 	Limit           int32
 	Name            *string
 	TransactionType *valueobject.TransactionType
-	Status          *categoryvalueobject.Status
 	Cursor          *string
 }
 
@@ -36,7 +34,6 @@ func (u *ListCategories) Execute(ctx context.Context, request ListCategoriesRequ
 		Limit:           request.Limit,
 		Name:            request.Name,
 		TransactionType: request.TransactionType,
-		Status:          request.Status,
 		Cursor:          request.Cursor,
 	}
 

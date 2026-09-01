@@ -6,14 +6,12 @@ import (
 
 	accountrepository "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
-	valueobject "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 )
 
 type UpdateAccountRequest struct {
 	UserID string
 	ID     string
 	Name   string
-	Status valueobject.Status
 }
 
 type UpdateAccountResponse struct{}
@@ -32,7 +30,6 @@ func (u *UpdateAccount) Execute(ctx context.Context, request UpdateAccountReques
 	account := entity.Account{
 		ID:        request.ID,
 		Name:      request.Name,
-		Status:    request.Status,
 		UpdatedAt: now,
 	}
 

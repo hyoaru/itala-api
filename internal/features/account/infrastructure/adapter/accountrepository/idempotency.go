@@ -56,10 +56,6 @@ func (r *IdempotencyAccountRepository) Update(ctx context.Context, userID string
 	return r.inner.Update(ctx, userID, account)
 }
 
-func (r *IdempotencyAccountRepository) Archive(ctx context.Context, userID string, id string) error {
-	return r.inner.Archive(ctx, userID, id)
-}
-
-func (r *IdempotencyAccountRepository) Restore(ctx context.Context, userID string, id string) error {
-	return r.inner.Restore(ctx, userID, id)
+func (r *IdempotencyAccountRepository) Delete(ctx context.Context, userID string, id string) error {
+	return r.inner.Delete(ctx, userID, id)
 }

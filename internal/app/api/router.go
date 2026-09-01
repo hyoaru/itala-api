@@ -51,8 +51,7 @@ func NewRouter(
 			r.Get("/", categoryHandler.List)
 			r.Get("/{id}", categoryHandler.Get)
 			r.Put("/{id}", categoryHandler.Update)
-			r.Post("/{id}/archive", categoryHandler.Archive)
-			r.Post("/{id}/restore", categoryHandler.Restore)
+			r.Delete("/{id}", categoryHandler.Delete)
 		})
 
 		r.Route("/accounts", func(r chi.Router) {
@@ -60,8 +59,7 @@ func NewRouter(
 			r.Get("/", accountHandler.List)
 			r.Get("/{id}", accountHandler.Get)
 			r.Put("/{id}", accountHandler.Update)
-			r.Post("/{id}/archive", accountHandler.Archive)
-			r.Post("/{id}/restore", accountHandler.Restore)
+			r.Delete("/{id}", accountHandler.Delete)
 		})
 
 		r.Route("/transactions", func(r chi.Router) {

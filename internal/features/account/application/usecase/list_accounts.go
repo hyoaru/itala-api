@@ -5,14 +5,12 @@ import (
 
 	accountrepository "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
-	valueobject "github.com/hyoaru/itala-api/internal/features/account/domain/valueobject"
 )
 
 type ListAccountsRequest struct {
 	UserID string
 	Limit  int32
 	Name   *string
-	Status *valueobject.Status
 	Cursor *string
 }
 
@@ -33,7 +31,6 @@ func (u *ListAccounts) Execute(ctx context.Context, request ListAccountsRequest)
 	query := accountrepository.AccountQuery{
 		Limit:  request.Limit,
 		Name:   request.Name,
-		Status: request.Status,
 		Cursor: request.Cursor,
 	}
 

@@ -68,28 +68,15 @@ func (c *LoggingCategoryRepository) Update(ctx context.Context, userID string, c
 	return nil
 }
 
-func (c *LoggingCategoryRepository) Archive(ctx context.Context, userID string, categoryID string) error {
-	logger.Debug("Archiving category", "category_id", categoryID)
+func (c *LoggingCategoryRepository) Delete(ctx context.Context, userID string, categoryID string) error {
+	logger.Debug("Deleting category", "category_id", categoryID)
 
-	if err := c.inner.Archive(ctx, userID, categoryID); err != nil {
-		logger.Warn("Failed to archive category", "error", err)
+	if err := c.inner.Delete(ctx, userID, categoryID); err != nil {
+		logger.Warn("Failed to delete category", "error", err)
 		return err
 	}
 
-	logger.Info("Category archived", "category_id", categoryID)
-
-	return nil
-}
-
-func (c *LoggingCategoryRepository) Restore(ctx context.Context, userID string, categoryID string) error {
-	logger.Debug("Restoring category", "category_id", categoryID)
-
-	if err := c.inner.Restore(ctx, userID, categoryID); err != nil {
-		logger.Warn("Failed to restore category", "error", err)
-		return err
-	}
-
-	logger.Info("Category restored", "category_id", categoryID)
+	logger.Info("Category deleted", "category_id", categoryID)
 
 	return nil
 }

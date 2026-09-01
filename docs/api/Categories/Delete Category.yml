@@ -1,11 +1,11 @@
 info:
-  name: Restore Category
+  name: Delete Category
   type: http
-  seq: 6
+  seq: 5
 
 http:
-  method: POST
-  url: "{{BASE_URL}}/categories/:id/restore"
+  method: DELETE
+  url: "{{BASE_URL}}/categories/:id"
   headers:
     - name: Authorization
       value: Bearer {{ACCESS_TOKEN}}

@@ -13,7 +13,6 @@ import (
 type listAccountsRequest struct {
 	Limit  int32   `schema:"limit" validate:"omitempty,min=1,max=40"`
 	Name   *string `schema:"name"`
-	Status *string `schema:"status" validate:"omitempty,oneof=ACTIVE ARCHIVED ALL"`
 	Cursor *string `schema:"cursor"`
 }
 
@@ -21,7 +20,6 @@ type listAccountsResponseItem struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
 	Balance   string    `json:"balance"`
-	Status    string    `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -45,20 +43,10 @@ func (h *AccountHandler) List(w http.ResponseWriter, r *http.Request) {
 		limit = 40
 	}
 
-	var status *account.Status
-	if request.Status == nil {
-		active := account.StatusActive
-		status = &active
-	} else if *request.Status != "ALL" {
-		s := account.Status(*request.Status)
-		status = &s
-	}
-
 	useCaseRequest := account.ListAccountsRequest{
 		UserID: user.ID,
 		Limit:  limit,
 		Name:   request.Name,
-		Status: status,
 		Cursor: request.Cursor,
 	}
 
@@ -74,7 +62,6 @@ func (h *AccountHandler) List(w http.ResponseWriter, r *http.Request) {
 			ID:        account.ID,
 			Name:      account.Name,
 			Balance:   account.Balance.String(),
-			Status:    string(account.Status),
 			CreatedAt: account.CreatedAt,
 			UpdatedAt: account.UpdatedAt,
 		})

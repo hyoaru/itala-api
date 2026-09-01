@@ -48,13 +48,13 @@ func (h *TransactionHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err = h.UpdateTransaction.Execute(r.Context(), useCaseRequest); err != nil {
-		if errors.Is(err, category.ErrCategoryArchived) {
-			res.WriteError(w, "RESOURCE_CONFLICT", "category is archived", http.StatusConflict)
+		if errors.Is(err, category.ErrCategoryNotFound) {
+			res.WriteError(w, "RESOURCE_NOT_FOUND", "category not found", http.StatusNotFound)
 			return
 		}
 
-		if errors.Is(err, account.ErrAccountArchived) {
-			res.WriteError(w, "RESOURCE_CONFLICT", "account is archived", http.StatusConflict)
+		if errors.Is(err, account.ErrAccountNotFound) {
+			res.WriteError(w, "RESOURCE_NOT_FOUND", "account not found", http.StatusNotFound)
 			return
 		}
 

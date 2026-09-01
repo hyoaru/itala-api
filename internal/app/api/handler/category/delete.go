@@ -9,15 +9,15 @@ import (
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
 )
 
-func (h *CategoryHandler) Restore(w http.ResponseWriter, r *http.Request) {
+func (h *CategoryHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	user := identity.UserFromContext(r.Context())
 
-	useCaseRequest := category.RestoreCategoryRequest{
+	useCaseRequest := category.DeleteCategoryRequest{
 		UserID: user.ID,
 		ID:     r.PathValue("id"),
 	}
 
-	if _, err := h.RestoreCategory.Execute(r.Context(), useCaseRequest); err != nil {
+	if _, err := h.DeleteCategory.Execute(r.Context(), useCaseRequest); err != nil {
 		if errors.Is(err, category.ErrCategoryNotFound) {
 			res.WriteError(w, "RESOURCE_NOT_FOUND", "category not found", http.StatusNotFound)
 			return

@@ -31,10 +31,6 @@ func (c *DecoratedCategoryRepository) Update(ctx context.Context, userID string,
 	return c.inner.Update(ctx, userID, category)
 }
 
-func (c *DecoratedCategoryRepository) Archive(ctx context.Context, userID string, categoryID string) error {
-	return c.inner.Archive(ctx, userID, categoryID)
-}
-
-func (c *DecoratedCategoryRepository) Restore(ctx context.Context, userID string, categoryID string) error {
-	return c.inner.Restore(ctx, userID, categoryID)
+func (c *DecoratedCategoryRepository) Delete(ctx context.Context, userID string, categoryID string) error {
+	return c.inner.Delete(ctx, userID, categoryID)
 }

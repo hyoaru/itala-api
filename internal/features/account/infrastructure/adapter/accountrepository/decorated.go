@@ -37,12 +37,8 @@ func (c *DecoratedAccountRepository) Update(ctx context.Context, userID string, 
 	return c.inner.Update(ctx, userID, account)
 }
 
-func (c *DecoratedAccountRepository) Archive(ctx context.Context, userID string, id string) error {
-	return c.inner.Archive(ctx, userID, id)
-}
-
-func (c *DecoratedAccountRepository) Restore(ctx context.Context, userID string, id string) error {
-	return c.inner.Restore(ctx, userID, id)
+func (c *DecoratedAccountRepository) Delete(ctx context.Context, userID string, id string) error {
+	return c.inner.Delete(ctx, userID, id)
 }
 
 func (c *DecoratedAccountRepository) AdjustBalance(ctx context.Context, userID string, accountID string, idempotencyKey string, delta valueobject.Decimal) error {
