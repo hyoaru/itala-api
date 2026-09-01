@@ -32,9 +32,8 @@ func NewCreateTransaction(
 	transactionRepository TransactionRepository,
 	categoryRepository category.CategoryRepository,
 	accountRepository account.AccountRepository,
-	idempotencyStore idempotency.IdempotencyStore,
 ) usecase.UseCase[CreateTransactionRequest, CreateTransactionResponse] {
-	return transactionusecase.NewCreateTransaction(transactionRepository, categoryRepository, accountRepository, idempotencyStore)
+	return transactionusecase.NewCreateTransaction(transactionRepository, categoryRepository, accountRepository)
 }
 
 type (
@@ -55,9 +54,8 @@ func NewUpdateTransaction(
 	transactionRepository TransactionRepository,
 	categoryRepository category.CategoryRepository,
 	accountRepository account.AccountRepository,
-	idempotencyStore idempotency.IdempotencyStore,
 ) usecase.UseCase[UpdateTransactionRequest, UpdateTransactionResponse] {
-	return transactionusecase.NewUpdateTransaction(transactionRepository, categoryRepository, accountRepository, idempotencyStore)
+	return transactionusecase.NewUpdateTransaction(transactionRepository, categoryRepository, accountRepository)
 }
 
 type (

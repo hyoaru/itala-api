@@ -10,7 +10,6 @@ import (
 	transactionrepository "github.com/hyoaru/itala-api/internal/features/transaction/application/port/transactionrepository"
 	entity "github.com/hyoaru/itala-api/internal/features/transaction/domain/entity"
 	"github.com/hyoaru/itala-api/internal/shared/domain/valueobject"
-	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
 )
 
 type UpdateTransactionRequest struct {
@@ -30,41 +29,21 @@ type UpdateTransaction struct {
 	transactionRepository transactionrepository.TransactionRepository
 	categoryRepository    category.CategoryRepository
 	accountRepository     account.AccountRepository
-	idempotencyStore      idempotency.IdempotencyStore
 }
 
 func NewUpdateTransaction(
 	transactionRepository transactionrepository.TransactionRepository,
 	categoryRepository category.CategoryRepository,
 	accountRepository account.AccountRepository,
-	idempotencyStore idempotency.IdempotencyStore,
 ) *UpdateTransaction {
 	return &UpdateTransaction{
 		transactionRepository: transactionRepository,
 		categoryRepository:    categoryRepository,
 		accountRepository:     accountRepository,
-		idempotencyStore:      idempotencyStore,
 	}
 }
 
 func (u *UpdateTransaction) Execute(ctx context.Context, request UpdateTransactionRequest) (UpdateTransactionResponse, error) {
-	lock, status, _, err := u.idempotencyStore.Acquire(ctx, request.IdempotencyKey, 900)
-	if err != nil {
-		return UpdateTransactionResponse{}, err
-	}
-
-	if status == idempotency.IdempotencyStatusLocked {
-		return UpdateTransactionResponse{}, idempotency.ErrResourceLocked
-	}
-
-	if status == idempotency.IdempotencyStatusCompleted {
-		return UpdateTransactionResponse{}, nil
-	}
-
-	defer func() {
-		_ = u.idempotencyStore.Commit(ctx, lock, "null")
-	}()
-
 	existing, err := u.transactionRepository.FindOne(ctx, request.UserID, request.ID)
 	if err != nil {
 		return UpdateTransactionResponse{}, err

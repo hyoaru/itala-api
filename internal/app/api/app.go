@@ -43,10 +43,10 @@ func New(addr string) *App {
 		DeleteAccount: account.NewDeleteAccount(accountRepository),
 	}
 	transactionHandler := &handler.TransactionHandler{
-		CreateTransaction: transaction.NewCreateTransaction(transactionRepository, categoryRepository, accountRepository, idempotencyStore),
+		CreateTransaction: transaction.NewCreateTransaction(transactionRepository, categoryRepository, accountRepository),
 		ListTransactions:  transaction.NewListTransactions(transactionRepository),
 		GetTransaction:    transaction.NewGetTransaction(transactionRepository),
-		UpdateTransaction: transaction.NewUpdateTransaction(transactionRepository, categoryRepository, accountRepository, idempotencyStore),
+		UpdateTransaction: transaction.NewUpdateTransaction(transactionRepository, categoryRepository, accountRepository),
 		DeleteTransaction: transaction.NewDeleteTransaction(transactionRepository, accountRepository),
 	}
 
