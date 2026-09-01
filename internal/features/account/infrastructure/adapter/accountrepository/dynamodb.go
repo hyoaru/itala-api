@@ -297,21 +297,42 @@ func (r *DynamoDBAccountRepository) Update(ctx context.Context, userID string, a
 }
 
 func (r *DynamoDBAccountRepository) Delete(ctx context.Context, userID string, id string) error {
-	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("ACCOUNT#%s", id)}
-	expression := "SET deleted_at = :deleted_at, updated_at = :updated_at"
-	condition := "attribute_exists(PK)"
-	expressionValues := map[string]any{
-		":deleted_at": time.Now().UTC().Format(time.RFC3339Nano),
-		":updated_at": time.Now().UTC().Format(time.RFC3339Nano),
+	current, err := r.FindOne(ctx, userID, id)
+	if err != nil {
+		return err
 	}
 
-	err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
-		TableName:                 r.tableName,
-		Key:                       key,
-		UpdateExpression:          expression,
-		ConditionExpression:       aws.String(condition),
-		ExpressionAttributeValues: expressionValues,
-	})
+	pk := fmt.Sprintf("USER#%s", userID)
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+
+	transactItems := []dynamodbclient.TransactWriteItem{
+		{
+			Update: &dynamodbclient.TransactUpdate{
+				TableName: r.tableName,
+				Key: map[string]any{
+					"PK": pk,
+					"SK": fmt.Sprintf("ACCOUNT#%s", id),
+				},
+				UpdateExpression:    "SET deleted_at = :deleted_at, updated_at = :updated_at",
+				ConditionExpression: aws.String("attribute_exists(PK)"),
+				ExpressionAttributeValues: map[string]any{
+					":deleted_at": now,
+					":updated_at": now,
+				},
+			},
+		},
+		{
+			Delete: &dynamodbclient.TransactDelete{
+				TableName: r.tableName,
+				Key: map[string]any{
+					"PK": pk,
+					"SK": fmt.Sprintf("ACCOUNT_NAME#%s", current.Name),
+				},
+			},
+		},
+	}
+
+	err = r.client.TransactWriteItems(ctx, &dynamodbclient.TransactWriteItemsInput{TransactItems: transactItems})
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
 			return port.ErrAccountNotFound
