@@ -119,7 +119,8 @@ func (r *DynamoDBAccountRepository) Find(ctx context.Context, userID string, que
 
 	var filters []string
 	expressionNames := map[string]string{}
-	filters = append(filters, "attribute_null(deleted_at)")
+	filters = append(filters, "(attribute_not_exists(deleted_at) OR attribute_type(deleted_at, :nullType))")
+	expressionValues[":nullType"] = "NULL"
 	if query.Name != nil {
 		filters = append(filters, "#name = :name")
 		expressionNames["#name"] = "name"

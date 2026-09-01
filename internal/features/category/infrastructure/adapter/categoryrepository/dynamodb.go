@@ -113,7 +113,8 @@ func (r *DynamoDBCategoryRepository) Find(ctx context.Context, userID string, qu
 
 	var filters []string
 	expressionNames := map[string]string{}
-	filters = append(filters, "attribute_null(deleted_at)")
+	filters = append(filters, "(attribute_not_exists(deleted_at) OR attribute_type(deleted_at, :nullType))")
+	expressionValues[":nullType"] = "NULL"
 	if query.TransactionType != nil {
 		filters = append(filters, "transaction_type = :transaction_type")
 		expressionValues[":transaction_type"] = string(*query.TransactionType)

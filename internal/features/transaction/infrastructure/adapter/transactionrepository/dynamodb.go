@@ -163,7 +163,8 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 
 	var filters []string
 	expressionNames := map[string]string{}
-	filters = append(filters, "attribute_null(deleted_at)")
+	filters = append(filters, "(attribute_not_exists(deleted_at) OR attribute_type(deleted_at, :nullType))")
+	expressionValues[":nullType"] = "NULL"
 	if query.Type != nil {
 		filters = append(filters, "#type = :type")
 		expressionNames["#type"] = "type"
@@ -294,9 +295,16 @@ func (r *DynamoDBTransactionRepository) FindOne(ctx context.Context, userID stri
 }
 
 func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID string, transaction entity.Transaction) error {
+	current, err := r.FindOne(ctx, userID, transaction.ID)
+	if err != nil {
+		return fmt.Errorf("get current transaction: %w", err)
+	}
+
 	gsiSortKey := fmt.Sprintf("TRANSACTION#%s#%s", transaction.OccurredAt.Format(time.RFC3339Nano), transaction.ID)
 	key := map[string]any{"PK": fmt.Sprintf("USER#%s", userID), "SK": fmt.Sprintf("TRANSACTION#%s", transaction.ID)}
-	condition := "attribute_exists(PK)"
+	condition := "updated_at = :old_updated_at"
+	oldUpdatedAt := current.UpdatedAt.Format(time.RFC3339Nano)
+	updatedAt := transaction.UpdatedAt.Format(time.RFC3339Nano)
 
 	expression := `
 		SET
@@ -319,20 +327,21 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 	expressionNames := map[string]string{"#type": "type"}
 
 	expressionValues := map[string]any{
-		":amount":      dynamodbclient.Decimal(transaction.Amount),
-		":type":        string(transaction.Type),
-		":account_id":  transaction.AccountID,
-		":category_id": transaction.CategoryID,
-		":description": transaction.Description,
-		":occurred_at": transaction.OccurredAt.Format(time.RFC3339Nano),
-		":updated_at":  transaction.UpdatedAt.Format(time.RFC3339Nano),
-		":gsi1sk":      gsiSortKey,
-		":gsi2pk":      fmt.Sprintf("USER#%s#TYPE#%s", userID, string(transaction.Type)),
-		":gsi2sk":      gsiSortKey,
-		":gsi3pk":      fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, transaction.AccountID),
-		":gsi3sk":      gsiSortKey,
-		":gsi4pk":      fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
-		":gsi4sk":      gsiSortKey,
+		":amount":          dynamodbclient.Decimal(transaction.Amount),
+		":type":            string(transaction.Type),
+		":account_id":      transaction.AccountID,
+		":category_id":     transaction.CategoryID,
+		":description":     transaction.Description,
+		":occurred_at":     transaction.OccurredAt.Format(time.RFC3339Nano),
+		":updated_at":      updatedAt,
+		":old_updated_at":  oldUpdatedAt,
+		":gsi1sk":          gsiSortKey,
+		":gsi2pk":          fmt.Sprintf("USER#%s#TYPE#%s", userID, string(transaction.Type)),
+		":gsi2sk":          gsiSortKey,
+		":gsi3pk":          fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, transaction.AccountID),
+		":gsi3sk":          gsiSortKey,
+		":gsi4pk":          fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
+		":gsi4sk":          gsiSortKey,
 	}
 
 	if err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
@@ -344,7 +353,7 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 		ExpressionAttributeValues: expressionValues,
 	}); err != nil {
 		if errors.Is(err, dynamodbclient.ErrConditionFailed) {
-			return port.ErrTransactionNotFound
+			return port.ErrConcurrentModification
 		}
 
 		return fmt.Errorf("update transaction: %w", err)
