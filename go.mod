@@ -14,6 +14,8 @@ require (
 
 require (
 	github.com/MicahParks/jwkset v0.11.1 // indirect
+	github.com/akrylysov/algnhsa v1.1.0 // indirect
+	github.com/aws/aws-lambda-go v1.55.0 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.32.37 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.36 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.20.61 // indirect
@@ -30,6 +32,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.6 // indirect
 	github.com/aws/smithy-go v1.27.8 // indirect
+	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2 // indirect
 	github.com/go-chi/cors v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
