@@ -1,10 +1,8 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	handler "github.com/hyoaru/itala-api/internal/app/api/handler"
 	account "github.com/hyoaru/itala-api/internal/features/account"
@@ -13,12 +11,11 @@ import (
 	"github.com/hyoaru/itala-api/internal/features/transaction"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
-	"github.com/hyoaru/itala-api/internal/shared/infrastructure/logger"
 )
 
-type App struct{ server *http.Server }
+type App struct{ Handler http.Handler }
 
-func New(addr string) *App {
+func New() *App {
 	dynamodbTableName := os.Getenv("DYNAMODB_TABLE_NAME")
 	dynamodbClient := dynamodbclient.NewSDKDynamoDBClient()
 	idempotencyStore := idempotency.NewDecoratedIdempotencyStore(idempotency.NewDynamoDBIdempotencyStore(dynamodbClient, dynamodbTableName))
@@ -52,18 +49,5 @@ func New(addr string) *App {
 
 	router := NewRouter(identityProvider, *categoryHandler, *accountHandler, *transactionHandler)
 
-	server := &http.Server{
-		Addr:         addr,
-		Handler:      router,
-		WriteTimeout: time.Second * 30,
-		ReadTimeout:  time.Second * 10,
-		IdleTimeout:  time.Minute,
-	}
-
-	return &App{server: server}
-}
-
-func (app *App) Run() error {
-	logger.Debug(fmt.Sprintf("Server has started at %s", app.server.Addr))
-	return app.server.ListenAndServe()
+	return &App{Handler: router}
 }
