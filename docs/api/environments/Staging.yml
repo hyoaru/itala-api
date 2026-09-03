@@ -1,0 +1,8 @@
+name: Staging
+variables:
+  - name: BASE_URL
+    value: https://s0k9s7zs01.execute-api.ap-southeast-1.amazonaws.com
+    description: ""
+  - secret: true
+    name: ACCESS_TOKEN
+    description: ""
