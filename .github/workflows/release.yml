@@ -120,15 +120,27 @@ jobs:
             --name "/itala/api-function-s3-uri-base" \
             --query "Parameter.Value" \
             --output text)
+          API_FUNCTION_NAME=$(aws ssm get-parameter \
+            --name "/itala/api-function-name" \
+            --query "Parameter.Value" \
+            --output text)
+
 
           echo "API_FUNCTION_S3_URI=$API_FUNCTION_S3_URI" >> "$GITHUB_ENV"
           echo "API_FUNCTION_S3_URI_BASE=$API_FUNCTION_S3_URI_BASE" >> "$GITHUB_ENV"
+          echo "API_FUNCTION_NAME=$API_FUNCTION_NAME" >> "$GITHUB_ENV"
 
-      - name: Deploy to S3
+      - name: Deploy function
         run: |
+          # Deploy  to s3
           aws s3 cp function.zip "${{ env.API_FUNCTION_S3_URI }}"
           aws s3 cp function.zip "${{ env.API_FUNCTION_S3_URI_BASE }}/${{ needs.version.outputs.tag }}/function.zip"
-
+          # Update lambda function
+          S3_URI="${{ env.API_FUNCTION_S3_URI }}"
+          S3_BUCKET="${S3_URI#s3://}"
+          S3_BUCKET="${S3_BUCKET%%/*}"
+          S3_KEY="${S3_URI#s3://*/}"
+          aws lambda update-function-code --function-name ${{ env.API_FUNCTION_NAME }} --s3-bucket "$S3_BUCKET" --s3-key "$S3_KEY"
   notify:
     needs: [setup, version, build, deploy]
     if: always()
