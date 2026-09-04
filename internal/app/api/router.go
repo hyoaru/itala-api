@@ -10,6 +10,7 @@ import (
 	handler "github.com/hyoaru/itala-api/internal/app/api/handler"
 	middleware "github.com/hyoaru/itala-api/internal/app/api/middleware"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
+	"github.com/hyoaru/itala-api/version"
 )
 
 func NewRouter(
@@ -48,6 +49,12 @@ func NewRouter(
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
+	})
+
+	mux.Get("/version", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"version":"` + version.Version + `"}`))
 	})
 
 	mux.Group(func(r chi.Router) {
