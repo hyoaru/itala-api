@@ -1,0 +1,146 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-southeast-1
+
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.setup.outputs.environment }}
+    steps:
+      - id: setup
+        run: echo "environment=staging" >> "$GITHUB_OUTPUT"
+
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: hyoaru/actions/checkout@v1
+        with:
+          fetch-depth: 0
+
+      - name: Setup node
+        uses: hyoaru/actions/setup-node@v1
+        with:
+          node-version: 24
+
+      - name: Release
+        run: |
+          npx \
+            -p semantic-release \
+            -p @semantic-release/commit-analyzer \
+            -p @semantic-release/release-notes-generator \
+            -p @semantic-release/changelog \
+            -p @semantic-release/git \
+            semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version
+        id: version
+        run: |
+          TAG=$(git tag --sort=-v:refname | head -n1)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: [setup, version]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+    steps:
+      - name: Checkout
+        uses: hyoaru/actions/checkout@v1
+        with:
+          ref: ${{ needs.version.outputs.tag }}
+
+      - name: Setup Go
+        uses: hyoaru/actions/setup-go@v1
+        with:
+          go-version-file: "go.mod"
+
+      - name: Build lambda
+        run: |
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bootstrap cmd/lambda/main.go
+          zip -j function.zip bootstrap
+
+      - name: Upload build artifact
+        uses: hyoaru/actions/upload-artifact@v1
+        with:
+          name: build-${{ needs.version.outputs.tag }}
+          path: function.zip
+          if-no-files-found: error
+
+  deploy:
+    needs: [setup, version, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+    steps:
+      - name: Download build artifact
+        uses: hyoaru/actions/download-artifact@v1
+        with:
+          name: build-${{ needs.version.outputs.tag }}
+          path: .
+
+      - name: Configure AWS credentials
+        uses: hyoaru/actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get configuration
+        run: |
+          API_FUNCTION_S3_URI=$(aws ssm get-parameter \
+            --name "/itala/api-function-s3-uri" \
+            --query "Parameter.Value" \
+            --output text)
+          API_FUNCTION_S3_URI_BASE=$(aws ssm get-parameter \
+            --name "/itala/api-function-s3-uri-base" \
+            --query "Parameter.Value" \
+            --output text)
+
+          echo "API_FUNCTION_S3_URI=$API_FUNCTION_S3_URI" >> "$GITHUB_ENV"
+          echo "API_FUNCTION_S3_URI_BASE=$API_FUNCTION_S3_URI_BASE" >> "$GITHUB_ENV"
+
+      - name: Deploy to S3
+        run: |
+          aws s3 cp function.zip "${{ env.API_FUNCTION_S3_URI }}"
+          aws s3 cp function.zip "${{ env.API_FUNCTION_S3_URI_BASE }}/${{ needs.version.outputs.tag }}/function.zip"
+
+  notify:
+    needs: [setup, version, build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify discord
+        uses: hyoaru/actions/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: ${{ job.status }}
+          title: "Itala API Release - ${{ needs.version.outputs.tag }}"
+          description: |
+            Environment: `${{ needs.setup.outputs.environment }}`
+            Setup: `${{ needs.setup.result }}`
+            Version: `${{ needs.version.result }}`
+            Build: `${{ needs.build.result }}`
+            Deploy: `${{ needs.deploy.result }}`
