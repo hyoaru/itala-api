@@ -55,7 +55,7 @@ jobs:
           if-no-files-found: error
 
   deploy:
-    needs: [setup, version, build]
+    needs: [setup, build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
