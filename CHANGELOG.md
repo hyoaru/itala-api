@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/hyoaru/itala-api/compare/v0.3.0...v0.3.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* unknown deps version ([9affd79](https://github.com/hyoaru/itala-api/commit/9affd794a67fd9fdea965a3eae6a285a16a5d6f6))
+
 # [0.3.0](https://github.com/hyoaru/itala-api/compare/v0.2.0...v0.3.0) (2026-09-07)
 
 
