@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/hyoaru/itala-api/compare/v0.2.0...v0.3.0) (2026-09-07)
+
+
+### Features
+
+* publish pipeline ([92fe8cb](https://github.com/hyoaru/itala-api/commit/92fe8cb0bf3fea67cf5b37173ee35b0223b7d3f3))
+
 # [0.2.0](https://github.com/hyoaru/itala-api/compare/v0.1.0...v0.2.0) (2026-09-07)
 
 
