@@ -111,11 +111,20 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
+      - name: Determine status
+        id: status
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "status=failure" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=success" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Notify discord
         uses: hyoaru/actions/actions-status-discord@v1
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          status: ${{ job.status }}
+          status: ${{ steps.status.outputs.status }}
           title: "Itala API Release - ${{ github.event.release.tag_name }}"
           description: |
             Environment: `${{ needs.setup.outputs.environment }}`
