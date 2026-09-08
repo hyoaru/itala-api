@@ -239,11 +239,11 @@ func (r *DynamoDBTransactionRepository) findByIndex(ctx context.Context, index t
 
 func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string, query port.TransactionQuery) (port.TransactionPage, error) {
 	switch {
-	case query.Type != nil:
+	case query.CategoryID != nil:
 		return r.findByIndex(
 			ctx,
-			transactionIndex{PK: "GSI2PK", SK: "GSI2SK", Name: "TransactionByType"},
-			fmt.Sprintf("USER#%s#TYPE#%s", userID, *query.Type),
+			transactionIndex{PK: "GSI4PK", SK: "GSI4SK", Name: "TransactionByCategory"},
+			fmt.Sprintf("USER#%s#CATEGORY#%s", userID, *query.CategoryID),
 			query,
 		)
 	case query.AccountID != nil:
@@ -253,11 +253,11 @@ func (r *DynamoDBTransactionRepository) Find(ctx context.Context, userID string,
 			fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, *query.AccountID),
 			query,
 		)
-	case query.CategoryID != nil:
+	case query.Type != nil:
 		return r.findByIndex(
 			ctx,
-			transactionIndex{PK: "GSI4PK", SK: "GSI4SK", Name: "TransactionByCategory"},
-			fmt.Sprintf("USER#%s#CATEGORY#%s", userID, *query.CategoryID),
+			transactionIndex{PK: "GSI2PK", SK: "GSI2SK", Name: "TransactionByType"},
+			fmt.Sprintf("USER#%s#TYPE#%s", userID, *query.Type),
 			query,
 		)
 	default:
