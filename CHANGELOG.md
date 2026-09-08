@@ -1,3 +1,10 @@
+## [0.3.3](https://github.com/hyoaru/itala-api/compare/v0.3.2...v0.3.3) (2026-09-08)
+
+
+### Bug Fixes
+
+* trailing white spaces in text entries ([9cdab01](https://github.com/hyoaru/itala-api/commit/9cdab014da98e8fa49784fc651c1b43aefb4fc5a))
+
 ## [0.3.2](https://github.com/hyoaru/itala-api/compare/v0.3.1...v0.3.2) (2026-09-08)
 
 
