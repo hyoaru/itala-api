@@ -1,3 +1,10 @@
+## [0.3.4](https://github.com/hyoaru/itala-api/compare/v0.3.3...v0.3.4) (2026-09-08)
+
+
+### Performance Improvements
+
+* route gsi to use based on selectivity access pattern ([d116448](https://github.com/hyoaru/itala-api/commit/d1164480cf5b5c9ed55ec8ddbfa4e965a7f04553))
+
 ## [0.3.3](https://github.com/hyoaru/itala-api/compare/v0.3.2...v0.3.3) (2026-09-08)
 
 
