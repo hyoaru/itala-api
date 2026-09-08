@@ -1,3 +1,10 @@
+## [0.3.2](https://github.com/hyoaru/itala-api/compare/v0.3.1...v0.3.2) (2026-09-08)
+
+
+### Bug Fixes
+
+* unable to create category of same name but different types ([b3f242b](https://github.com/hyoaru/itala-api/commit/b3f242baef430c8466ae801b01701fe2250c8ac7))
+
 ## [0.3.1](https://github.com/hyoaru/itala-api/compare/v0.3.0...v0.3.1) (2026-09-07)
 
 
