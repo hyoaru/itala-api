@@ -2,6 +2,7 @@ package category
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	categoryrepository "github.com/hyoaru/itala-api/internal/features/category/application/port/categoryrepository"
@@ -34,7 +35,7 @@ func (u *UpdateCategory) Execute(ctx context.Context, request UpdateCategoryRequ
 
 	category := entity.Category{
 		ID:        request.ID,
-		Name:      request.Name,
+		Name:      strings.TrimSpace(request.Name),
 		UpdatedAt: now,
 	}
 

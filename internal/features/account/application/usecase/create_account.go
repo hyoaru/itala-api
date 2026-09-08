@@ -2,6 +2,7 @@ package account
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,7 +38,7 @@ func (u *CreateAccount) Execute(ctx context.Context, request CreateAccountReques
 
 	account := entity.Account{
 		ID:        id.String(),
-		Name:      request.Name,
+		Name:      strings.TrimSpace(request.Name),
 		Balance:   balance,
 		CreatedAt: now,
 		UpdatedAt: now,

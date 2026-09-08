@@ -2,6 +2,7 @@ package category
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -33,7 +34,7 @@ func (u *CreateCategory) Execute(ctx context.Context, request CreateCategoryRequ
 
 	category := entity.Category{
 		ID:              id.String(),
-		Name:            request.Name,
+		Name:            strings.TrimSpace(request.Name),
 		TransactionType: request.Type,
 		CreatedAt:       now,
 		UpdatedAt:       now,

@@ -2,6 +2,7 @@ package account
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	accountrepository "github.com/hyoaru/itala-api/internal/features/account/application/port/accountrepository"
@@ -34,7 +35,7 @@ func (u *UpdateAccount) Execute(ctx context.Context, request UpdateAccountReques
 
 	account := entity.Account{
 		ID:        request.ID,
-		Name:      request.Name,
+		Name:      strings.TrimSpace(request.Name),
 		UpdatedAt: now,
 	}
 

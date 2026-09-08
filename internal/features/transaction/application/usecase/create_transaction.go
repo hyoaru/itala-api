@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -62,7 +63,7 @@ func (u *CreateTransaction) Execute(ctx context.Context, request CreateTransacti
 		Type:        foundCategory.TransactionType,
 		AccountID:   request.AccountID,
 		CategoryID:  request.CategoryID,
-		Description: request.Description,
+		Description: strings.TrimSpace(request.Description),
 		OccurredAt:  request.OccurredAt,
 		CreatedAt:   now,
 		UpdatedAt:   now,
