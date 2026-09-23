@@ -19,6 +19,7 @@ type fakeDynamoDBClient struct {
 	transactWriteItems func(ctx context.Context, input *dynamodbclient.TransactWriteItemsInput) error
 	query              func(ctx context.Context, input *dynamodbclient.QueryInput, output any) (dynamodbclient.QueryOutput, error)
 	getItem            func(ctx context.Context, input *dynamodbclient.GetItemInput, output any) error
+	updateItem         func(ctx context.Context, input *dynamodbclient.UpdateItemInput) error
 }
 
 func (f *fakeDynamoDBClient) TransactWriteItems(
@@ -42,6 +43,13 @@ func (f *fakeDynamoDBClient) GetItem(
 	output any,
 ) error {
 	return f.getItem(ctx, input, output)
+}
+
+func (f *fakeDynamoDBClient) UpdateItem(
+	ctx context.Context,
+	input *dynamodbclient.UpdateItemInput,
+) error {
+	return f.updateItem(ctx, input)
 }
 
 func TestDynamoDBCategoryRepository_Create(t *testing.T) {
@@ -641,6 +649,451 @@ func TestDynamoDBCategoryRepository_FindOne(t *testing.T) {
 
 		if got := captured.Key["SK"]; got != "CATEGORY#category-1" {
 			t.Errorf("key %q: got %v, want %v", "SK", got, "CATEGORY#category-1")
+		}
+	})
+}
+
+func TestDynamoDBCategoryRepository_Update(t *testing.T) {
+	createdAt := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	updatedAt := time.Date(2026, 1, 3, 3, 4, 5, 0, time.UTC)
+	timestamp := createdAt.Format(time.RFC3339Nano)
+
+	t.Run("success same name", func(t *testing.T) {
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				item := output.(*findCategoryItem)
+				*item = findCategoryItem{
+					ID:              "category-1",
+					Name:            "Groceries",
+					TransactionType: "EXPENSE",
+					CreatedAt:       timestamp,
+					UpdatedAt:       timestamp,
+				}
+				return nil
+			},
+			updateItem: func(ctx context.Context, input *dynamodbclient.UpdateItemInput) error {
+				return nil
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		category := entity.Category{
+			ID:              "category-1",
+			Name:            "Groceries",
+			TransactionType: valueobject.TransactionTypeExpense,
+			UpdatedAt:       updatedAt,
+		}
+
+		if got := repository.Update(context.Background(), "user-1", category); got != nil {
+			t.Errorf("got %v, want %v", got, nil)
+		}
+	})
+
+	t.Run("success name changed", func(t *testing.T) {
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				item := output.(*findCategoryItem)
+				*item = findCategoryItem{
+					ID:              "category-1",
+					Name:            "Old",
+					TransactionType: "EXPENSE",
+					CreatedAt:       timestamp,
+					UpdatedAt:       timestamp,
+				}
+				return nil
+			},
+			transactWriteItems: func(
+				ctx context.Context,
+				input *dynamodbclient.TransactWriteItemsInput,
+			) error {
+				return nil
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		category := entity.Category{
+			ID:              "category-1",
+			Name:            "Groceries",
+			TransactionType: valueobject.TransactionTypeExpense,
+			UpdatedAt:       updatedAt,
+		}
+
+		if got := repository.Update(context.Background(), "user-1", category); got != nil {
+			t.Errorf("got %v, want %v", got, nil)
+		}
+	})
+
+	t.Run("concurrent modification", func(t *testing.T) {
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				item := output.(*findCategoryItem)
+				*item = findCategoryItem{
+					ID:              "category-1",
+					Name:            "Groceries",
+					TransactionType: "EXPENSE",
+					CreatedAt:       timestamp,
+					UpdatedAt:       timestamp,
+				}
+				return nil
+			},
+			updateItem: func(ctx context.Context, input *dynamodbclient.UpdateItemInput) error {
+				return dynamodbclient.ErrConditionFailed
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		category := entity.Category{
+			ID:              "category-1",
+			Name:            "Groceries",
+			TransactionType: valueobject.TransactionTypeExpense,
+			UpdatedAt:       updatedAt,
+		}
+
+		want := port.ErrConcurrentModification
+		got := repository.Update(context.Background(), "user-1", category)
+
+		if !errors.Is(got, want) {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("category already exists", func(t *testing.T) {
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				item := output.(*findCategoryItem)
+				*item = findCategoryItem{
+					ID:              "category-1",
+					Name:            "Old",
+					TransactionType: "EXPENSE",
+					CreatedAt:       timestamp,
+					UpdatedAt:       timestamp,
+				}
+				return nil
+			},
+			transactWriteItems: func(
+				ctx context.Context,
+				input *dynamodbclient.TransactWriteItemsInput,
+			) error {
+				return dynamodbclient.ErrConditionFailed
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		category := entity.Category{
+			ID:              "category-1",
+			Name:            "Groceries",
+			TransactionType: valueobject.TransactionTypeExpense,
+			UpdatedAt:       updatedAt,
+		}
+
+		want := port.ErrCategoryExists
+		got := repository.Update(context.Background(), "user-1", category)
+
+		if !errors.Is(got, want) {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("get current error", func(t *testing.T) {
+		boom := errors.New("boom")
+
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				return boom
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		got := repository.Update(context.Background(), "user-1", entity.Category{})
+
+		if !errors.Is(got, boom) {
+			t.Errorf("got %v, want %v", got, boom)
+		}
+	})
+
+	t.Run("unexpected update error", func(t *testing.T) {
+		boom := errors.New("boom")
+
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				item := output.(*findCategoryItem)
+				*item = findCategoryItem{
+					ID:              "category-1",
+					Name:            "Groceries",
+					TransactionType: "EXPENSE",
+					CreatedAt:       timestamp,
+					UpdatedAt:       timestamp,
+				}
+				return nil
+			},
+			updateItem: func(ctx context.Context, input *dynamodbclient.UpdateItemInput) error {
+				return boom
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		category := entity.Category{
+			ID:              "category-1",
+			Name:            "Groceries",
+			TransactionType: valueobject.TransactionTypeExpense,
+			UpdatedAt:       updatedAt,
+		}
+
+		got := repository.Update(context.Background(), "user-1", category)
+
+		if !errors.Is(got, boom) {
+			t.Errorf("got %v, want %v", got, boom)
+		}
+	})
+}
+
+func TestDynamoDBCategoryRepository_Delete(t *testing.T) {
+	createdAt := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	timestamp := createdAt.Format(time.RFC3339Nano)
+
+	t.Run("success", func(t *testing.T) {
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				item := output.(*findCategoryItem)
+				*item = findCategoryItem{
+					ID:              "category-1",
+					Name:            "Groceries",
+					TransactionType: "EXPENSE",
+					CreatedAt:       timestamp,
+					UpdatedAt:       timestamp,
+				}
+				return nil
+			},
+			transactWriteItems: func(
+				ctx context.Context,
+				input *dynamodbclient.TransactWriteItemsInput,
+			) error {
+				return nil
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		if got := repository.Delete(context.Background(), "user-1", "category-1"); got != nil {
+			t.Errorf("got %v, want %v", got, nil)
+		}
+	})
+
+	t.Run("category not found", func(t *testing.T) {
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				return dynamodbclient.ErrItemNotFound
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		want := port.ErrCategoryNotFound
+		got := repository.Delete(context.Background(), "user-1", "category-1")
+
+		if !errors.Is(got, want) {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("condition failed", func(t *testing.T) {
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				item := output.(*findCategoryItem)
+				*item = findCategoryItem{
+					ID:              "category-1",
+					Name:            "Groceries",
+					TransactionType: "EXPENSE",
+					CreatedAt:       timestamp,
+					UpdatedAt:       timestamp,
+				}
+				return nil
+			},
+			transactWriteItems: func(
+				ctx context.Context,
+				input *dynamodbclient.TransactWriteItemsInput,
+			) error {
+				return dynamodbclient.ErrConditionFailed
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		want := port.ErrCategoryNotFound
+		got := repository.Delete(context.Background(), "user-1", "category-1")
+
+		if !errors.Is(got, want) {
+			t.Errorf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("unexpected error", func(t *testing.T) {
+		boom := errors.New("boom")
+
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				item := output.(*findCategoryItem)
+				*item = findCategoryItem{
+					ID:              "category-1",
+					Name:            "Groceries",
+					TransactionType: "EXPENSE",
+					CreatedAt:       timestamp,
+					UpdatedAt:       timestamp,
+				}
+				return nil
+			},
+			transactWriteItems: func(
+				ctx context.Context,
+				input *dynamodbclient.TransactWriteItemsInput,
+			) error {
+				return boom
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		got := repository.Delete(context.Background(), "user-1", "category-1")
+
+		if !errors.Is(got, boom) {
+			t.Errorf("got %v, want %v", got, boom)
+		}
+	})
+
+	t.Run("writes expected transaction items", func(t *testing.T) {
+		var captured *dynamodbclient.TransactWriteItemsInput
+
+		client := &fakeDynamoDBClient{
+			getItem: func(
+				ctx context.Context,
+				input *dynamodbclient.GetItemInput,
+				output any,
+			) error {
+				item := output.(*findCategoryItem)
+				*item = findCategoryItem{
+					ID:              "category-1",
+					Name:            "Groceries",
+					TransactionType: "EXPENSE",
+					CreatedAt:       timestamp,
+					UpdatedAt:       timestamp,
+				}
+				return nil
+			},
+			transactWriteItems: func(
+				ctx context.Context,
+				input *dynamodbclient.TransactWriteItemsInput,
+			) error {
+				captured = input
+				return nil
+			},
+		}
+
+		repository := NewDynamoDBCategoryRepository(client, "table")
+
+		_ = repository.Delete(context.Background(), "user-1", "category-1")
+
+		if len(captured.TransactItems) != 2 {
+			t.Fatalf("got %d transact items, want %d", len(captured.TransactItems), 2)
+		}
+
+		categoryUpdate := captured.TransactItems[0].Update
+		if categoryUpdate == nil {
+			t.Fatal("got nil category update, want non-nil")
+		}
+
+		if categoryUpdate.TableName != "table" {
+			t.Errorf("got %v, want %v", categoryUpdate.TableName, "table")
+		}
+
+		if got := categoryUpdate.Key["PK"]; got != "USER#user-1" {
+			t.Errorf("key %q: got %v, want %v", "PK", got, "USER#user-1")
+		}
+
+		if got := categoryUpdate.Key["SK"]; got != "CATEGORY#category-1" {
+			t.Errorf("key %q: got %v, want %v", "SK", got, "CATEGORY#category-1")
+		}
+
+		if want := "SET deleted_at = :deleted_at, updated_at = :updated_at"; categoryUpdate.UpdateExpression != want {
+			t.Errorf("got %v, want %v", categoryUpdate.UpdateExpression, want)
+		}
+
+		if categoryUpdate.ConditionExpression == nil {
+			t.Fatal("got nil condition expression, want non-nil")
+		}
+
+		if want := "attribute_exists(PK)"; *categoryUpdate.ConditionExpression != want {
+			t.Errorf("got %v, want %v", *categoryUpdate.ConditionExpression, want)
+		}
+
+		deletedAt, ok := categoryUpdate.ExpressionAttributeValues[":deleted_at"].(string)
+		if !ok || deletedAt == "" {
+			t.Errorf("got %v, want non-empty string", categoryUpdate.ExpressionAttributeValues[":deleted_at"])
+		}
+
+		if categoryUpdate.ExpressionAttributeValues[":updated_at"] != deletedAt {
+			t.Errorf("got %v, want %v", categoryUpdate.ExpressionAttributeValues[":updated_at"], deletedAt)
+		}
+
+		nameDelete := captured.TransactItems[1].Delete
+		if nameDelete == nil {
+			t.Fatal("got nil name delete, want non-nil")
+		}
+
+		if nameDelete.TableName != "table" {
+			t.Errorf("got %v, want %v", nameDelete.TableName, "table")
+		}
+
+		if got := nameDelete.Key["PK"]; got != "USER#user-1" {
+			t.Errorf("key %q: got %v, want %v", "PK", got, "USER#user-1")
+		}
+
+		if got := nameDelete.Key["SK"]; got != "CATEGORY_NAME#Groceries#EXPENSE" {
+			t.Errorf("key %q: got %v, want %v", "SK", got, "CATEGORY_NAME#Groceries#EXPENSE")
 		}
 	})
 }
