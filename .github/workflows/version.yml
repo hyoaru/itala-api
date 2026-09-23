@@ -53,6 +53,9 @@ jobs:
     needs: [version]
     if: needs.version.outputs.bumped == 'true'
     uses: ./.github/workflows/release.yml
+    permissions:
+      contents: read
+      id-token: write
     with:
       version: ${{ needs.version.outputs.version }}
     secrets: inherit
