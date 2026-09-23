@@ -1,8 +1,11 @@
 name: Release
 
 on:
-  push:
-    branches: [master]
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -21,43 +24,8 @@ jobs:
       - id: setup
         run: echo "environment=staging" >> "$GITHUB_OUTPUT"
 
-  version:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      tag: ${{ steps.version.outputs.tag }}
-    steps:
-      - name: Checkout
-        uses: hyoaru/actions/checkout@v1
-        with:
-          fetch-depth: 0
-
-      - name: Setup node
-        uses: hyoaru/actions/setup-node@v1
-        with:
-          node-version: 24
-
-      - name: Release
-        run: |
-          npx \
-            -p semantic-release \
-            -p @semantic-release/commit-analyzer \
-            -p @semantic-release/release-notes-generator \
-            -p @semantic-release/changelog \
-            -p @semantic-release/git \
-            semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get version
-        id: version
-        run: |
-          TAG=$(git tag --sort=-v:refname | head -n1)
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-
   build:
-    needs: [setup, version]
+    needs: [setup]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -68,7 +36,7 @@ jobs:
       - name: Checkout
         uses: hyoaru/actions/checkout@v1
         with:
-          ref: ${{ needs.version.outputs.tag }}
+          ref: ${{ inputs.version }}
 
       - name: Setup Go
         uses: hyoaru/actions/setup-go@v1
@@ -78,19 +46,19 @@ jobs:
       - name: Build lambda
         run: |
           GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build \
-            -ldflags="-X github.com/hyoaru/itala-api/version.Version=${{ needs.version.outputs.tag }}" \
+            -ldflags="-X github.com/hyoaru/itala-api/version.Version=${{ inputs.version }}" \
             -o bootstrap cmd/lambda/main.go
           zip -j function.zip bootstrap
 
       - name: Upload build artifact
         uses: hyoaru/actions/upload-artifact@v1
         with:
-          name: build-${{ needs.version.outputs.tag }}
+          name: build-${{ inputs.version }}
           path: function.zip
           if-no-files-found: error
 
   deploy:
-    needs: [setup, version, build]
+    needs: [setup, build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -101,7 +69,7 @@ jobs:
       - name: Download build artifact
         uses: hyoaru/actions/download-artifact@v1
         with:
-          name: build-${{ needs.version.outputs.tag }}
+          name: build-${{ inputs.version }}
           path: .
 
       - name: Configure AWS credentials
@@ -134,15 +102,16 @@ jobs:
         run: |
           # Deploy  to s3
           aws s3 cp function.zip "${{ env.API_FUNCTION_S3_URI }}"
-          aws s3 cp function.zip "${{ env.API_FUNCTION_S3_URI_BASE }}/${{ needs.version.outputs.tag }}/function.zip"
+          aws s3 cp function.zip "${{ env.API_FUNCTION_S3_URI_BASE }}/${{ inputs.version }}/function.zip"
           # Update lambda function
           S3_URI="${{ env.API_FUNCTION_S3_URI }}"
           S3_BUCKET="${S3_URI#s3://}"
           S3_BUCKET="${S3_BUCKET%%/*}"
           S3_KEY="${S3_URI#s3://*/}"
           aws lambda update-function-code --function-name ${{ env.API_FUNCTION_NAME }} --s3-bucket "$S3_BUCKET" --s3-key "$S3_KEY"
+
   notify:
-    needs: [setup, version, build, deploy]
+    needs: [setup, build, deploy]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -160,10 +129,9 @@ jobs:
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
           status: ${{ steps.status.outputs.status }}
-          title: "Itala API Release - ${{ needs.version.outputs.tag }}"
+          title: "Itala API Release - ${{ inputs.version }}"
           description: |
             Environment: `${{ needs.setup.outputs.environment }}`
             Setup: `${{ needs.setup.result }}`
-            Version: `${{ needs.version.result }}`
             Build: `${{ needs.build.result }}`
             Deploy: `${{ needs.deploy.result }}`
