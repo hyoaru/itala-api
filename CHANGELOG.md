@@ -1,3 +1,11 @@
+## [0.3.5](https://github.com/hyoaru/itala-api/compare/v0.3.4...v0.3.5) (2026-09-23)
+
+
+### Bug Fixes
+
+* persm ([af23e69](https://github.com/hyoaru/itala-api/commit/af23e6999a89afdb5ce3fdd58e6099c11de434a3))
+* workflows ([6a3a459](https://github.com/hyoaru/itala-api/commit/6a3a459a237e421d96ba5d024d0b4df03ac7e3f6))
+
 ## [0.3.4](https://github.com/hyoaru/itala-api/compare/v0.3.3...v0.3.4) (2026-09-08)
 
 
