@@ -1,0 +1,87 @@
+name: Verify
+
+on:
+  push:
+    branches-ignore: [master]
+    tags-ignore: ["**"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: hyoaru/actions/checkout@v1
+
+      - name: Setup Go
+        uses: hyoaru/actions/setup-go@v1
+        with:
+          go-version-file: "go.mod"
+
+      - name: Format check
+        run: test -z "$(gofmt -l .)"
+
+      - name: Vet
+        run: go vet ./...
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: hyoaru/actions/checkout@v1
+
+      - name: Setup Go
+        uses: hyoaru/actions/setup-go@v1
+        with:
+          go-version-file: "go.mod"
+
+      - name: Test
+        run: go test ./...
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: hyoaru/actions/checkout@v1
+
+      - name: Setup Go
+        uses: hyoaru/actions/setup-go@v1
+        with:
+          go-version-file: "go.mod"
+
+      - name: Build
+        run: |
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bootstrap cmd/lambda/main.go
+
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: hyoaru/actions/checkout@v1
+
+      - name: Cache Trivy DB
+        uses: hyoaru/actions/cache@v1
+        with:
+          path: ${{ github.workspace }}/.cache/trivy
+          key: trivy-db
+          restore-keys: |
+            trivy-
+
+      - name: Scan dependencies
+        uses: hyoaru/actions/trivy@v1
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          format: table
+          exit-code: "1"
+          cache: "true"
