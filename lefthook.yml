@@ -1,0 +1,14 @@
+pre-commit:
+  commands:
+    format:
+      glob: "*.go"
+      run: gofmt -w {staged_files}
+      stage_fixed: true
+    vet:
+      glob: "*.go"
+      run: go vet $(dirname {staged_files} | sort -u | sed 's|^|./|')
+
+commit-msg:
+  commands:
+    conventional:
+      run: cog verify --file {1}
