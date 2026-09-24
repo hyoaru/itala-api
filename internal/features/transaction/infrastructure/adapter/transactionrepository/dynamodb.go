@@ -327,21 +327,21 @@ func (r *DynamoDBTransactionRepository) Update(ctx context.Context, userID strin
 	expressionNames := map[string]string{"#type": "type"}
 
 	expressionValues := map[string]any{
-		":amount":          dynamodbclient.Decimal(transaction.Amount),
-		":type":            string(transaction.Type),
-		":account_id":      transaction.AccountID,
-		":category_id":     transaction.CategoryID,
-		":description":     transaction.Description,
-		":occurred_at":     transaction.OccurredAt.Format(time.RFC3339Nano),
-		":updated_at":      updatedAt,
-		":old_updated_at":  oldUpdatedAt,
-		":gsi1sk":          gsiSortKey,
-		":gsi2pk":          fmt.Sprintf("USER#%s#TYPE#%s", userID, string(transaction.Type)),
-		":gsi2sk":          gsiSortKey,
-		":gsi3pk":          fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, transaction.AccountID),
-		":gsi3sk":          gsiSortKey,
-		":gsi4pk":          fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
-		":gsi4sk":          gsiSortKey,
+		":amount":         dynamodbclient.Decimal(transaction.Amount),
+		":type":           string(transaction.Type),
+		":account_id":     transaction.AccountID,
+		":category_id":    transaction.CategoryID,
+		":description":    transaction.Description,
+		":occurred_at":    transaction.OccurredAt.Format(time.RFC3339Nano),
+		":updated_at":     updatedAt,
+		":old_updated_at": oldUpdatedAt,
+		":gsi1sk":         gsiSortKey,
+		":gsi2pk":         fmt.Sprintf("USER#%s#TYPE#%s", userID, string(transaction.Type)),
+		":gsi2sk":         gsiSortKey,
+		":gsi3pk":         fmt.Sprintf("USER#%s#ACCOUNT#%s", userID, transaction.AccountID),
+		":gsi3sk":         gsiSortKey,
+		":gsi4pk":         fmt.Sprintf("USER#%s#CATEGORY#%s", userID, transaction.CategoryID),
+		":gsi4sk":         gsiSortKey,
 	}
 
 	if err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
@@ -367,8 +367,8 @@ func (r *DynamoDBTransactionRepository) Delete(ctx context.Context, userID strin
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 
 	err := r.client.UpdateItem(ctx, &dynamodbclient.UpdateItemInput{
-		TableName: r.tableName,
-		Key:       key,
+		TableName:           r.tableName,
+		Key:                 key,
 		UpdateExpression:    "SET deleted_at = :deleted_at, updated_at = :updated_at",
 		ConditionExpression: aws.String("attribute_exists(PK)"),
 		ExpressionAttributeValues: map[string]any{

@@ -247,10 +247,10 @@ func (r *DynamoDBCategoryRepository) Update(ctx context.Context, userID string, 
 	transactItems := []dynamodbclient.TransactWriteItem{
 		{
 			Update: &dynamodbclient.TransactUpdate{
-				TableName:           r.tableName,
-				Key:                 currentKey,
-				UpdateExpression:    "SET #name = :name, updated_at = :updated_at",
-				ConditionExpression: &updateCondition,
+				TableName:                r.tableName,
+				Key:                      currentKey,
+				UpdateExpression:         "SET #name = :name, updated_at = :updated_at",
+				ConditionExpression:      &updateCondition,
 				ExpressionAttributeNames: map[string]string{"#name": "name"},
 				ExpressionAttributeValues: map[string]any{
 					":name":           category.Name,
