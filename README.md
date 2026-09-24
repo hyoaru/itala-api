@@ -44,7 +44,7 @@ itala-api/
 │       ├── domain/valueobject/  # Decimal, TransactionType value objects
 │       └── infrastructure/      # DynamoDB client, idempotency, logger
 ├── .env.example                 # Required environment variables template
-├── Makefile                     # build, package, hooks targets
+├── Makefile                     # build, package targets
 ├── lefthook.yml                 # Git hooks (gofmt, go vet, cog verify)
 └── .air.toml                    # Hot-reload config
 ```
@@ -84,12 +84,6 @@ paru -S lefthook cocogitto
 ```
 
 Install the hooks:
-
-```bash
-make hooks
-```
-
-or equivalently:
 
 ```bash
 lefthook install
