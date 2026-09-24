@@ -44,7 +44,8 @@ itala-api/
 │       ├── domain/valueobject/  # Decimal, TransactionType value objects
 │       └── infrastructure/      # DynamoDB client, idempotency, logger
 ├── .env.example                 # Required environment variables template
-├── Makefile                     # build, package targets
+├── Makefile                     # build, package, hooks targets
+├── lefthook.yml                 # Git hooks (gofmt, go vet, cog verify)
 └── .air.toml                    # Hot-reload config
 ```
 
@@ -72,11 +73,52 @@ itala-api/
 - AWS credentials configured (default credential chain)
 - A `.env` file (see [Environment Variables](#environment-variables))
 
+## Development
+
+### Git Hooks
+
+Git hooks are managed with [Lefthook](https://github.com/evilmartians/lefthook) and [Cocogitto](https://github.com/cocogitto/cocogitto). Install both:
+
+```bash
+paru -S lefthook cocogitto
+```
+
+Install the hooks:
+
+```bash
+make hooks
+```
+
+or equivalently:
+
+```bash
+lefthook install
+```
+
+| Hook         | Action                                                                              |
+| ------------ | ----------------------------------------------------------------------------------- |
+| `pre-commit` | Runs `gofmt -w` on staged Go files and `go vet` on their packages, re-staging fixes |
+| `commit-msg` | Runs `cog verify` to enforce [Conventional Commits](https://www.conventionalcommits.org/) |
+
+Commits must follow the conventional format, e.g. `feat: add transaction recurrence` or `fix: derive gsi key on update`.
+
 ## Deployment
 
 ### CI/CD Pipeline
 
 Deployments are fully automated via GitHub Actions. All pipelines use OIDC-based AWS authentication (no static credentials), fetch configuration from SSM Parameter Store, and notify Discord on completion.
+
+#### Verify — `verify.yml`
+
+Triggered on pushes to non-`master` branches. Checks formatting and vet, runs the test suite, builds the Lambda binary, and scans dependencies with Trivy before merging.
+
+```mermaid
+flowchart TD
+    T["push to branch"] --> LINT["lint\ngofmt check + go vet ./..."]
+    T --> TEST["test\ngo test ./..."]
+    T --> BUILD["build\ncross-compile Go → arm64"]
+    T --> SEC["security\nTrivy fs scan → CRITICAL,HIGH"]
+```
 
 #### Staging — `release.yml`
 
