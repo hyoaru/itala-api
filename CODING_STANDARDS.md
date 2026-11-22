@@ -10,11 +10,27 @@ The `account` slice owns Account and AccountNameLock. The `ledger` slice owns Tr
 
 No Posting repository exists. Posting has no lifecycle outside its Transaction.
 
+## File layout
+
+Follow the legacy feature layout exactly. One file per named thing:
+
+- `domain/entity/` — one entity per `snake_case.go` file: `transaction.go`, `posting.go`, `account_statement_entry.go`. No consolidated model file anywhere.
+- `application/port/<name>/` — `interface.go` and `errors.go`. Extra port types get their own file.
+- `application/usecase/` — one use case file per action and a matching `_test.go`. Repository fakes live in `fakes_test.go`.
+- `infrastructure/adapter/<name>/` — one file per concern: `dynamodb.go`, `decorated.go`, `logging.go`, `retry.go`, `idempotency.go`. Each concern gets its own `_test.go`.
+- Slice root — one facade named after the slice: `account.go`, `ledger.go`. It holds aliases and constructors only.
+
+`domain/entity` holds domain facts only. Write infrastructure belongs in the application port or adapter. `IdempotencyRecord` lives in `application/port/ledgerrepository`, not in `domain/entity`.
+
+Group related constructors and aliases in the facade, not in a model file. A model file defines one type.
+
 ## DynamoDB keys
 
 Physical table keys are `PK` and `SK` in uppercase. Documentation may say `pk` and `sk` when describing logical item shape, but Go code that builds items or key conditions uses `PK` and `SK`.
 
 Name is never part of an Account key. Account identity is UUIDv7. AccountNameLock is the only name-keyed item, and uniqueness is enforced by a conditional write in the same transaction as the account.
+
+Build key maps inline at the call site. Prefer explicit `PK` and `SK` values over a shared key helper; the repetition is intentional. A reader should see the full key without following a helper.
 
 ## Money
 

@@ -163,7 +163,7 @@ func (r *DynamoDBLedgerRepository) RecordTransaction(ctx context.Context, userID
 	return nil
 }
 
-func (r *DynamoDBLedgerRepository) FindIdempotency(ctx context.Context, userID string, keyHash string) (entity.IdempotencyRecord, bool, error) {
+func (r *DynamoDBLedgerRepository) FindIdempotency(ctx context.Context, userID string, keyHash string) (port.IdempotencyRecord, bool, error) {
 	var item idempotencyItem
 	err := r.client.GetItem(ctx, &dynamodbclient.GetItemInput{
 		TableName: r.tableName,
@@ -174,12 +174,12 @@ func (r *DynamoDBLedgerRepository) FindIdempotency(ctx context.Context, userID s
 	}, &item)
 	if err != nil {
 		if errors.Is(err, dynamodbclient.ErrItemNotFound) {
-			return entity.IdempotencyRecord{}, false, nil
+			return port.IdempotencyRecord{}, false, nil
 		}
-		return entity.IdempotencyRecord{}, false, fmt.Errorf("find idempotency: %w", err)
+		return port.IdempotencyRecord{}, false, fmt.Errorf("find idempotency: %w", err)
 	}
 
-	return entity.IdempotencyRecord{
+	return port.IdempotencyRecord{
 		TransactionID: item.TransactionID,
 		RequestHash:   item.RequestHash,
 		CreatedAt:     item.CreatedAt,

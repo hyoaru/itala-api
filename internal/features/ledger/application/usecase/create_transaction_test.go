@@ -33,13 +33,13 @@ func (f *fakeAccountRepository) Delete(context.Context, string, string) error   
 type fakeLedgerRepository struct {
 	input       ledgerrepository.RecordTransactionInput
 	recorded    bool
-	idempotency map[string]entity.IdempotencyRecord
+	idempotency map[string]ledgerrepository.IdempotencyRecord
 }
 
 func (f *fakeLedgerRepository) RecordTransaction(_ context.Context, _ string, input ledgerrepository.RecordTransactionInput) error {
 	f.input = input
 	f.recorded = true
-	f.idempotency[input.Idempotency.KeyHash] = entity.IdempotencyRecord{
+	f.idempotency[input.Idempotency.KeyHash] = ledgerrepository.IdempotencyRecord{
 		TransactionID: input.Idempotency.TransactionID,
 		RequestHash:   input.Idempotency.RequestHash,
 		CreatedAt:     input.Idempotency.CreatedAt,
@@ -47,7 +47,7 @@ func (f *fakeLedgerRepository) RecordTransaction(_ context.Context, _ string, in
 	return nil
 }
 
-func (f *fakeLedgerRepository) FindIdempotency(_ context.Context, _ string, keyHash string) (entity.IdempotencyRecord, bool, error) {
+func (f *fakeLedgerRepository) FindIdempotency(_ context.Context, _ string, keyHash string) (ledgerrepository.IdempotencyRecord, bool, error) {
 	record, ok := f.idempotency[keyHash]
 	return record, ok, nil
 }
@@ -61,7 +61,7 @@ func newFixtures() (*fakeAccountRepository, *fakeLedgerRepository, CreateTransac
 		"cash":      {ID: "cash", Name: "Cash", Type: account.TypeAsset},
 		"groceries": {ID: "groceries", Name: "Groceries", Type: account.TypeExpense},
 	}}
-	ledgerRepo := &fakeLedgerRepository{idempotency: map[string]entity.IdempotencyRecord{}}
+	ledgerRepo := &fakeLedgerRepository{idempotency: map[string]ledgerrepository.IdempotencyRecord{}}
 	amount, _ := valueobject.NewDecimal("100")
 	request := CreateTransactionRequest{
 		UserID:                "u1",

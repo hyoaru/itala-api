@@ -60,8 +60,8 @@ func (r *RetryLedgerRepository) RecordTransaction(ctx context.Context, userID st
 	return r.retry(ctx, func() error { return r.inner.RecordTransaction(ctx, userID, input) })
 }
 
-func (r *RetryLedgerRepository) FindIdempotency(ctx context.Context, userID string, keyHash string) (entity.IdempotencyRecord, bool, error) {
-	var record entity.IdempotencyRecord
+func (r *RetryLedgerRepository) FindIdempotency(ctx context.Context, userID string, keyHash string) (port.IdempotencyRecord, bool, error) {
+	var record port.IdempotencyRecord
 	var found bool
 	err := r.retry(ctx, func() error {
 		var err error

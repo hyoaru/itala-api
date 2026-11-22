@@ -15,7 +15,7 @@ type Posting = entity.Posting
 type BalanceDelta = entity.BalanceDelta
 type TransactionSummary = entity.TransactionSummary
 type AccountStatementEntry = entity.AccountStatementEntry
-type IdempotencyRecord = entity.IdempotencyRecord
+type IdempotencyRecord = ledgerrepositoryport.IdempotencyRecord
 
 type LedgerRepository = ledgerrepositoryport.LedgerRepository
 type RecordTransactionInput = ledgerrepositoryport.RecordTransactionInput

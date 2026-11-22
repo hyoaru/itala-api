@@ -26,7 +26,7 @@ func (r *LoggingLedgerRepository) RecordTransaction(ctx context.Context, userID 
 	return nil
 }
 
-func (r *LoggingLedgerRepository) FindIdempotency(ctx context.Context, userID string, keyHash string) (entity.IdempotencyRecord, bool, error) {
+func (r *LoggingLedgerRepository) FindIdempotency(ctx context.Context, userID string, keyHash string) (port.IdempotencyRecord, bool, error) {
 	return r.inner.FindIdempotency(ctx, userID, keyHash)
 }
 

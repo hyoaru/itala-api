@@ -27,6 +27,6 @@ type RecordTransactionInput struct {
 
 type LedgerRepository interface {
 	RecordTransaction(ctx context.Context, userID string, input RecordTransactionInput) error
-	FindIdempotency(ctx context.Context, userID string, keyHash string) (entity.IdempotencyRecord, bool, error)
+	FindIdempotency(ctx context.Context, userID string, keyHash string) (IdempotencyRecord, bool, error)
 	FindTransactionDetail(ctx context.Context, userID string, occurredAt string, id string) (entity.Transaction, []entity.Posting, error)
 }
