@@ -177,6 +177,7 @@ func (c *SDKDynamoDBClient) Query(ctx context.Context, input *QueryInput, output
 		TableName:                aws.String(input.TableName),
 		Limit:                    input.Limit,
 		ScanIndexForward:         input.ScanIndexForward,
+		ConsistentRead:           input.ConsistentRead,
 		KeyConditionExpression:   input.KeyConditionExpression,
 		IndexName:                input.IndexName,
 		FilterExpression:         input.FilterExpression,

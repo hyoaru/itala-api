@@ -44,6 +44,18 @@ func (d Decimal) Divide(amount Decimal) (Decimal, error) {
 	return Decimal{d.value.Div(amount.value)}, nil
 }
 
+func (d Decimal) IsZero() bool {
+	return d.value.IsZero()
+}
+
+func (d Decimal) IsPositive() bool {
+	return d.value.IsPositive()
+}
+
+func (d Decimal) IsNegative() bool {
+	return d.value.IsNegative()
+}
+
 func (d Decimal) String() string {
 	return d.value.String()
 }

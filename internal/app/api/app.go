@@ -7,6 +7,7 @@ import (
 	handler "github.com/hyoaru/itala-api/internal/app/api/handler"
 	account "github.com/hyoaru/itala-api/internal/features/account"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
+	"github.com/hyoaru/itala-api/internal/features/ledger"
 	legacyaccount "github.com/hyoaru/itala-api/internal/legacy/features/account"
 	category "github.com/hyoaru/itala-api/internal/legacy/features/category"
 	"github.com/hyoaru/itala-api/internal/legacy/features/transaction"
@@ -27,6 +28,7 @@ func New() *App {
 	// shortcut: legacy transactions still adjust balance through the legacy repository; remove at cutover.
 	legacyAccountRepository := legacyaccount.NewDynamoDBAccountRepository(dynamodbClient, dynamodbTableName, idempotencyStore)
 	transactionRepository := transaction.NewDynamoDBTransactionRepository(dynamodbClient, dynamodbTableName, idempotencyStore)
+	ledgerRepository := ledger.NewDynamoDBLedgerRepository(dynamodbClient, dynamodbTableName)
 
 	categoryHandler := &handler.CategoryHandler{
 		CreateCategory: category.NewCreateCategory(categoryRepository),
@@ -43,9 +45,9 @@ func New() *App {
 		DeleteAccount: account.NewDeleteAccount(accountRepository),
 	}
 	transactionHandler := &handler.TransactionHandler{
-		CreateTransaction: transaction.NewCreateTransaction(transactionRepository, categoryRepository, legacyAccountRepository),
+		CreateTransaction: ledger.NewCreateTransaction(ledgerRepository, accountRepository),
+		GetTransaction:    ledger.NewGetTransaction(ledgerRepository),
 		ListTransactions:  transaction.NewListTransactions(transactionRepository),
-		GetTransaction:    transaction.NewGetTransaction(transactionRepository),
 		UpdateTransaction: transaction.NewUpdateTransaction(transactionRepository, categoryRepository, legacyAccountRepository),
 		DeleteTransaction: transaction.NewDeleteTransaction(transactionRepository, legacyAccountRepository),
 	}

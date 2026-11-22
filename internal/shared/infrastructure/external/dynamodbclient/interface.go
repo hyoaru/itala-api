@@ -20,6 +20,7 @@ type QueryInput struct {
 	IndexName                 *string
 	Limit                     *int32
 	ScanIndexForward          *bool
+	ConsistentRead            *bool
 	KeyConditionExpression    *string
 	FilterExpression          *string
 	ExpressionAttributeNames  map[string]string

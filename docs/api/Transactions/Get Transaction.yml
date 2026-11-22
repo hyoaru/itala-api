@@ -13,6 +13,9 @@ http:
     - name: id
       value: "{{TRANSACTION_ID}}"
       type: path
+    - name: occurred_at
+      value: "2026-11-22"
+      type: query
   auth: inherit
 
 settings:
@@ -20,3 +23,21 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: |-
+  # Get Transaction
+
+  Reads the immutable transaction header and its postings.
+
+  ## Parameters
+
+  - `id` — path transaction UUID.
+  - `occurred_at` — query `YYYY-MM-DD`. Required because the base-table sort key embeds the business date.
+
+  ## Response
+
+  Header fields plus `postings`, ordered by sort key. A reversed transaction includes `reversed_by_transaction_id`.
+
+  ## Errors
+
+  - `404` — transaction not found for that date.

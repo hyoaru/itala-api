@@ -4,7 +4,7 @@
 
 **Blocked by:** 01: Create account through new account slice.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] One `TransactWriteItems` writes the transaction header, lean postings, balance adds, one transaction summary, and one account statement entry per posting.
 - [ ] Header uses `TRANSACTION#<date>#<id>`; postings use `TRANSACTION#<date>#<id>#POSTING#<id>`.
