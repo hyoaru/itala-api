@@ -10,7 +10,9 @@
 - [ ] Header uses `TRANSACTION#<date>#<id>`; postings use `TRANSACTION#<date>#<id>#POSTING#<id>`.
 - [ ] Postings sum to zero; the application rejects a transaction that does not, and writes nothing.
 - [ ] Money uses the shared Decimal value object; enum values stay lowercase.
-- [ ] A written decision for the primary-account rule and the client `type`/`category` mapping is applied in this ticket.
+- [ ] `counterparty_account_id` is the category-account leg; direction comes from that account type. No `category_id` and no category lookup exist.
+- [ ] Display fields use the primary-account rule: expense or income posting first, else positive side, else first posting.
+- [ ] Idempotency-Key is required. Result item is written in the same atomic write; replay returns the stored transaction ID and a different payload returns 409.
 - [ ] Detail query returns the header followed by its postings in one call.
 - [ ] Each account balance equals the sum of its posting amounts after the write.
 - [ ] No write-model or projection item carries global secondary index keys; financial reads use strong consistency.

@@ -112,7 +112,7 @@ Corrections are reversals. A reversal appends a new transaction with negated pos
 - Use `snake_case` attributes, lowercase enum values, ISO timestamps, `YYYY-MM-DD` business dates, and UUID identifiers with UUIDv7 preferred.
 - Enforce the account type enum in the application layer. DynamoDB does not enforce it.
 - Keep currency single and implicit.
-- Treat categories as accounts. Do not create a Category entity.
+- Treat categories as accounts. Do not create a Category entity. Transaction create takes `account_id` for the balance leg and `counterparty_account_id` for the category leg. Direction comes from the counterparty account type: `income` credits the balance account and debits the income account; `expense` debits the balance account and credits the expense account. No `category_id`, category repository, or lookup exists.
 - Write all six relevant item types in one `TransactWriteItems` on create: header, postings, summary, statement entries, and balance adds. Balance items are auto-created by the first add.
 - Update balances only with atomic add operations. Do not set `updated_at` on a balance add.
 - Use strongly consistent base-table reads for financial values.
@@ -121,8 +121,8 @@ Corrections are reversals. A reversal appends a new transaction with negated pos
 - Enforce three-entity read rules in the application service: postings sum to zero, transaction and posting are write-once, and no write bypasses the service and repository adapter.
 - Keep the legacy code archived under a clearly named legacy area until cutover, then delete it. Do not add features to the archived code.
 - Switch wiring to the new slices in one cutover. Do not ship dual-write, feature flags, shadow reads, or a backfill.
-- Leave the PWA request mapping unresolved. Existing clients send type and category; the new model has no category entity. Decide the account-mapping rule before handler wiring.
-- Leave idempotency storage unresolved. It is deferred but required for retry safety.
+- Keep `Idempotency-Key` required on transaction create. Store one result item in the same `TransactWriteItems`, keyed by `IDEMPOTENCY#<sha256(user_id|operation|key)>` and `#RESULT`, holding `request_hash`, `transaction_id`, and `created_at`. A replay with the same key and hash returns the stored transaction ID; a different hash returns a conflict.
+- Use the primary-account rule for display fields: pick the posting whose account type is `expense` or `income`; else the debit side; else the first posting.
 
 ## Testing Decisions
 
@@ -165,8 +165,6 @@ Corrections are reversals. A reversal appends a new transaction with negated pos
 - Hard cutover is accepted because there is one user and all production data belongs to that user. Preserve no legacy write path.
 - No legacy data needs preserving. Purge the table before cutover; every account created by the new code has a name lock, so lock deletes require `attribute_exists(PK)`.
 - The write-once rule conflicts with the reversal requirement to set `reversed_by_transaction_id` on the original header. Treat the guarded header update as the single allowed exception, or resolve the conflict before implementation.
-- The primary-account rule for `display_amount` and `display_account_id` is unresolved. Need a deterministic rule before handlers are wired.
-- Mapping the existing `type` and `category` request fields onto accounts is unresolved. Decide before changing the HTTP layer.
 - `updated_at` on Balance is set at item creation. Atomic balance adds do not move it, per the rule that `updated_at` changes only on metadata writes.
 - Branch name still says `projector-model`. The vault migration model is the active design; the branch name is stale.
 - Archived legacy code may be deleted only after the new slices own all traffic and tests pass.
