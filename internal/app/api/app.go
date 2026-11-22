@@ -5,8 +5,9 @@ import (
 	"os"
 
 	handler "github.com/hyoaru/itala-api/internal/app/api/handler"
+	account "github.com/hyoaru/itala-api/internal/features/account"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
-	account "github.com/hyoaru/itala-api/internal/legacy/features/account"
+	legacyaccount "github.com/hyoaru/itala-api/internal/legacy/features/account"
 	category "github.com/hyoaru/itala-api/internal/legacy/features/category"
 	"github.com/hyoaru/itala-api/internal/legacy/features/transaction"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
@@ -22,7 +23,9 @@ func New() *App {
 
 	identityProvider := identity.NewCognitoIdentityProvider(os.Getenv("AWS_REGION"), os.Getenv("COGNITO_USER_POOL_ID"))
 	categoryRepository := category.NewDynamoDBCategoryRepository(dynamodbClient, dynamodbTableName)
-	accountRepository := account.NewDynamoDBAccountRepository(dynamodbClient, dynamodbTableName, idempotencyStore)
+	accountRepository := account.NewDynamoDBAccountRepository(dynamodbClient, dynamodbTableName)
+	// shortcut: legacy transactions still adjust balance through the legacy repository; remove at cutover.
+	legacyAccountRepository := legacyaccount.NewDynamoDBAccountRepository(dynamodbClient, dynamodbTableName, idempotencyStore)
 	transactionRepository := transaction.NewDynamoDBTransactionRepository(dynamodbClient, dynamodbTableName, idempotencyStore)
 
 	categoryHandler := &handler.CategoryHandler{
@@ -40,11 +43,11 @@ func New() *App {
 		DeleteAccount: account.NewDeleteAccount(accountRepository),
 	}
 	transactionHandler := &handler.TransactionHandler{
-		CreateTransaction: transaction.NewCreateTransaction(transactionRepository, categoryRepository, accountRepository),
+		CreateTransaction: transaction.NewCreateTransaction(transactionRepository, categoryRepository, legacyAccountRepository),
 		ListTransactions:  transaction.NewListTransactions(transactionRepository),
 		GetTransaction:    transaction.NewGetTransaction(transactionRepository),
-		UpdateTransaction: transaction.NewUpdateTransaction(transactionRepository, categoryRepository, accountRepository),
-		DeleteTransaction: transaction.NewDeleteTransaction(transactionRepository, accountRepository),
+		UpdateTransaction: transaction.NewUpdateTransaction(transactionRepository, categoryRepository, legacyAccountRepository),
+		DeleteTransaction: transaction.NewDeleteTransaction(transactionRepository, legacyAccountRepository),
 	}
 
 	router := NewRouter(identityProvider, *categoryHandler, *accountHandler, *transactionHandler)

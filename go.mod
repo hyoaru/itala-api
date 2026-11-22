@@ -4,21 +4,26 @@ go 1.26.5
 
 require (
 	github.com/MicahParks/keyfunc/v3 v3.8.1
+	github.com/akrylysov/algnhsa v1.1.0
 	github.com/aws/aws-sdk-go-v2 v1.43.6
+	github.com/aws/aws-sdk-go-v2/config v1.32.37
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.20.61
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.63.3
 	github.com/go-chi/chi/v5 v5.3.1
+	github.com/go-chi/cors v1.2.2
+	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
+	github.com/gorilla/schema v1.4.1
 	github.com/joho/godotenv v1.5.1
+	github.com/shopspring/decimal v1.4.0
+	golang.org/x/text v0.44.0
 )
 
 require (
 	github.com/MicahParks/jwkset v0.11.1 // indirect
-	github.com/akrylysov/algnhsa v1.1.0 // indirect
 	github.com/aws/aws-lambda-go v1.55.0 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.32.37 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.36 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.20.61 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.37 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.37 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.37 // indirect
@@ -32,13 +37,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.6 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.6 // indirect
 	github.com/aws/smithy-go v1.27.8 // indirect
-	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2 // indirect
-	github.com/go-chi/cors v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator v9.31.0+incompatible // indirect
-	github.com/gorilla/schema v1.4.1 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
-	github.com/shopspring/decimal v1.4.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
+	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 )
