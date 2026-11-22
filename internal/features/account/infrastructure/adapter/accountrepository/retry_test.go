@@ -10,13 +10,45 @@ import (
 	entity "github.com/hyoaru/itala-api/internal/features/account/domain/entity"
 )
 
+type stubAccountRepository struct {
+	port.AccountRepository
+	accounts     map[string]entity.Account
+	createCalls  int
+	createErrors []error
+}
+
+func newStubAccountRepository() *stubAccountRepository {
+	return &stubAccountRepository{accounts: map[string]entity.Account{}}
+}
+
+func (f *stubAccountRepository) Create(_ context.Context, _ string, account entity.Account) error {
+	f.createCalls++
+	if len(f.createErrors) > 0 {
+		err := f.createErrors[0]
+		f.createErrors = f.createErrors[1:]
+		if err != nil {
+			return err
+		}
+	}
+	f.accounts[account.ID] = account
+	return nil
+}
+
+func (f *stubAccountRepository) FindOne(_ context.Context, _ string, id string) (entity.Account, error) {
+	account, ok := f.accounts[id]
+	if !ok {
+		return entity.Account{}, port.ErrAccountNotFound
+	}
+	return account, nil
+}
+
 func testAccount() entity.Account {
 	now := time.Now().UTC()
 	return entity.Account{ID: "a1", Name: "Cash", Type: entity.TypeAsset, CreatedAt: now, UpdatedAt: now}
 }
 
 func TestRetryAccountRepositoryRetriesTransientFailure(t *testing.T) {
-	inner := newFakeRepository()
+	inner := newStubAccountRepository()
 	inner.createErrors = []error{errors.New("transient"), nil}
 	repo := &RetryAccountRepository{inner: inner, maxAttempts: 3, delay: time.Millisecond, maxDelay: 2 * time.Millisecond}
 
@@ -29,7 +61,7 @@ func TestRetryAccountRepositoryRetriesTransientFailure(t *testing.T) {
 }
 
 func TestRetryAccountRepositoryDoesNotRetryTerminalError(t *testing.T) {
-	inner := newFakeRepository()
+	inner := newStubAccountRepository()
 	inner.createErrors = []error{port.ErrAccountExists}
 	repo := &RetryAccountRepository{inner: inner, maxAttempts: 3, delay: time.Millisecond, maxDelay: 2 * time.Millisecond}
 

@@ -17,7 +17,7 @@ Follow the legacy feature layout exactly. One file per named thing:
 - `domain/entity/` — one entity per `snake_case.go` file: `transaction.go`, `posting.go`, `account_statement_entry.go`. No consolidated model file anywhere.
 - `application/port/<name>/` — `interface.go` and `errors.go`. Extra port types get their own file.
 - `application/usecase/` — one use case file per action and a matching `_test.go`. Repository fakes live in `fakes_test.go`.
-- `infrastructure/adapter/<name>/` — one file per concern: `dynamodb.go`, `decorated.go`, `logging.go`, `retry.go`, `idempotency.go`. Each concern gets its own `_test.go`.
+- `infrastructure/adapter/<name>/` — one file per concern: `dynamodb.go`, `decorated.go`, `logging.go`, `retry.go`, `idempotency.go`. Tests exist where behavior needs them: `dynamodb_test.go`, `retry_test.go`, `idempotency_test.go`. Stubs live inside the test that uses them, usually by embedding the port.
 - Slice root — one facade named after the slice: `account.go`, `ledger.go`. It holds aliases and constructors only.
 
 `domain/entity` holds domain facts only. Write infrastructure belongs in the application port or adapter. `IdempotencyRecord` lives in `application/port/ledgerrepository`, not in `domain/entity`.
