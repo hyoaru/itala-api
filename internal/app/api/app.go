@@ -5,10 +5,10 @@ import (
 	"os"
 
 	handler "github.com/hyoaru/itala-api/internal/app/api/handler"
-	account "github.com/hyoaru/itala-api/internal/features/account"
-	category "github.com/hyoaru/itala-api/internal/features/category"
 	identity "github.com/hyoaru/itala-api/internal/features/identity"
-	"github.com/hyoaru/itala-api/internal/features/transaction"
+	account "github.com/hyoaru/itala-api/internal/legacy/features/account"
+	category "github.com/hyoaru/itala-api/internal/legacy/features/category"
+	"github.com/hyoaru/itala-api/internal/legacy/features/transaction"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/external/dynamodbclient"
 	"github.com/hyoaru/itala-api/internal/shared/infrastructure/idempotency"
 )
