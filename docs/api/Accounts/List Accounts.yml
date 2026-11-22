@@ -16,3 +16,21 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: |-
+  # List Accounts
+
+  Lists account metadata for the authenticated user.
+
+  ## Query
+
+  - `limit` — optional, 1-40. Defaults to 40.
+  - `name` — optional exact-name filter.
+  - `cursor` — optional opaque pagination cursor.
+
+  ## Response
+
+  `items` contains `id`, `name`, `type`, `created_at`, `updated_at`.
+  `next_cursor` is present when another page exists.
+
+  Balance is not part of this response. Read it from the dashboard projection.

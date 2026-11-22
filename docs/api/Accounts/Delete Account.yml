@@ -20,3 +20,16 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: |-
+  # Delete Account
+
+  Soft-deletes the account and frees its name lock.
+
+  ## Responses
+
+  - `204` — deleted.
+  - `404` — account not found or already deleted.
+  - `409` — account changed concurrently.
+
+  The account item stays for history with `deleted_at` set. The name lock is removed in the same transaction.

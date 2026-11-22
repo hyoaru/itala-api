@@ -5,3 +5,10 @@ info:
 
 request:
   auth: inherit
+
+docs: |-
+  # Accounts
+
+  Account metadata endpoints. Account is write-model data in the account slice. Balance is a ledger projection and is not returned here.
+
+  Names are unique per user after trim, NFKC, and lowercase normalization.

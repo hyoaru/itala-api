@@ -23,3 +23,21 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: |-
+  # Update Account
+
+  Renames account metadata. Only `name` is editable.
+
+  ## Request
+
+  - `name` — required display name. Must be unique per user after normalization.
+
+  ## Responses
+
+  - `204` — renamed.
+  - `400` — invalid name.
+  - `404` — account not found or deleted.
+  - `409` — name already in use, or account changed concurrently.
+
+  The name lock moves in the same transaction as the account. Renaming to the same normalized name skips lock writes.

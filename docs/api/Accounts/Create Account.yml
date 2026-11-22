@@ -11,7 +11,7 @@ http:
       value: Bearer {{ACCESS_TOKEN}}
   body:
     type: json
-    data: '{"name": "BPI Savings"}'
+    data: '{"name": "BPI Savings", "type": "asset"}'
   auth: inherit
 
 runtime:
@@ -30,3 +30,21 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: |-
+  # Create Account
+
+  Creates account metadata in the account slice. Account name is unique per user, case- and whitespace-insensitive.
+
+  ## Request
+
+  - `name` — required display name.
+  - `type` — required. One of `asset`, `liability`, `income`, `expense`. Lowercase.
+
+  ## Responses
+
+  - `201` — `{ "id": "<uuid>" }`
+  - `400` — invalid name or type.
+  - `409` — name already in use by this user.
+
+  Balance is not stored on the account item. It is a ledger projection.
